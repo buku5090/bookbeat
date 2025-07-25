@@ -15,9 +15,11 @@
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-image-lightbox": "^5.1.4",
     "react-router-dom": "^7.6.3",
     "semantic-ui-css": "^2.5.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "yet-another-react-lightbox": "^3.25.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

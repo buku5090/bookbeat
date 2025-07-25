@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { db } from "../src/firebase";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../src/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../src/firebase";
+import { v4 as uuidv4 } from "uuid";
+import { genres } from "../src/data/genres";
 
 export default function CreateAnnouncementAdvanced() {
   const navigate = useNavigate();
@@ -13,7 +17,7 @@ export default function CreateAnnouncementAdvanced() {
       if (!user) navigate("/login");
     });
     return () => unsub();
-  });
+  }, [navigate]);
 
   const [step, setStep] = useState(1);
   const [type, setType] = useState("");
@@ -21,28 +25,95 @@ export default function CreateAnnouncementAdvanced() {
     announcementTitle: "",
     realName: "",
     stageName: "",
-    genre: "",
+    genres: [],
     description: "",
     locationName: "",
     address: "",
     capacity: "",
     budget: "",
-    styleWanted: "",
+    styleWanted: [],
     thumbnail: "",
     images: [],
   });
+  const [genreInput, setGenreInput] = useState("");
+  const [genreSuggestions, setGenreSuggestions] = useState([]);
+  const [styleInput, setStyleInput] = useState("");
+  const [styleSuggestions, setStyleSuggestions] = useState([]);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    const urls = files.map((file) => URL.createObjectURL(file));
-    setFormData((prev) => ({ ...prev, images: urls }));
-  };
+  const [descriptionCharCount, setDescriptionCharCount] = useState(0);
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    if ((name === "capacity" || name === "budget") && !/^[0-9]*$/.test(value)) return;
+    const maxLengths = {
+      announcementTitle: 35,
+      realName: 35,
+      stageName: 35,
+      locationName: 35,
+      address: 50,
+      description: 500,
+    };
+    if (maxLengths[name] && value.length > maxLengths[name]) return;
+    if (name === "description") setDescriptionCharCount(value.length);
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleGenreInput = (e) => {
+    const value = e.target.value;
+    setGenreInput(value);
+    if (value.length > 0) {
+      const filtered = genres.filter((g) =>
+        g.toLowerCase().startsWith(value.toLowerCase())
+      );
+      setGenreSuggestions(filtered.slice(0, 6));
+    } else {
+      setGenreSuggestions([]);
+    }
+  };
+
+  const addGenre = (genre) => {
+    if (!formData.genres.includes(genre) && formData.genres.length < 5) {
+      setFormData((prev) => ({ ...prev, genres: [...prev.genres, genre] }));
+    }
+    setGenreInput("");
+    setGenreSuggestions([]);
+  };
+
+  const removeGenre = (genre) => {
+    setFormData((prev) => ({
+      ...prev,
+      genres: prev.genres.filter((g) => g !== genre),
+    }));
+  };
+
+  const handleStyleInput = (e) => {
+    const value = e.target.value;
+    setStyleInput(value);
+    if (value.length > 0) {
+      const filtered = genres.filter((g) =>
+        g.toLowerCase().startsWith(value.toLowerCase())
+      );
+      setStyleSuggestions(filtered.slice(0, 6));
+    } else {
+      setStyleSuggestions([]);
+    }
+  };
+
+  const addStyle = (style) => {
+    if (!formData.styleWanted.includes(style) && formData.styleWanted.length < 5) {
+      setFormData((prev) => ({ ...prev, styleWanted: [...prev.styleWanted, style] }));
+    }
+    setStyleInput("");
+    setStyleSuggestions([]);
+  };
+
+  const removeStyle = (style) => {
+    setFormData((prev) => ({
+      ...prev,
+      styleWanted: prev.styleWanted.filter((s) => s !== style),
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -51,10 +122,51 @@ export default function CreateAnnouncementAdvanced() {
     setErrorMsg("");
     setSuccessMsg("");
 
+    const allGenresValid = formData.genres.every((g) => genres.includes(g));
+    const allStylesValid = formData.styleWanted.every((s) => genres.includes(s));
+
+    if (!allGenresValid || !allStylesValid) {
+      setErrorMsg("Unul sau mai multe genuri sau stiluri nu sunt valide.");
+      setLoading(false);
+      return;
+    }
+
+    const files = document.querySelector('input[type="file"]').files;
+    if (files.length > 6) {
+      setErrorMsg("Poți încărca maximum 6 imagini.");
+      setLoading(false);
+      return;
+    }
+
+    const uploadedUrls = [];
+
+    for (const file of files) {
+      if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+        alert("Doar imagini PNG, JPG și JPEG sunt permise.");
+        continue;
+      }
+
+      const uniqueName = `${uuidv4()}_${file.name}`;
+      const folderPath = `announcements/${auth.currentUser?.uid || "anonymous"}/${uuidv4()}`;
+      const storageRef = ref(storage, `${folderPath}/${uniqueName}`);
+
+      try {
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+        uploadedUrls.push(downloadURL);
+      } catch (error) {
+        console.error("Eroare la upload:", error);
+      }
+    }
+
     const dataToSave = {
       ...formData,
       type,
       createdAt: new Date(),
+      userEmail: auth.currentUser?.email || "anonim",
+      userId: auth.currentUser?.uid || null,
+      images: uploadedUrls,
+      thumbnail: uploadedUrls[0] || "",
     };
 
     try {
@@ -76,30 +188,26 @@ export default function CreateAnnouncementAdvanced() {
           <div className="h-screen flex flex-col justify-center items-center px-6">
             <h1 className="text-5xl font-bold text-center mb-12">Anunțul este pentru...</h1>
             <div className="flex flex-col md:flex-row w-full h-2/3 gap-6">
-              {/* 🔸 Artist */}
               <button
                 onClick={() => {
                   setType("artist");
                   setStep(2);
                 }}
-                className="flex-1 bg-neutral-900 text-black opacity-60 hover:opacity-100 hover:scale-105 transition duration-300 ease-in-out rounded-2xl shadow-xl p-10 border border-white flex items-center justify-center"
+                className="flex-1 !bg-neutral-900 opacity-60 hover:opacity-100 hover:scale-105 transition duration-300 ease-in-out rounded-2xl shadow-xl p-10 border border-white flex items-center justify-center"
               >
-                <span className="text-6xl md:text-7xl font-extrabold tracking-wider drop-shadow-lg">
+                <span className="text-6xl text-white md:text-7xl font-extrabold tracking-wider drop-shadow-lg">
                   ARTIST
                 </span>
               </button>
 
-
-
-              {/* 🔹 Location */}
               <button
                 onClick={() => {
                   setType("location");
                   setStep(2);
                 }}
-                className="flex-1 bg-neutral-900 text-black opacity-60 hover:opacity-100 hover:scale-105 transition duration-300 ease-in-out rounded-2xl shadow-xl p-10 border border-white flex items-center justify-center"
+                className="flex-1 !bg-neutral-900 opacity-60 hover:opacity-100 hover:scale-105 transition duration-300 ease-in-out rounded-2xl shadow-xl p-10 border border-white flex items-center justify-center"
               >
-                <span className="text-6xl md:text-7xl font-extrabold tracking-wider drop-shadow-lg">
+                <span className="text-6xl text-white md:text-7xl font-extrabold tracking-wider drop-shadow-lg">
                   LOCAȚIE
                 </span>
               </button>
@@ -107,13 +215,10 @@ export default function CreateAnnouncementAdvanced() {
           </div>
         )}
 
-        {/* 🔽 Form */}
         {step === 2 && (
           <form
             onSubmit={handleSubmit}
-            className={`bg-white text-black p-6 rounded-xl shadow max-w-2xl mx-auto ${
-              type === "location" ? "mt-20" : "mt-8"
-            }`}
+            className="bg-white text-black p-6 rounded-xl shadow max-w-2xl mx-auto mt-10"
           >
             <h2 className="text-2xl font-bold mb-4">
               Formular pentru {type === "artist" ? "Artist" : "Locație"}
@@ -135,7 +240,42 @@ export default function CreateAnnouncementAdvanced() {
               <>
                 <input name="realName" placeholder="Nume real" value={formData.realName} onChange={handleChange} className="mb-4 w-full p-2 border rounded" />
                 <input name="stageName" placeholder="Nume de scenă" value={formData.stageName} onChange={handleChange} className="mb-4 w-full p-2 border rounded" />
-                <input name="genre" placeholder="Gen muzical" value={formData.genre} onChange={handleChange} className="mb-4 w-full p-2 border rounded" />
+
+                {/* GENRE SELECTOR */}
+                <div className="relative mb-4">
+                  <input
+                    name="genreInput"
+                    placeholder="Gen muzical"
+                    value={genreInput}
+                    onChange={handleGenreInput}
+                    className="w-full p-2 border rounded"
+                    autoComplete="off"
+                  />
+                  {genreSuggestions.length > 0 && (
+                    <ul className="absolute z-50 bg-white text-black border w-full rounded mt-1 shadow">
+                      {genreSuggestions.map((g, i) => (
+                        <li
+                          key={i}
+                          className="px-3 py-2 hover:bg-pink-100 cursor-pointer"
+                          onClick={() => addGenre(g)}
+                        >
+                          {g}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {formData.genres.map((g, i) => (
+                    <span key={i} className="bg-pink-200 text-pink-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-pink-300" onClick={() => removeGenre(g)}>
+                      {g} ✕
+                    </span>
+                  ))}
+                </div>
+                <div className="text-right text-xs text-gray-400 pr-4">
+                  {descriptionCharCount}/500 caractere
+                </div>
+
                 <textarea name="description" placeholder="Descriere artist" value={formData.description} onChange={handleChange} className="mb-4 w-full p-2 border rounded" rows={3} />
               </>
             ) : (
@@ -144,13 +284,49 @@ export default function CreateAnnouncementAdvanced() {
                 <input name="address" placeholder="Adresă completă" value={formData.address} onChange={handleChange} className="mb-4 w-full p-2 border rounded" />
                 <input name="capacity" placeholder="Număr maxim de persoane" value={formData.capacity} onChange={handleChange} className="mb-4 w-full p-2 border rounded" />
                 <input name="budget" placeholder="Buget (EUR)" value={formData.budget} onChange={handleChange} className="mb-4 w-full p-2 border rounded" />
-                <input name="styleWanted" placeholder="Stiluri dorite" value={formData.styleWanted} onChange={handleChange} className="mb-4 w-full p-2 border rounded" />
+
+                {/* STYLE SELECTOR */}
+                <div className="relative mb-4">
+                  <input
+                    name="styleInput"
+                    placeholder="Stiluri dorite"
+                    value={styleInput}
+                    onChange={handleStyleInput}
+                    className="w-full p-2 border rounded"
+                    autoComplete="off"
+                  />
+                  {styleSuggestions.length > 0 && (
+                    <ul className="absolute z-50 bg-white text-black border w-full rounded mt-1 shadow">
+                      {styleSuggestions.map((s, i) => (
+                        <li
+                          key={i}
+                          className="px-3 py-2 hover:bg-pink-100 cursor-pointer"
+                          onClick={() => addStyle(s)}
+                        >
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {formData.styleWanted.map((s, i) => (
+                    <span key={i} className="bg-purple-200 text-purple-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-purple-300" onClick={() => removeStyle(s)}>
+                      {s} ✕
+                    </span>
+                  ))}
+                </div>
+
                 <textarea name="description" placeholder="Descriere locație" value={formData.description} onChange={handleChange} className="mb-4 w-full p-2 border rounded" rows={3} />
               </>
             )}
 
-            <input name="thumbnail" placeholder="Thumbnail URL (opțional)" value={formData.thumbnail} onChange={handleChange} className="mb-4 w-full p-2 border rounded" />
-            <input type="file" multiple onChange={handleImageChange} className="mb-4 w-full" />
+            <input
+              type="file"
+              accept="image/png, image/jpeg, image/jpg"
+              multiple
+              className="mb-4 w-full"
+            />
 
             {formData.images.length > 0 && (
               <div className="grid grid-cols-2 gap-4 mb-6">

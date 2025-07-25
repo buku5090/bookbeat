@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import UserMenu from "./UserMenu";
+import { useAuth } from "../context/AuthContext"; // ⬅️ adăugat
 
 export default function MainMenu() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth(); // ⬅️ adăugat
+  const isAdmin = user?.email === "test@gmail.com"; // 🛡️ poți schimba adresa
 
   const menuItems = [
     { label: "Acasă", path: "/" },
@@ -13,7 +16,7 @@ export default function MainMenu() {
     { label: "Evenimente", path: "/events" },
     { label: "Artiști", path: "/artists" },
     { label: "Adaugă anunț", path: "/create" },
-    { label: "Caută", path: "/search" }
+    { label: "Caută", path: "/search" },
   ];
 
   const lastItem = menuItems[menuItems.length - 1];
@@ -34,10 +37,9 @@ export default function MainMenu() {
 
           {/* 🔹 Desktop Menu */}
           <div className="hidden md:flex items-center w-full ml-8">
-            {/* Left menu */}
             <ul className="flex space-x-6 font-medium text-gray-600">
               {leftItems.map(({ label, path }) => (
-                <li key={label} className="cursor-pointer">
+                <li key={label}>
                   <Link
                     to={path}
                     className={`uppercase !font-bold transition ${
@@ -49,9 +51,20 @@ export default function MainMenu() {
                   </Link>
                 </li>
               ))}
+
+              {/* 🔴 Buton Admin */}
+              {isAdmin && (
+                <li>
+                  <Link
+                    to="/admin"
+                    className="uppercase font-bold text-red-400 hover:text-red-600 transition"
+                  >
+                    Admin
+                  </Link>
+                </li>
+              )}
             </ul>
 
-            {/* Right section: last item + user avatar */}
             <div className="ml-auto flex items-center space-x-4">
               <Link
                 to={lastItem.path}
@@ -95,6 +108,18 @@ export default function MainMenu() {
                   </Link>
                 </li>
               ))}
+
+              {isAdmin && (
+                <li>
+                  <Link
+                    to="/admin"
+                    className="uppercase font-bold text-red-500 hover:text-red-700 transition"
+                  >
+                    Admin
+                  </Link>
+                </li>
+              )}
+
               <li>
                 <input
                   type="text"

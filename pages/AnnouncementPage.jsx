@@ -2,11 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../src/firebase";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 export default function AnnouncementPage() {
   const { id } = useParams();
   const [announcement, setAnnouncement] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const fetchAnnouncement = async () => {
@@ -53,15 +57,58 @@ export default function AnnouncementPage() {
     images = [],
   } = announcement;
 
+  const slides = images.map((src) => ({ src }));
+
   return (
-    <div className="min-h-screen bg-black text-white py-20 px-6">
-      <div className="max-w-4xl mx-auto bg-white text-black rounded-xl overflow-hidden shadow-xl">
-        <img
-          src={thumbnail || images[0] || `https://placehold.co/800x300?text=${type}`}
-          alt="Thumbnail"
-          className="w-full h-64 object-cover"
-        />
-        <div className="p-6">
+    <div className="min-h-screen bg-black text-white py-20 px-4">
+      <div className="max-w-6xl mx-auto bg-white text-black rounded-xl shadow-xl p-4 flex flex-col md:flex-row gap-6">
+        {/* 🔺 Poza mare și thumbnails în stânga */}
+        <div className="w-full md:w-1/2">
+          <div className="relative aspect-square overflow-hidden rounded-xl mb-4">
+            <img
+              src={images[photoIndex] || thumbnail || `https://placehold.co/800x800?text=${type}`}
+              alt="Main"
+              className="w-full h-full object-cover cursor-pointer"
+              onClick={() => images.length > 0 && setIsOpen(true)}
+            />
+
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() =>
+                    setPhotoIndex((photoIndex - 1 + images.length) % images.length)
+                  }
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-2"
+                >
+                  &#8592;
+                </button>
+                <button
+                  onClick={() =>
+                    setPhotoIndex((photoIndex + 1) % images.length)
+                  }
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-2"
+                >
+                  &#8594;
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="grid grid-cols-4 gap-2">
+            {images.map((img, idx) => (
+              <img
+                key={idx}
+                src={img}
+                alt={`thumb-${idx}`}
+                className={`h-20 w-full object-cover rounded cursor-pointer border-2 ${idx === photoIndex ? "border-pink-500" : "border-transparent"}`}
+                onClick={() => setPhotoIndex(idx)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 🔹 Detalii în dreapta */}
+        <div className="w-full md:w-1/2">
           <h1 className="text-3xl font-bold mb-2 text-pink-600">{announcementTitle}</h1>
           <span className="text-sm uppercase font-bold text-purple-600">{type}</span>
 
@@ -83,24 +130,22 @@ export default function AnnouncementPage() {
             )}
             <p><strong>Descriere:</strong> {description}</p>
           </div>
-
-          {images.length > 0 && (
-            <div className="mt-6">
-              <h2 className="text-xl font-semibold mb-2">Galerie foto</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {images.map((img, idx) => (
-                  <img
-                    key={idx}
-                    src={img}
-                    alt={`img-${idx}`}
-                    className="w-full h-40 object-cover rounded"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* 🖼️ Lightbox modern */}
+      {isOpen && (
+        <Lightbox
+          open={isOpen}
+          close={() => setIsOpen(false)}
+          slides={slides}
+          index={photoIndex}
+          carousel={{ finite: false }}
+          on={{
+            view: ({ index }) => setPhotoIndex(index),
+          }}
+        />
+      )}
     </div>
   );
 }

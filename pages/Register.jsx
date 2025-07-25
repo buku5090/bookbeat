@@ -47,20 +47,20 @@ export default function Register() {
 
         <div className="space-y-4">
           <input
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
+            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
             placeholder="Nume complet"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
           />
           <input
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
+            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             type="email"
           />
           <input
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
+            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
             placeholder="Parolă"
             type="password"
             value={password}
@@ -69,7 +69,7 @@ export default function Register() {
           <button
             onClick={handleRegister}
             disabled={loading}
-            className="w-full bg-violet-600 text-black font-semibold py-3 rounded-lg hover:bg-violet-700 transition"
+            className="w-full !bg-black !border-black !text-white font-semibold py-3 rounded-lg hover:!bg-gray-800 transition"
           >
             {loading ? "Se creează contul..." : "🔐 Creează cont"}
           </button>

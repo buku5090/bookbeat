@@ -72,3 +72,8 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+input::placeholder {
+  color: #9ca3af; /* echivalentul Tailwind placeholder-gray-400 */
+  opacity: 1; /* pentru Safari */
+}
