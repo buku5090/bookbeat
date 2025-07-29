@@ -77,3 +77,8 @@ input::placeholder {
   color: #9ca3af; /* echivalentul Tailwind placeholder-gray-400 */
   opacity: 1; /* pentru Safari */
 }
+
+textarea::placeholder {
+  color: #9ca3af; /* echivalentul Tailwind placeholder-gray-400 */
+  opacity: 1; /* pentru Safari */
+}

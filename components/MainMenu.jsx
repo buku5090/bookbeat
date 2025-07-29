@@ -14,8 +14,6 @@ export default function MainMenu() {
     { label: "Acasă", path: "/" },
     { label: "Descoperă", path: "/discover" },
     { label: "Evenimente", path: "/events" },
-    { label: "Artiști", path: "/artists" },
-    { label: "Adaugă anunț", path: "/create" },
     { label: "Caută", path: "/search" },
   ];
 

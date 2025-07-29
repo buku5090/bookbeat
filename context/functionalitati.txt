@@ -1,0 +1,27 @@
+artist:
+1. nume de scena
+2. nume real
+3. my work
+4. unde a pus el muzica
+5. recenzii + rating doar de la locatii
+6. genuri muzicale
+7. pret / pe ora / pe set
+8. descriere personala
+9. link instagram
+10. poza de profil
+11. disponibilatte
+
+
+locatie:
+1. nume locatie
+2. adresa
+3. Tip locație (bar, pub, cafenea, club etc.)
+4. capacitate maxima
+5. lista echipament la locatie
+6. instagram
+7. descriere
+8. link google maps + harta interactiva
+9. poza de profil
+10. genuri acceptate
+11. poze cu scena
+12. program

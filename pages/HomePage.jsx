@@ -1,16 +1,17 @@
 import { useEffect } from "react";
 import MainMenu from "../components/MainMenu";
-import Announcements from "./AnnouncementsPage";
+import ProfilesPage from "./ProfilesPage";
+
 
 export default function HomePage() {
 
   useEffect(() => {
-    document.title = "BookBeat | Connect Artists with Venues";
+    document.title = "BookMix | Connect Artists with Venues";
   }, []);
 
   return (
     <div className="pt-20"> {/* ajustează valoarea după înălțimea navbarului */}
-        <Announcements />
+        <ProfilesPage />
     </div>
   );
 }

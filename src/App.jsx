@@ -4,21 +4,18 @@ import { useAuth } from "../context/AuthContext"; // 🔹 asigură-te că ai cre
 
 import MainMenu from "../components/MainMenu";
 import HomePage from "../pages/HomePage";
-import CreateAnnouncement from "../pages/CreateAnnouncement";
 import DiscoverPage from "../pages/DiscoverPage";
 import EventsPage from "../pages/EventsPage";
-import ArtistsPage from "../pages/ArtistsPage";
 import SearchPage from "../pages/SearchPage";
-import AnnouncementPage from "../pages/AnnouncementPage";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import UserPage from "../pages/UserPage";
+import ProfilePage from "../pages/ProfilePage";
 import RequireAuth from "../components/RequireAuth";
 import NotFoundPage from "../pages/NotFoundPage";
 import LoadingPage from "../pages/LoadingPage";
 import AdminPage from "../pages/AdminPage";
-import UserAnnouncementsPage from "../pages/UserAnnouncementPage";
-import UserPublicPage from "../pages/UserPublicPage";
+import Footer from "../components/Footer";
+import CompleteProfileWizard from "../pages/CompleteProfileWizard";
 
 function App() {
   const { loading } = useAuth();
@@ -30,30 +27,18 @@ function App() {
       <MainMenu />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route
-          path="/create"
-          element={
-            <RequireAuth>
-              <CreateAnnouncement />
-            </RequireAuth>
-          }
-        />
-        
+        <Route path="/complete-profile" element={<CompleteProfileWizard />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/events" element={<EventsPage />} />
-        <Route path="/artists" element={<ArtistsPage />} />
         <Route path="/search" element={<SearchPage />} />
-        <Route path="/announcement/:id" element={<AnnouncementPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/userannoucements" element={<UserAnnouncementsPage />} />
-        <Route path="/user/:userId" element={<UserPublicPage />} />
         <Route
           path="/profil"
           element={
             <RequireAuth>
-              <UserPage />
+              <ProfilePage />
             </RequireAuth>
           }
         />
@@ -64,6 +49,11 @@ function App() {
         {/* Pagina 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      
+
+      {/* Footer */}
+      <Footer />  
+
     </Router>
   );
 }

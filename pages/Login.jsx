@@ -6,7 +6,8 @@ import {
   signInWithRedirect,
   onAuthStateChanged,
 } from "firebase/auth";
-import { auth } from "../src/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db } from "../src/firebase";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
@@ -15,8 +16,9 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        await saveUserIfNotExists(user);
         console.log("🟢 Ești deja logat ca:", user);
         navigate("/profil");
       }
@@ -26,7 +28,8 @@ export default function Login() {
 
   const loginWithEmail = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      await saveUserIfNotExists(cred.user);
       navigate("/profil");
     } catch (err) {
       alert("❌ Eroare: " + err.message);
@@ -36,7 +39,8 @@ export default function Login() {
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      await saveUserIfNotExists(result.user);
       console.log("✅ Google login cu popup a mers");
       navigate("/profil");
     } catch (error) {
@@ -47,6 +51,23 @@ export default function Login() {
       } else {
         alert("❌ Google login error: " + error.message);
       }
+    }
+  };
+
+  const saveUserIfNotExists = async (user) => {
+    if (!user?.uid) return;
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        uid: user.uid,
+        name: user.displayName || "",
+        email: user.email || "",
+        photoURL: user.photoURL || "",
+        createdAt: new Date().toISOString(),
+      });
+      console.log("✅ Utilizator salvat în baza de date");
     }
   };
 

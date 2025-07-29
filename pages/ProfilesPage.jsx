@@ -3,39 +3,35 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../src/firebase";
 import { Link } from "react-router-dom";
 
-export default function AnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState([]);
+export default function ProfilesPage() {
+  const [profiles, setProfiles] = useState([]);
   const [filter, setFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAnnouncements = async () => {
+    const fetchUsers = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "announcements"));
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setAnnouncements(data);
+        const querySnapshot = await getDocs(collection(db, "users"));
+        const data = querySnapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((user) => user.type === "artist" || user.type === "location");
+        setProfiles(data);
         setLoading(false);
       } catch (err) {
-        console.error("Eroare la încărcarea anunțurilor:", err);
+        console.error("Eroare la încărcarea profilurilor:", err);
       }
     };
-
-    fetchAnnouncements();
+    fetchUsers();
   }, []);
 
-  const filtered = announcements
+  const filtered = profiles
     .filter((item) => (filter === "all" ? true : item.type === filter))
-      .sort((a, b) => {
-    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-    return sortOrder === "oldest"
-      ? dateA - dateB
-      : dateB - dateA;
-  });
+    .sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+      return sortOrder === "oldest" ? dateA - dateB : dateB - dateA;
+    });
 
   return (
     <div className="flex flex-col md:flex-row p-6 gap-6 pt-10 bg-black min-h-screen text-white">
@@ -58,7 +54,7 @@ export default function AnnouncementsPage() {
 
       {/* 🔻 Secțiune principală */}
       <div className="w-full md:w-3/4 flex flex-col gap-6">
-        {/* 🔺 Sortare sus */}
+        {/* 🔺 Sortare */}
         <div className="flex flex-col relative w-52">
           <select
             value={sortOrder}
@@ -68,53 +64,44 @@ export default function AnnouncementsPage() {
             <option value="newest">Cele mai noi</option>
             <option value="oldest">Cele mai vechi</option>
           </select>
-          {/* 🔽 Săgeată personalizată */}
           <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
 
-
-        {/* 🔻 Lista anunțuri */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        {/* 🔻 Lista tip OLX */}
+        <div className="flex flex-col gap-4">
           {loading ? (
             <div className="flex justify-center items-center w-full col-span-2 h-48">
               <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : filtered.length === 0 ? (
-            <p>Nu există anunțuri pentru filtrul selectat.</p>
+            <p>Nu există profiluri pentru filtrul selectat.</p>
           ) : (
-            filtered.map(({ id, announcementTitle, description, thumbnail, type }) => {
-              const placeholder = `https://placehold.co/400x400?text=${type === "artist" ? "Artist" : "Locație"}`;
-              const imageSrc = thumbnail || placeholder;
+            filtered.map(({ id, name, type, photoURL }) => {
+              const placeholder = `https://placehold.co/120x120?text=${type}`;
+              const imageSrc = photoURL || placeholder;
 
               return (
                 <Link
                   key={id}
-                  to={`/announcement/${id}`}
-                  className="bg-white text-black rounded-xl overflow-hidden shadow-lg hover:shadow-pink-300 hover:scale-[1.02] transition-transform duration-200"
+                  to={`/user/${id}`}
+                  className="flex items-center gap-6 bg-white text-black p-4 rounded-xl shadow hover:shadow-pink-300 hover:scale-[1.01] transition-transform duration-200"
                 >
                   <img
                     src={imageSrc}
-                    alt={announcementTitle}
-                    className="w-full aspect-[4/3] object-cover"
+                    alt={name}
+                    className="w-24 h-24 object-cover rounded-xl border"
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = placeholder;
                     }}
                   />
-                  <div className="p-4">
-                    <span className="text-sm uppercase font-bold text-pink-500">{type}</span>
-                    <h3 className="text-xl font-semibold mt-2">{announcementTitle}</h3>
-                    <p className="mt-1 text-gray-700">{description?.substring(0, 120)}...</p>
+                  <div className="flex flex-col justify-center">
+                    <h3 className="text-lg font-semibold">{name}</h3>
+                    <span className="text-sm text-pink-500 uppercase">{type}</span>
                   </div>
                 </Link>
               );
