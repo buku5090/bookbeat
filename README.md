@@ -1,78 +1,77 @@
 ## 📣 BookBeat Platform – README
 
 ### 🔍 Descriere
-Aplicație web care conectează artiști (DJ, trupe, etc.) cu locații (cluburi, puburi, cafenele) printr-un sistem de anunțuri și căutare. Include autentificare, formular avansat, sistem de rating și funcții moderne de UX/UI pentru căutare și publicare.
+Aplicație web care conectează artiști (DJ, trupe, etc.) cu locații (cluburi, puburi, cafenele) printr-un sistem de anunțuri și profiluri publice. Include autentificare, sistem de rating, upload poze, genuri muzicale și multe funcționalități moderne.
 
 ---
 
-## 🔄 Update 2025-07-25 – Full Feature Changelog
+## 🔄 Update 2025-08-05 – Profil user & Avatar Crop
 
-### 🎛️ Formular creare anunț
+### 👤 Pagina de profil (artist / locație)
 
-- ✅ Autentificare verificată: redirect automat dacă userul nu e logat.
-- 🎭 Selectare tip anunț: ARTIST sau LOCAȚIE, cu UI animat.
-- 🧠 Validare dinamică pe câmpuri:
-  - `announcementTitle`, `realName`, `stageName`, `locationName`: max. **35 caractere**
-  - `address`: max. **50 caractere**
-  - `description`: max. **500 caractere**, cu **contor live** (ex: `123/500`)
-  - `capacity` și `budget`: doar **cifre** (regex)
-- 🧠 Validare globală la `handleChange` + frontend `maxLength`
-- 📷 Limitare încărcare poze: max. **6 imagini** (cu preview)
-- ☁️ Upload imagini pe Firebase Storage
+- 🧠 Detectare automată dacă **profilul este complet**:
+  - ✅ Notificare verde dacă toate câmpurile sunt completate
+  - ⚠️ Notificare galbenă altfel (cu progres %)
+- ✏️ Editare câmpuri:
+  - Nume de scenă / locație
+  - Nume real (italic, gri)
+  - Bio
+  - Tarif (cu opțiune „Gratis”)
+  - Unde a pus muzică, lucrări, etc.
+- 🔒 Confirmare modificare prin **modal modern**
 
----
+### 🖼️ Upload și crop avatar
 
-### 🎧 Genuri muzicale & stiluri
-
-- 🎵 **Selectare multiplă de genuri muzicale** (max. 5), afișate ca **bule interactive**.
-- 🪄 Autocomplete inteligent pentru genuri – din listă predefinită `genres.js`.
-- 🧼 Poți șterge bulele prin click ✕.
-- 🎯 Aceeași funcționalitate pentru câmpul „stiluri dorite” la locații (cu listă separată `styles.js` dacă dorești).
-- ✅ Validare ca toate genurile/stilurile selectate să fie valide (inclusiv la `handleSubmit`).
+- ✅ Inel de progres SVG colorat dinamic
+- ✅ Preview imagine
+- ✅ Crop cu zoom și mutare (1:1)
+- ☁️ Upload imagine finală direct în Firebase
 
 ---
 
-### 🔍 Search și filtrare
+## 🔄 Update 2025-07-25 – Formular creare anunț
 
-- 🆕 Suport pentru `@` în căutare → filtrează doar **useri**
-- 🧠 Autocomplete live pentru titluri de anunțuri și utilizatori
-- 🎨 UI responsive pentru listare rezultate
+### 🎛️ Formulare avansate
 
----
-
-### 📦 Organizare & scalabilitate
-
-- 📁 Mutare lista de genuri într-un fișier extern: `src/data/genres.js`
-- ✅ Importabil în orice componentă
-- 🔧 Structură ușor de extins și reutilizat pentru stiluri
+- Validare dinamică pentru:
+  - Titluri (max. 35 caractere)
+  - Adrese (max. 50)
+  - Descrieri (max. 500)
+  - Cifre only pentru capacitate/buget
+- Upload imagini cu preview (max. 6)
 
 ---
 
-## ⚙️ Tehnologii principale
+## 🎧 Genuri muzicale
+
+- Selectare genuri (max. 5)
+- Autocomplete din `genres.js`
+- UI tip „bule” interactive ✕
+- Validare globală
+
+---
+
+## 🔍 Căutare
+
+- Căutare live cu autocomplete
+- Suport pentru `@user`
+- Responsive + performant
+
+---
+
+## ⚙️ Tehnologii
 
 - React 18
 - Firebase (Auth, Firestore, Storage)
-- React Router
 - TailwindCSS
+- react-easy-crop
 
-## 🚀 Setup local
+---
+
+## 🧪 Setup local
 
 ```bash
 git clone https://github.com/username/bookbeat.git
 cd bookbeat
 npm install
 npm run dev
-```
-
-## ✅ Funcționalități cheie (până acum)
-
-- Autentificare cu Google și Email/Parolă
-- Creare anunțuri pentru artiști și locații
-- Upload imagini + preview + validare
-- Sistem de taguri pentru genuri și stiluri muzicale
-- Pagini publice pentru utilizatori și anunțuri
-- Search inteligent cu autocomplete
-
----
-
-ℹ️ Dacă vrei să contribui sau să testezi, contactează dev-ul principal sau deschide un issue 🙌
