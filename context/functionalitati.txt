@@ -1,8 +1,8 @@
 artist:
-1. nume de scena
-2. nume real
-3. my work
-4. unde a pus el muzica
+* 1. nume de scena
+* 2. nume real
+** 3. my work
+** 4. unde a pus el muzica
 5. recenzii + rating doar de la locatii
 6. genuri muzicale
 7. pret / pe ora / pe set
@@ -10,6 +10,8 @@ artist:
 9. link instagram
 10. poza de profil
 11. disponibilatte
+12. a lucrat cu
+13. evenimente urmatoare:
 
 
 locatie:
@@ -25,3 +27,5 @@ locatie:
 10. genuri acceptate
 11. poze cu scena
 12. program
+13. a lucrat cu
+14. evenimente urmatoare

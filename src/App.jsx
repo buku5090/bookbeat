@@ -15,7 +15,6 @@ import NotFoundPage from "../pages/NotFoundPage";
 import LoadingPage from "../pages/LoadingPage";
 import AdminPage from "../pages/AdminPage";
 import Footer from "../components/Footer";
-import CompleteProfileWizard from "../pages/CompleteProfileWizard";
 
 function App() {
   const { loading } = useAuth();
@@ -27,7 +26,6 @@ function App() {
       <MainMenu />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/complete-profile" element={<CompleteProfileWizard />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/discover" element={<DiscoverPage />} />
         <Route path="/events" element={<EventsPage />} />
