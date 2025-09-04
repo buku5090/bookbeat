@@ -11,6 +11,7 @@ export default function ProfileAvatarWithProgress({
   strokeWidth = 8,
   avatarPadding = 6,
   handleAvatarChange,
+  canEdit = false,
 }) {
   const fileInputRef = useRef();
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -19,22 +20,30 @@ export default function ProfileAvatarWithProgress({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSelectedImage(reader.result); // base64 img preview
-      setCropModalOpen(true);
-    };
-    reader.readAsDataURL(file);
+
+    const isGif = file.type === "image/gif";
+    if (isGif) {
+      const filename = `avatars/${Date.now()}.gif`;
+      const imageRef = ref(storage, filename);
+      uploadBytes(imageRef, file).then(async () => {
+        const downloadURL = await getDownloadURL(imageRef);
+        handleAvatarChange(downloadURL);
+      });
+    } else {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result);
+        setCropModalOpen(true);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleCropComplete = async (croppedBlob) => {
-    // Upload to Firebase Storage
     const filename = `avatars/${Date.now()}.jpg`;
     const imageRef = ref(storage, filename);
     await uploadBytes(imageRef, croppedBlob);
     const downloadURL = await getDownloadURL(imageRef);
-
-    // Return result to parent
     handleAvatarChange(downloadURL);
     setCropModalOpen(false);
   };
@@ -50,34 +59,37 @@ export default function ProfileAvatarWithProgress({
   return (
     <>
       <div className="relative mb-4" style={{ width: size, height: size }}>
-        <svg
-          width={size}
-          height={size}
-          className="absolute inset-0 z-0"
-          style={{ transform: "rotate(-90deg)" }}
-        >
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="transparent"
-            stroke="#eee"
-            strokeWidth={strokeWidth}
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="transparent"
-            stroke={strokeColor}
-            strokeWidth={strokeWidth}
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-            style={{ transition: "stroke 200ms, stroke-dashoffset 200ms" }}
-          />
-        </svg>
+        {canEdit && (
+          <svg
+            width={size}
+            height={size}
+            className="absolute inset-0 z-0"
+            style={{ transform: "rotate(-90deg)" }}
+          >
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="transparent"
+              stroke="#eee"
+              strokeWidth={strokeWidth}
+            />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="transparent"
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeDasharray={circumference}
+              strokeDashoffset={dashOffset}
+              strokeLinecap="round"
+              style={{ transition: "stroke 200ms, stroke-dashoffset 200ms" }}
+            />
+          </svg>
+        )}
 
+        {/* Imaginea avatar */}
         <div
           className="absolute rounded-full bg-white z-10"
           style={{
@@ -97,20 +109,25 @@ export default function ProfileAvatarWithProgress({
           />
         </div>
 
-        <button
-          className="w-10 h-10 !rounded-full !bg-white !text-blue-600 shadow !absolute bottom-0 right-0 flex items-center justify-center border border-gray-300 z-20"
-          onClick={() => fileInputRef.current.click()}
-        >
-          <Pencil size={14} />
-        </button>
+        {/* Buton editare */}
+        {canEdit && (
+          <>
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="w-10 h-10 absolute bottom-0 right-0 z-10 !bg-white !rounded-full border border-gray-300 grid place-items-center !p-0"
+            >
+              <Pencil size={14} className="text-gray-400 align-center" />
+            </button>
 
-        <input
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-        />
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </>
+        )}
       </div>
 
       {cropModalOpen && selectedImage && (

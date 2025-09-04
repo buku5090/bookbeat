@@ -1,5 +1,5 @@
 // components/Dialog.jsx
-
+// PENTRU AVATAR! NU ARE ALT SCOP
 export default function Dialog({ open, onClose, onConfirm }) {
   if (!open) return null;
 

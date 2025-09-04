@@ -1,3 +1,4 @@
+// PENTRU AVATAR! NU ARE ALT SCOP!
 export default function getCroppedImg(imageSrc, crop) {
   return new Promise((resolve, reject) => {
     const image = new Image();

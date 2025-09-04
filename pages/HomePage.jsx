@@ -10,7 +10,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="pt-20"> {/* ajustează valoarea după înălțimea navbarului */}
+    <div> {/* ajustează valoarea după înălțimea navbarului */}
         <ProfilesPage />
     </div>
   );

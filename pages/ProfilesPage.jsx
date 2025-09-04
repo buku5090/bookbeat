@@ -25,6 +25,7 @@ export default function ProfilesPage() {
     fetchUsers();
   }, []);
 
+
   const filtered = profiles
     .filter((item) => (filter === "all" ? true : item.type === filter))
     .sort((a, b) => {

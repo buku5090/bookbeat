@@ -1,50 +1,32 @@
+/* eslint-disable react-refresh/only-export-components */
+// context/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../src/firebase";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { auth } from "../src/firebase"; // <- așa ai spus că imporți
 
-const AuthContext = createContext();
+const AuthContext = createContext({ user: null, loading: true });
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setCurrentUser(firebaseUser);
-
-        const userRef = doc(db, "users", firebaseUser.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || null,
-            name: firebaseUser.displayName || "",
-            photoURL: firebaseUser.photoURL || "",
-            type: "user", // implicit generic
-            createdAt: serverTimestamp(),
-          });
-        }
-      } else {
-        setCurrentUser(null);
-      }
-
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
       setLoading(false);
     });
-
-    return () => unsubscribe();
+    return unsub;
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
-  return useContext(AuthContext);
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
+  return ctx;
 }

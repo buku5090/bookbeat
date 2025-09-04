@@ -1,12 +1,13 @@
-/** @type {import('tailwindcss').Config} */
+// tailwind.config.(js|cjs)
 export default {
   content: [
     "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
+    "./components/**/*.{js,jsx,ts,tsx}",   // <— adaugă asta
+    "./pages/**/*.{js,jsx,ts,tsx}",        // dacă ai pages în root
   ],
-  theme: {
-    extend: {},
-  },
+  important: true,
+  theme: { extend: {} },
   plugins: [],
-  darkMode: 'class', // 🔧 ADĂUGĂ LINIA ASTA
+  darkMode: "class",
 }

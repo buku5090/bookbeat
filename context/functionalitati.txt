@@ -29,3 +29,10 @@ locatie:
 12. program
 13. a lucrat cu
 14. evenimente urmatoare
+
+<button
+    className="w-10 h-10 rounded-full bg-white text-blue-600 shadow absolute bottom-0 right-0 flex items-center justify-center border border-gray-300 z-20 hover:bg-gray-100"
+    onClick={() => fileInputRef.current.click()}
+    >
+    <Pencil size={18} strokeWidth={2} />
+</button>

@@ -1,4 +1,5 @@
 // components/AvatarCropModal.jsx
+// PENTRU AVATAR! NU ARE ALT SCOP!
 import { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./cropImageHelper";
@@ -18,16 +19,12 @@ export default function AvatarCropModal({ image, onCancel, onCropComplete }) {
   };
 
   const handleZoom = (direction) => {
-    setZoom((z) => {
-      const newZoom = z + direction * 0.2;
-      return Math.min(3, Math.max(1, newZoom));
-    });
+    setZoom((z) => Math.min(3, Math.max(1, z + direction * 0.2)));
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
       <div className="bg-white rounded-xl overflow-hidden shadow-xl max-w-lg w-full">
-        {/* Cropper */}
         <div className="relative w-full h-[400px] bg-black">
           <Cropper
             image={image}
@@ -40,7 +37,6 @@ export default function AvatarCropModal({ image, onCancel, onCropComplete }) {
           />
         </div>
 
-        {/* Zoom Buttons */}
         <div className="flex items-center justify-center gap-4 py-4">
           <button
             onClick={() => handleZoom(-1)}
@@ -57,7 +53,6 @@ export default function AvatarCropModal({ image, onCancel, onCropComplete }) {
           </button>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-end gap-3 px-6 pb-6">
           <button
             onClick={onCancel}
@@ -76,3 +71,4 @@ export default function AvatarCropModal({ image, onCancel, onCropComplete }) {
     </div>
   );
 }
+

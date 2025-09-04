@@ -1,3 +1,5 @@
+// PENTRU EDITUL TEXTULUI DIN PROFIL
+
 import { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
 
@@ -36,15 +38,15 @@ export function EditableField({
   };
 
   return (
-    <div className="mb-4 w-full">
+    <div className="w-full">
       {label && (
-        <label className="text-sm font-semibold text-gray-700 block mb-1">
+        <label className="text-xl font-bold mb-2 !uppercase">
           {label}
         </label>
       )}
 
       {isEditing ? (
-        <div className="space-y-2">
+        <div className="space-y-2 mb-1 mt-1">
           {isPrice && (
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -65,7 +67,7 @@ export function EditableField({
             />
             <button
               onClick={handleSave}
-              className="bg-green-500 text-white px-3 py-1 rounded text-sm"
+              className="!bg-green-500 text-white px-3 py-1 rounded text-sm"
             >
               ✔
             </button>
@@ -75,7 +77,7 @@ export function EditableField({
                 setIsFree(value === "Gratis");
                 setIsEditing(false);
               }}
-              className="bg-gray-300 text-black px-3 py-1 rounded text-sm"
+              className="!bg-gray-300 text-black px-3 py-1 rounded text-sm"
             >
               ✖
             </button>
@@ -89,7 +91,7 @@ export function EditableField({
           {canEdit && (
             <button
               onClick={() => setIsEditing(true)}
-              className="text-gray-400 hover:text-gray-700 transition"
+              className="!bg-white !px-3 !py-1 !text-gray-400 hover:text-gray-700 transition"
               aria-label="Edit"
             >
               <Pencil size={14} />

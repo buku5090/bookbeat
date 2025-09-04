@@ -15,6 +15,7 @@ import NotFoundPage from "../pages/NotFoundPage";
 import LoadingPage from "../pages/LoadingPage";
 import AdminPage from "../pages/AdminPage";
 import Footer from "../components/Footer";
+import Test from "../pages/Test";
 
 function App() {
   const { loading } = useAuth();
@@ -22,7 +23,8 @@ function App() {
   if (loading) return <LoadingPage />; // ⏳ loading global
 
   return (
-    <Router>
+    <>
+      <Router>
       <MainMenu />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -41,8 +43,10 @@ function App() {
           }
         />
 
+        <Route path="/user/:id" element={<ProfilePage />} />
+
         {/* Test loading page */}
-        <Route path="/test" element={<LoadingPage />} />
+        <Route path="/test" element={<Test />} />
 
         {/* Pagina 404 */}
         <Route path="*" element={<NotFoundPage />} />
@@ -53,6 +57,8 @@ function App() {
       <Footer />  
 
     </Router>
+    </>
+    
   );
 }
 

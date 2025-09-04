@@ -46,7 +46,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 pt-24">
+    <div className="min-h-screen bg-black text-white md:p-6 md:pt-10 md:pt-24">
       <h1 className="text-3xl font-bold mb-6">Panou Admin</h1>
 
       {announcements.length === 0 ? (
