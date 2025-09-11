@@ -177,29 +177,25 @@ export default function MediaGallery({
               decoding="async"
             />
 
-            {canEdit && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => deleteOne(img)}
-                className="absolute top-2 right-2 bg-white/90 transition"
-                title="Șterge"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
+            {canEdit && ( 
+                <Button 
+                    onClick={() => deleteOne(img)} 
+                    className="!bg-white hover:!bg-gray-200 !border-gray-200 
+                        absolute top-2 right-2 transition !px-3" 
+                    title="Șterge" > 
+                        <Trash2 className="w-4 h-4 text-black" /> 
+                </Button> ) }
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => openLightbox(idx)}
-              className="absolute bottom-2 right-2 bg-white/90
-                         opacity-100 md:opacity-0 md:group-hover:opacity-100
-                         transition"
-              title="Mărește"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </Button>
+                <Button
+                onClick={() => openLightbox(idx)}
+                className="absolute bottom-2 right-2 !bg-white
+                            hover:!bg-gray-200 !border-gray-200
+                            opacity-100 md:opacity-0 md:group-hover:opacity-100
+                            transition !px-3"
+                title="Mărește"
+                >
+                <Maximize2 className="w-4 h-4 text-black" />
+                </Button>
           </div>
         ))}
 
@@ -210,8 +206,8 @@ export default function MediaGallery({
             onClick={onAddClick}
             disabled={addDisabled || uploading}
             className={[
-              "aspect-square rounded-lg border-2 border-dashed flex items-center justify-center",
-              "text-3xl text-gray-400 hover:text-gray-600 hover:border-gray-400",
+              "!bg-gray-300 aspect-square rounded-lg border-2 border-dashed flex items-center justify-center",
+              "text-3xl text-gray-400 hover:text-white hover:!border-white",
               addDisabled || uploading ? "opacity-50 cursor-not-allowed" : "",
             ].join(" ")}
             title={atLimit ? `Ai atins limita de ${max} imagini` : "Adaugă imagini"}
@@ -263,19 +259,19 @@ export default function MediaGallery({
                 {renderList.length > 1 && (
                   <>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="secondary"
+                      size="md"
                       onClick={prev}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80"
+                      className="absolute left-2 top-1/2 -translate-y-1/2"
                       aria-label="Anterior"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="secondary"
+                      size="md"
                       onClick={next}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80"
+                      className="absolute right-2 top-1/2 -translate-y-1/2"
                       aria-label="Următor"
                     >
                       <ChevronRight className="w-5 h-5" />

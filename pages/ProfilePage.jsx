@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable no-undef */
 // pages/ProfilePage.jsx
 import { useEffect, useState, useRef, useCallback, useMemo, useLayoutEffect } from "react";
 import { auth, db, storage } from "../src/firebase";
@@ -14,6 +16,7 @@ import { EditableField } from "../components/EditableField";
 import EditableGenres from "../components/EditableGenres";
 import SocialSection from "../components/SocialSection";
 import MediaGalleryGrid from "../components/MediaGalleryGrid";
+import AvailabilityCalendar from "../components/AvailabilityCalendar"; 
 
 
 import {
@@ -31,6 +34,7 @@ import EditableBio from "../components/EditableBio"
 import Button from "../components/Button"; // <— asigură-te că acesta e path-ul corect
 import CollaborationsCarousel from "../components/CollaborationsCarousel";
 import SectionTitle from "../components/SectionTitle"
+
 
 /* ============================== REVIEWS HOOK ============================== */
 function useReviews(profileUid) {
@@ -456,11 +460,17 @@ export default function ProfilePage() {
                 inputClassName={rateClass}
               />
               {isArtist && (
-                <div>
-                  <p className="font-semibold">Disponibilitate</p>
-                  <p className="text-sm text-gray-500 italic">Calendar (în lucru)</p>
+                <div className="mt-6">
+                  <SectionTitle>Disponibilitate</SectionTitle>
+                  <AvailabilityCalendar
+                    userId={profileUid}                // UID-ul profilului afișat
+                    currentUser={authUser}             // userul logat (din AuthContext)
+                    type="artist"                         // sau "location" pe profilurile de locații
+                    editable={authUser?.uid === profileUid}
+                  />
                 </div>
               )}
+
             </div>
 
             {isOwnProfile && (
