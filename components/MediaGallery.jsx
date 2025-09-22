@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Trash2, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 
 import Button from "./Button";
@@ -46,6 +46,25 @@ function normalizeItems(arr = []) {
 const sig = (list = []) =>
   normalizeItems(list).map(it => `${it.id}|${it.url}`).join(";");
 
+// obține dimensiunile imaginii fără s-o urci
+async function getImageDimensions(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      URL.revokeObjectURL(url);
+      resolve({ width: w, height: h });
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+    img.src = url;
+  });
+}
+
 /* ---------------- componenta ---------------- */
 
 export default function MediaGallery({
@@ -56,8 +75,17 @@ export default function MediaGallery({
   addButtonMode = "hide",         // "hide" | "disable"
   onChange,                       // primești lista curată
   onExceedMax,
+
+  // <<< NOI: parametri de validare >>>
+  maxFileSizeMB = 8,
+  minWidth = 400,
+  minHeight = 400,
+  maxWidth = 6000,
+  maxHeight = 6000,
+  onValidationError,              // opțional: callback(msg, details)
 }) {
   const [list, setList] = useState(() => normalizeItems(items));
+  const [uploadError, setUploadError] = useState("");
 
   // re-sync când items din props se schimbă
   useEffect(() => setList(normalizeItems(items)), [items]);
@@ -101,10 +129,27 @@ export default function MediaGallery({
     const imageFiles = files.filter(f => f.type.startsWith("image/")).slice(0, remaining);
     if (imageFiles.length === 0) { e.target.value = ""; return; }
 
+    setUploadError("");
     setUploading(true);
     const results = [];
+    const skipped = { tooLargeBytes: 0, tooSmallRes: 0, tooBigRes: 0, other: 0 };
+
     try {
       for (const f of imageFiles) {
+        // 1) mărime fișier
+        const maxBytes = maxFileSizeMB * 1024 * 1024;
+        if (f.size > maxBytes) { skipped.tooLargeBytes++; continue; }
+
+        // 2) dimensiuni imagine
+        try {
+          const { width, height } = await getImageDimensions(f);
+          if (width < minWidth || height < minHeight) { skipped.tooSmallRes++; continue; }
+          if (width > maxWidth || height > maxHeight) { skipped.tooBigRes++; continue; }
+        } catch {
+          skipped.other++; continue;
+        }
+
+        // 3) upload
         const safeName = f.name.replace(/\s+/g, "-");
         const path = `users/${authUser.uid}/gallery/${Date.now()}-${safeName}`;
         const ref = storageRef(storage, path);
@@ -112,7 +157,20 @@ export default function MediaGallery({
         const url = await getDownloadURL(ref);
         results.push({ id: path, url });
       }
-      emit([...list, ...results]);
+
+      if (results.length) emit([...list, ...results]);
+
+      // feedback pentru fișierele respinse
+      if (skipped.tooLargeBytes || skipped.tooSmallRes || skipped.tooBigRes || skipped.other) {
+        const parts = [];
+        if (skipped.tooLargeBytes) parts.push(`${skipped.tooLargeBytes} fișier(e) > ${maxFileSizeMB}MB`);
+        if (skipped.tooSmallRes)  parts.push(`${skipped.tooSmallRes} sub ${minWidth}×${minHeight}px`);
+        if (skipped.tooBigRes)    parts.push(`${skipped.tooBigRes} peste ${maxWidth}×${maxHeight}px`);
+        if (skipped.other)        parts.push(`${skipped.other} invalide`);
+        const msg = `Unele fișiere au fost ignorate: ${parts.join("; ")}.`;
+        setUploadError(msg);
+        onValidationError?.(msg, { ...skipped, maxFileSizeMB, minWidth, minHeight, maxWidth, maxHeight });
+      }
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -138,8 +196,19 @@ export default function MediaGallery({
   };
 
   const openLightbox = (idx) => { setLightboxIndex(idx); setLbLoading(true); setLightboxOpen(true); };
-  const next = () => { setLbLoading(true); setLightboxIndex(i => (i + 1) % list.length); };
-  const prev = () => { setLbLoading(true); setLightboxIndex(i => (i - 1 + list.length) % list.length); };
+
+  // navigare
+  const next = useCallback(() => {
+    if (!list.length) return;
+    setLbLoading(true);
+    setLightboxIndex(i => (i + 1) % list.length);
+  }, [list.length]);
+
+  const prev = useCallback(() => {
+    if (!list.length) return;
+    setLbLoading(true);
+    setLightboxIndex(i => (i - 1 + list.length) % list.length);
+  }, [list.length]);
 
   // prefetch curent + vecini
   useEffect(() => {
@@ -162,6 +231,25 @@ export default function MediaGallery({
     [list]
   );
 
+  // navigare cu taste (← →) + închidere cu Esc când lightboxul e deschis
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (e) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        if (renderList.length > 1) next();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        if (renderList.length > 1) prev();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setLightboxOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxOpen, renderList.length, next, prev]);
+
   return (
     <section className="relative">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
@@ -177,25 +265,24 @@ export default function MediaGallery({
               decoding="async"
             />
 
-            {canEdit && ( 
-                <Button 
-                    onClick={() => deleteOne(img)} 
-                    className="!bg-white hover:!bg-gray-200 !border-gray-200 
-                        absolute top-2 right-2 transition !px-3" 
-                    title="Șterge" > 
-                        <Trash2 className="w-4 h-4 text-black" /> 
-                </Button> ) }
+            {canEdit && (
+              <Button
+                onClick={() => deleteOne(img)}
+                className="!bg-white hover:!bg-gray-200 !border-gray-200 absolute top-2 right-2 transition !px-3"
+                title="Șterge"
+              >
+                <Trash2 className="w-4 h-4 text-black" />
+              </Button>
+            )}
 
-                <Button
-                onClick={() => openLightbox(idx)}
-                className="absolute bottom-2 right-2 !bg-white
-                            hover:!bg-gray-200 !border-gray-200
-                            opacity-100 md:opacity-0 md:group-hover:opacity-100
-                            transition !px-3"
-                title="Mărește"
-                >
-                <Maximize2 className="w-4 h-4 text-black" />
-                </Button>
+            <Button
+              onClick={() => openLightbox(idx)}
+              className="absolute bottom-2 right-2 !bg-white hover:!bg-gray-200 !border-gray-200
+                         opacity-100 md:opacity-0 md:group-hover:opacity-100 transition !px-3"
+              title="Mărește"
+            >
+              <Maximize2 className="w-4 h-4 text-black" />
+            </Button>
           </div>
         ))}
 
@@ -233,6 +320,9 @@ export default function MediaGallery({
               ? `Poți adăuga până la ${max} imagini. ${Math.max(0, max - renderList.length)} loc${Math.max(0, max - renderList.length) === 1 ? "" : "uri"} rămase.`
               : `Poți adăuga o singură imagine.`}
           </p>
+          {uploadError && (
+            <p className="text-xs text-red-600 mt-1">{uploadError}</p>
+          )}
         </>
       )}
 

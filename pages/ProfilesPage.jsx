@@ -14,8 +14,8 @@ export default function ProfilesPage() {
       try {
         const querySnapshot = await getDocs(collection(db, "users"));
         const data = querySnapshot.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((user) => user.type === "artist" || user.type === "location");
+          .map((doc) => ({ id: doc.id, ...doc.data() }));
+          // .filter((user) => user.type === "artist" || user.type === "location");
         setProfiles(data);
         setLoading(false);
       } catch (err) {

@@ -1,239 +1,43 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable no-undef */
 // pages/ProfilePage.jsx
-import { useEffect, useState, useRef, useCallback, useMemo, useLayoutEffect } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { auth, db, storage } from "../src/firebase";
-import {
-  doc, getDoc, updateDoc, collection, addDoc,
-  onSnapshot, query, orderBy, serverTimestamp,
-} from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate, useParams } from "react-router-dom";
 
 import ProfileAvatarWithProgress from "../components/ProfilePhotoWithAvatar";
 import { EditableField } from "../components/EditableField";
 import EditableGenres from "../components/EditableGenres";
 import SocialSection from "../components/SocialSection";
-import MediaGalleryGrid from "../components/MediaGalleryGrid";
-import AvailabilityCalendar from "../components/AvailabilityCalendar"; 
-
+import MediaGallery from "../components/MediaGallery";
+import AvailabilityCalendar from "../components/AvailabilityCalendar";
+import DemosUploader from "../components/DemosUploader";
 
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
 } from "../src/components/ui/dialog";
 
-import {
-  Instagram, Youtube, Music2, Facebook, Link as LinkIcon,
-  Star, Trash2, Maximize2, ChevronLeft, ChevronRight, Pencil, LogOut,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import LoadingPage from "./LoadingPage";
 import EditableSpecializations from "../components/EditableSpecializations";
-import EditableBio from "../components/EditableBio"
-import Button from "../components/Button"; // <— asigură-te că acesta e path-ul corect
-import CollaborationsCarousel from "../components/CollaborationsCarousel";
-import SectionTitle from "../components/SectionTitle"
+import EditableBio from "../components/EditableBio";
+import Button from "../components/Button";
+import SectionTitle from "../components/SectionTitle";
 
+// Colaborări + summary din colaborări (se arată doar după alegerea tipului)
+import CollaborationsWithReviews from "../components/CollaborationsWithReviews";
+import ReviewsSummaryFromCollabs from "../components/ReviewsSummaryFromCollabs";
 
-/* ============================== REVIEWS HOOK ============================== */
-function useReviews(profileUid) {
-  const [reviews, setReviews] = useState([]);
-  useEffect(() => {
-    if (!profileUid) return;
-    const q = query(collection(db, "users", profileUid, "reviews"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => setReviews(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
-    return () => unsub();
-  }, [profileUid]);
-
-  const avg = useMemo(() => {
-    if (!reviews.length) return 0;
-    return Math.round(
-      (reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length) * 10
-    ) / 10;
-  }, [reviews]);
-
-  return { reviews, avg };
-}
-
-/* ============================== DEMOS (AUDIO) ============================== */
-function DemosUploader({ canEdit, authUser, current = [], onAdded, onDeleted }) {
-  const [uploading, setUploading] = useState(false);
-  const [deleting, setDeleting] = useState(null);
-  const inputRef = useRef(null);
-
-  const list = Array.isArray(current) ? current : [];
-  const remaining = Math.max(0, 3 - list.length);
-  const openPicker = () => canEdit && remaining > 0 && inputRef.current?.click();
-
-  const handleFiles = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!authUser || files.length === 0) return;
-    const take = files.slice(0, remaining);
-    setUploading(true);
-    const results = [];
-    for (const f of take) {
-      if (!f.type.startsWith("audio/")) continue;
-      const safeName = f.name.replace(/\s+/g, "-");
-      const path = `users/${authUser.uid}/demos/${Date.now()}-${safeName}`;
-      const ref = storageRef(storage, path);
-      await uploadBytes(ref, f);
-      const url = await getDownloadURL(ref);
-      results.push({ id: path, url, title: f.name });
-    }
-    setUploading(false);
-    onAdded?.(results);
-    e.target.value = "";
-  };
-
-  const deleteOne = async (item) => {
-    try {
-      setDeleting(item.id || item.url);
-      if (item.id) await deleteObject(storageRef(storage, item.id));
-      onDeleted?.(item.id || item.url);
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  return (
-    <div>
-      <div className="space-y-2">
-        {list.map((d) => (
-          <div key={d.id || d.url} className="bg-gray-50 rounded-lg p-3 border flex items-start gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium mb-1 truncate">{d.title || d.url}</p>
-              <audio controls className="w-full">
-                <source src={d.url} />
-              </audio>
-            </div>
-            {canEdit && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => deleteOne(d)}
-                disabled={deleting === (d.id || d.url)}
-                title="Șterge"
-              >
-                <Trash2 className="w-5 h-5 text-gray-700" />
-              </Button>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {canEdit && (
-        <div className="mt-3">
-          <input ref={inputRef} type="file" accept="audio/*" multiple hidden onChange={handleFiles} />
-          <Button onClick={openPicker} disabled={uploading || remaining === 0} variant="primary">
-            {uploading ? "Se încarcă…" : remaining === 0 ? "Limită atinsă (3)" : "+ Adaugă demo-uri"}
-          </Button>
-          <p className="text-xs text-gray-500 mt-1">Max 3 fișiere audio. Se salvează automat după upload.</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ============================== REVIEWS ============================== */
-function ReviewsSummary({ profileUid }) {
-  const { reviews, avg } = useReviews(profileUid);
-  return (
-    <div className="mt-4">
-      <div className="flex items-center gap-2">
-        <div className="flex">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Star key={i} className={`w-5 h-5 ${i <= Math.round(avg) ? "fill-yellow-400 stroke-yellow-400" : "stroke-gray-400"}`} />
-          ))}
-        </div>
-        <span className="text-sm text-gray-600">{avg ? `${avg} / 5` : "Fără rating încă"} ({reviews.length})</span>
-      </div>
-    </div>
-  );
-}
-
-function ReviewsSection({ profileUid, authUser }) {
-  const navigate = useNavigate();
-  const { reviews, avg } = useReviews(profileUid);
-  const [myRating, setMyRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [sending, setSending] = useState(false);
-
-  const submit = async () => {
-    if (!authUser) return navigate("/login");
-    if (!myRating) return;
-    setSending(true);
-    await addDoc(collection(db, "users", profileUid, "reviews"), {
-      uid: authUser.uid,
-      rating: myRating,
-      comment: comment?.slice(0, 400) || "",
-      createdAt: serverTimestamp(),
-    });
-    setMyRating(0);
-    setComment("");
-    setSending(false);
-  };
-
-  return (
-    <div className="w-full">
-      <div className="flex items-center gap-2">
-        <div className="flex">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Star key={i} className={`w-5 h-5 ${i <= Math.round(avg) ? "fill-yellow-400 stroke-yellow-400" : "stroke-gray-400"}`} />
-          ))}
-        </div>
-        <span className="text-sm text-gray-600">{avg ? `${avg} / 5` : "Fără rating încă"} ({reviews.length})</span>
-      </div>
-
-      <div className="mt-3">
-        {authUser ? (
-          <div className="space-y-2">
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <button key={i} onClick={() => setMyRating(i)} aria-label={`${i} stele`}>
-                  <Star className={`w-7 h-7 ${i <= myRating ? "fill-yellow-400 stroke-yellow-400" : "stroke-gray-400"}`} />
-                </button>
-              ))}
-            </div>
-            <textarea
-              className="w-full border rounded p-2 resize-none"
-              rows={2}
-              maxLength={400}
-              placeholder="Lasă un comentariu (opțional)"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-            />
-            <Button variant="primary" onClick={submit} disabled={sending || !myRating}>
-              Trimite review
-            </Button>
-          </div>
-        ) : (
-          <Button variant="outline" onClick={() => navigate("/login")}>
-            Loghează-te pentru a lăsa un review
-          </Button>
-        )}
-      </div>
-
-      {reviews.length > 0 && (
-        <div className="mt-3 space-y-2">
-          {reviews.map((r) => (
-            <div key={r.id} className="border rounded p-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Star key={i} className={`w-4 h-4 ${i <= (r.rating || 0) ? "fill-yellow-400 stroke-yellow-400" : "stroke-gray-300"}`} />
-                  ))}
-                </div>
-                <span>{r.rating}/5</span>
-              </div>
-              {r.comment && <p className="text-sm mt-1 whitespace-pre-wrap break-words">{r.comment}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+// Switcher tip cont (fără selecție implicită)
+import AccountTypeSwitcher from "../components/AccountTypeSwitcher";
 
 /* ============================== PAGE ============================== */
 export default function ProfilePage() {
@@ -252,6 +56,10 @@ export default function ProfilePage() {
   const isOwnProfile = useMemo(() => !id || (authUser && authUser.uid === id), [id, authUser]);
   const profileUid = useMemo(() => id || authUser?.uid, [id, authUser]);
 
+  const isTypeChosen = !!userData?.type;
+  const isArtist = userData?.type === "artist";
+  const isLocation = userData?.type === "location";
+
   const normalizeRate = useCallback((v) => {
     if (v == null) return "";
     const s = String(v).trim().toLowerCase().replace(/\s+/g, " ");
@@ -262,6 +70,20 @@ export default function ProfilePage() {
     if (!Number.isNaN(num) && num > 0) return `${num} RON / set`;
     return s;
   }, []);
+
+  const handleGalleryChange = useCallback(
+    async (nextItems) => {
+      setUserData((u) => ({ ...u, gallery: nextItems }));
+      if (!profileUid) return;
+      try {
+        const userRef = doc(db, "users", profileUid);
+        await updateDoc(userRef, { gallery: nextItems });
+      } catch (e) {
+        console.error("Eroare la salvarea galeriei:", e);
+      }
+    },
+    [profileUid]
+  );
 
   useEffect(() => {
     let alive = true;
@@ -282,7 +104,10 @@ export default function ProfilePage() {
         if (alive) setLoading(false);
       }
     });
-    return () => { alive = false; unsub(); };
+    return () => {
+      alive = false;
+      unsub();
+    };
   }, [id, navigate]);
 
   const uploadAvatarAndGetUrl = useCallback(
@@ -301,21 +126,24 @@ export default function ProfilePage() {
     [authUser]
   );
 
-  const handleAvatarChange = useCallback(async (payload) => {
-    try {
-      setErrorMsg("");
-      let url = null;
-      if (typeof payload === "string" && payload.startsWith("http")) url = payload;
-      else if (payload?.target?.files?.[0]) url = await uploadAvatarAndGetUrl(payload.target.files[0]);
-      else if (payload instanceof File) url = await uploadAvatarAndGetUrl(payload);
-      else return;
-      setPendingUpdate({ field: "photoURL", value: url });
-      setModalOpen(true);
-    } catch (err) {
-      console.error(err);
-      setErrorMsg(err.message || "Eroare la uploadul avatarului.");
-    }
-  }, [uploadAvatarAndGetUrl]);
+  const handleAvatarChange = useCallback(
+    async (payload) => {
+      try {
+        setErrorMsg("");
+        let url = null;
+        if (typeof payload === "string" && payload.startsWith("http")) url = payload;
+        else if (payload?.target?.files?.[0]) url = await uploadAvatarAndGetUrl(payload.target.files[0]);
+        else if (payload instanceof File) url = await uploadAvatarAndGetUrl(payload);
+        else return;
+        setPendingUpdate({ field: "photoURL", value: url });
+        setModalOpen(true);
+      } catch (err) {
+        console.error(err);
+        setErrorMsg(err.message || "Eroare la uploadul avatarului.");
+      }
+    },
+    [uploadAvatarAndGetUrl]
+  );
 
   const openConfirmModal = useCallback(({ field, value }) => {
     setPendingUpdate({ field, value });
@@ -340,61 +168,67 @@ export default function ProfilePage() {
     }
   }, [authUser, pendingUpdate]);
 
-  const addDemos = useCallback(async (newItems) => {
-    if (!profileUid || !newItems?.length) return;
-    const ref = doc(db, "users", profileUid);
-    const prev = Array.isArray(userData?.demos) ? userData.demos : [];
-    const demos = [...prev, ...newItems].slice(0, 3);
-    await updateDoc(ref, { demos });
-    setUserData((p) => ({ ...p, demos }));
-  }, [profileUid, userData]);
+  const addDemos = useCallback(
+    async (newItems) => {
+      if (!profileUid || !newItems?.length) return;
+      const ref = doc(db, "users", profileUid);
+      const prev = Array.isArray(userData?.demos) ? userData.demos : [];
+      const demos = [...prev, ...newItems].slice(0, 3);
+      await updateDoc(ref, { demos });
+      setUserData((p) => ({ ...p, demos }));
+    },
+    [profileUid, userData]
+  );
 
-  const deleteDemo = useCallback(async (idOrUrl) => {
-    if (!profileUid) return;
-    const ref = doc(db, "users", profileUid);
-    const prev = Array.isArray(userData?.demos) ? userData.demos : [];
-    const demos = prev.filter((x) => (x.id || x.url) !== idOrUrl);
-    await updateDoc(ref, { demos });
-    setUserData((p) => ({ ...p, demos }));
-  }, [profileUid, userData]);
-
-  const addGallery = useCallback(async (newItems) => {
-    if (!profileUid || !newItems?.length) return;
-    const ref = doc(db, "users", profileUid);
-    const prev = Array.isArray(userData?.gallery) ? userData.gallery : [];
-    const gallery = [...prev, ...newItems];
-    await updateDoc(ref, { gallery });
-    setUserData((p) => ({ ...p, gallery }));
-  }, [profileUid, userData]);
-
-  const deleteMedia = useCallback(async (idOrUrl) => {
-    if (!profileUid) return;
-    const ref = doc(db, "users", profileUid);
-    const prev = Array.isArray(userData?.gallery) ? userData.gallery : [];
-    const gallery = prev.filter((x) => (x.id || x.url) !== idOrUrl);
-    await updateDoc(ref, { gallery });
-    setUserData((p) => ({ ...p, gallery }));
-  }, [profileUid, userData]);
+  const deleteDemo = useCallback(
+    async (idOrUrl) => {
+      if (!profileUid) return;
+      const ref = doc(db, "users", profileUid);
+      const prev = Array.isArray(userData?.demos) ? userData.demos : [];
+      const demos = prev.filter((x) => (x.id || x.url) !== idOrUrl);
+      await updateDoc(ref, { demos });
+      setUserData((p) => ({ ...p, demos }));
+    },
+    [profileUid, userData]
+  );
 
   const handleLogout = useCallback(async () => {
     await signOut(auth);
     navigate("/login");
   }, [navigate]);
 
+  // Username: dacă nu e ales tipul → editează `name`; dacă e Artist → `stageName`; dacă e Locație → `locationName`
+  const username = useMemo(() => {
+    if (isArtist) return userData?.stageName || userData?.name || "Utilizator";
+    if (isLocation) return userData?.locationName || userData?.name || "Utilizator";
+    return userData?.name || "Utilizator";
+  }, [isArtist, isLocation, userData]);
+
+  const handleUsernameSave = useCallback(
+    (val) => {
+      if (!isTypeChosen) return openConfirmModal({ field: "name", value: val });
+      if (isArtist) return openConfirmModal({ field: "stageName", value: val });
+      return openConfirmModal({ field: "locationName", value: val });
+    },
+    [isTypeChosen, isArtist, openConfirmModal]
+  );
+
+  // Progres: 0 dacă nu e ales tipul
   const progress = useMemo(() => {
     if (!userData) return 0;
-    const isArtist = userData?.type === "artist";
+    if (!isTypeChosen) return 0;
     const fields = isArtist
       ? ["stageName", "realName", "bio", "genres", "rate", "instagram", "photoURL", "demos"]
       : ["locationName", "address", "locationType", "capacity", "equipment", "acceptedGenres", "googleMaps", "schedule", "photoURL", "instagram"];
-    const filled = fields.filter((f) => Array.isArray(userData[f]) ? userData[f].length > 0 : !!userData[f]);
+    const filled = fields.filter((f) =>
+      Array.isArray(userData[f]) ? userData[f].length > 0 : !!userData[f]
+    );
     return Math.round((filled.length / fields.length) * 100);
-  }, [userData]);
+  }, [userData, isTypeChosen, isArtist]);
 
-  const isArtist = userData?.type === "artist";
-  const usernameRaw = userData?.stageName || userData?.locationName || userData?.name || "Utilizator";
-  const username = typeof usernameRaw === "string" ? usernameRaw.trim() : "Utilizator";
-  const imageSrc = userData?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=0D8ABC&color=fff`;
+  const imageSrc =
+    userData?.photoURL ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=0D8ABC&color=fff`;
 
   const normalizedRate = normalizeRate(userData?.rate);
   const isFree = normalizedRate === "gratis";
@@ -405,17 +239,44 @@ export default function ProfilePage() {
   if (!userData) {
     return (
       <div className="min-h-screen bg-black text-white md:p-6">
-        <div className="max-w-3xl mx-auto text-center"><p>Profilul nu a fost găsit.</p></div>
+        <div className="max-w-3xl mx-auto text-center">
+          <p>Profilul nu a fost găsit.</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-black text-white md:p-6">
+      {/* ===== Limităm viewer-ul din dialog să nu întindă poza pe tot ecranul ===== */}
+      <style>{`
+        .fixed.inset-0, [role="dialog"] { place-items: center; }
+        [role="dialog"] .aspect-square,
+        [role="dialog"] .aspect-video,
+        [role="dialog"] [style*="aspect-ratio"] { aspect-ratio: auto !important; }
+        [role="dialog"] img {
+          display: block;
+          width: auto !important;
+          height: auto !important;
+          max-width: 92vw !important;
+          max-height: 86vh !important;
+          object-fit: contain !important;
+          border-radius: 12px;
+        }
+      `}</style>
+
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-8 text-black">
-        {typeof progress === "number" && isOwnProfile && (
-          <div className={`mb-4 text-sm font-medium rounded px-4 py-2 ${progress < 100 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}`}>
-            {progress < 100 ? `⚠️ Completează toate câmpurile. Progres: ${progress}%` : "✅ Profil complet!"}
+        {isOwnProfile && (
+          <div
+            className={`mb-4 text-sm font-medium rounded px-4 py-2 ${
+              progress < 100 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"
+            }`}
+          >
+            {!isTypeChosen
+              ? "⚠️ Selectează tipul de cont (Artist sau Locație) când ești gata. Până atunci, poți edita câmpurile generale."
+              : progress < 100
+              ? `⚠️ Completează toate câmpurile. Progres: ${progress}%`
+              : "✅ Profil complet!"}
           </div>
         )}
 
@@ -434,9 +295,9 @@ export default function ProfilePage() {
 
             <EditableField
               value={username}
-              placeholder="Username"
+              placeholder="Nume profil"
               canEdit={isOwnProfile}
-              onSave={(val) => openConfirmModal({ field: isArtist ? "stageName" : "locationName", value: val })}
+              onSave={handleUsernameSave}
               inputClassName="text-2xl font-bold"
             />
 
@@ -448,33 +309,60 @@ export default function ProfilePage() {
               inputClassName="text-sm text-gray-500 mb-3"
             />
 
-            <ReviewsSummary profileUid={profileUid} />
+            {/* Switcher tip cont – niciun buton nu e activ până nu alegi */}
+            <AccountTypeSwitcher
+              value={userData?.type}
+              onConfirm={openConfirmModal}
+              disabled={!isOwnProfile}
+              className="w-full"
+            />
+
+            {/* Summary rating din colaborări – doar după alegerea tipului */}
+            {isTypeChosen && (
+              <ReviewsSummaryFromCollabs
+                profileUid={profileUid}
+                side={isArtist ? "artist" : "location"}
+              />
+            )}
 
             <div className="mt-6 space-y-2 text-sm w-full">
-              <EditableField
-                label="Tarif"
-                value={normalizedRate}
-                isPrice
-                canEdit={isOwnProfile}
-                onSave={(val) => openConfirmModal({ field: "rate", value: normalizeRate(val) })}
-                inputClassName={rateClass}
-              />
+              {/* Tarif – doar pentru artiști */}
               {isArtist && (
-                <div className="mt-6">
-                  <SectionTitle>Disponibilitate</SectionTitle>
-                  <AvailabilityCalendar
-                    userId={profileUid}                // UID-ul profilului afișat
-                    currentUser={authUser}             // userul logat (din AuthContext)
-                    type="artist"                         // sau "location" pe profilurile de locații
-                    editable={authUser?.uid === profileUid}
-                  />
-                </div>
+                <EditableField
+                  label="Tarif"
+                  value={normalizedRate}
+                  isPrice
+                  canEdit={isOwnProfile}
+                  onSave={(val) => openConfirmModal({ field: "rate", value: normalizeRate(val) })}
+                  inputClassName={rateClass}
+                />
               )}
 
+              {/* Disponibilitate – doar după alegerea tipului */}
+              <div className="mt-6">
+                <SectionTitle>Disponibilitate</SectionTitle>
+                {!isTypeChosen ? (
+                  <p className="text-xs text-gray-500">
+                    Alege tipul de cont pentru a seta disponibilitatea (Artist / Locație).
+                  </p>
+                ) : (
+                  <AvailabilityCalendar
+                    userId={profileUid}
+                    currentUser={authUser}
+                    type={isArtist ? "artist" : "location"}
+                    editable={authUser?.uid === profileUid}
+                  />
+                )}
+              </div>
             </div>
 
             {isOwnProfile && (
-              <Button variant="secondary" onClick={handleLogout} className="w-full mt-6" leftIcon={<LogOut className="w-4 h-4" />}>
+              <Button
+                variant="secondary"
+                onClick={handleLogout}
+                className="w-full mt-6"
+                leftIcon={<LogOut className="w-4 h-4" />}
+              >
                 Deconectare
               </Button>
             )}
@@ -482,7 +370,7 @@ export default function ProfilePage() {
 
           {/* Dreapta */}
           <div className="w-full md:w-2/3 space-y-8">
-            {/* Despre */}
+            {/* Despre – comun */}
             <section>
               <SectionTitle>Despre</SectionTitle>
               <EditableBio
@@ -490,10 +378,11 @@ export default function ProfilePage() {
                 canEdit={isOwnProfile}
                 onSave={(val) => openConfirmModal({ field: "bio", value: val })}
                 maxLength={1000}
-                minLength={300}
+                minLength={0}
               />
             </section>
 
+            {/* Secțiuni specifice tipului */}
             {isArtist && (
               <>
                 <EditableSpecializations
@@ -509,17 +398,15 @@ export default function ProfilePage() {
                 />
 
                 <section>
-                  <SectionTitle>Colaborări (cu locații BookMix)</SectionTitle>
-                  <CollaborationsCarousel
-                    title={null} // deja ai heading mai sus; sau setează direct titlul aici și scoate <h4>
-                    items={Array.isArray(userData.collaborations) ? userData.collaborations : []}
-                    // dacă vrei să NU apară locațiile demo când e gol:
-                    // useDemoWhenEmpty={false}
+                  <SectionTitle>Colaborări</SectionTitle>
+                  <CollaborationsWithReviews
+                    profileUid={profileUid}
+                    side="artist"
+                    authUser={authUser}
+                    pageSize={20}
                   />
                 </section>
 
-
-                {/* Demo-uri */}
                 <section>
                   <SectionTitle>Demo-uri</SectionTitle>
                   <DemosUploader
@@ -530,36 +417,54 @@ export default function ProfilePage() {
                     onDeleted={deleteDemo}
                   />
                 </section>
+              </>
+            )}
 
-                {/* Galerie media */}
+            {isLocation && (
+              <>
+                <EditableGenres
+                  value={Array.isArray(userData.acceptedGenres) ? userData.acceptedGenres : []}
+                  canEdit={isOwnProfile}
+                  onSave={(genres) => openConfirmModal({ field: "acceptedGenres", value: genres })}
+                />
+
                 <section>
-                  <SectionTitle>Galerie media</SectionTitle>
-                  <MediaGalleryGrid
-                    canEdit={isOwnProfile}
+                  <SectionTitle>Colaborări</SectionTitle>
+                  <CollaborationsWithReviews
+                    profileUid={profileUid}
+                    side="location"
                     authUser={authUser}
-                    items={userData.gallery}         // opțional; poate fi string[] sau [{id,url}]
-                    title="Galerie media"
-                    max={5}                          // limita (implicit 5)
-                    addButtonMode="hide"             // sau "disable"
-                    onChange={(items) => setUserData(u => ({ ...u, gallery: items }))} // opțional
-                    onExceedMax={(m) => console.log(`Limita de ${m} imagini atinsă`)}   // opțional
+                    pageSize={20}
                   />
-                </section>
-
-                {/* Reviews complete sub galerie */}
-                <section id="reviews" className="pt-2">
-                  <SectionTitle>Recenzii</SectionTitle>
-                  <ReviewsSection profileUid={profileUid} authUser={authUser} />
                 </section>
               </>
             )}
 
-            {/* Social */}
+            {/* Galerie media – comun */}
+            <section>
+              <SectionTitle>Galerie media</SectionTitle>
+              <MediaGallery
+                canEdit={isOwnProfile}
+                authUser={authUser}
+                items={userData.gallery}
+                title="Galerie media"
+                max={5}
+                addButtonMode="hide"
+                onChange={handleGalleryChange}
+                onExceedMax={(m) => console.log(`Limita de ${m} imagini atinsă`)}
+                maxFileSizeMB={8}
+                minWidth={600}
+                minHeight={600}
+                maxWidth={5000}
+                maxHeight={5000}
+              />
+            </section>
+
+            {/* Social – comun */}
             <SocialSection
               user={userData}
               canEdit={isOwnProfile}
               onConfirm={openConfirmModal}
-            // normalizeInstagramHandle={normalizeInstagramHandle} // dacă vrei s-o folosești pe a ta
             />
           </div>
         </div>
@@ -567,10 +472,7 @@ export default function ProfilePage() {
 
       {/* Modal confirmare */}
       {isOwnProfile && (
-        <Dialog
-          open={modalOpen}
-          onOpenChange={(open) => { if (!saving) setModalOpen(open); }}
-        >
+        <Dialog open={modalOpen} onOpenChange={(open) => !saving && setModalOpen(open)}>
           <DialogContent
             className="sm:max-w-lg"
             onInteractOutside={(e) => saving && e.preventDefault()}

@@ -1,79 +1,171 @@
+// pages/Register.jsx
 import { useState } from "react";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../src/firebase";
-import { doc, setDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import Button from "../components/Button";
 
 export default function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
-  const handleRegister = async () => {
-    setLoading(true);
+  const createOrMergeUserDoc = async (user, displayName) => {
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+
+    // Setăm un schelet minimal + type:null (alegerea vine în ProfilePage)
+    const payload = {
+      uid: user.uid,
+      email: user.email || email,
+      name: displayName || user.displayName || "",
+      photoURL: user.photoURL || "",
+      type: snap.exists() ? snap.data()?.type ?? null : null, // nu forțăm dacă există deja
+      // câmpuri utile pt profil (le poți extinde sau lăsa goale)
+      stageName: snap.exists() ? snap.data()?.stageName ?? "" : "",
+      locationName: snap.exists() ? snap.data()?.locationName ?? "" : "",
+      bio: snap.exists() ? snap.data()?.bio ?? "" : "",
+      genres: snap.exists() ? snap.data()?.genres ?? [] : [],
+      acceptedGenres: snap.exists() ? snap.data()?.acceptedGenres ?? [] : [],
+      demos: snap.exists() ? snap.data()?.demos ?? [] : [],
+      gallery: snap.exists() ? snap.data()?.gallery ?? [] : [],
+      instagram: snap.exists() ? snap.data()?.instagram ?? "" : "",
+      updatedAt: serverTimestamp(),
+      ...(snap.exists() ? {} : { createdAt: serverTimestamp() }),
+    };
+
+    await setDoc(ref, payload, { merge: true });
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setErr("");
+    setBusy(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Salvează numele în profilul Firebase
-      await updateProfile(user, {
-        displayName: fullName,
-      });
-
-      // Salvează și în Firestore (colecția "users")
-      await setDoc(doc(db, "users", user.uid), {
-        email,
-        fullName,
-        createdAt: new Date(),
-      });
-
-      alert("✅ Cont creat cu succes!");
-      navigate("/profil");
-    } catch (err) {
-      alert("❌ Eroare: " + err.message);
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+      // optional: setează displayName în Auth
+      if (name.trim()) {
+        await updateProfile(cred.user, { displayName: name.trim() });
+      }
+      await createOrMergeUserDoc(cred.user, name.trim());
+      navigate("/user");
+    } catch (e) {
+      console.error(e);
+      setErr(e.message || "Eroare la înregistrare.");
     } finally {
-      setLoading(false);
+      setBusy(false);
+    }
+  };
+
+  const signUpWithGoogle = async () => {
+    setErr("");
+    setBusy(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      await createOrMergeUserDoc(result.user, result.user.displayName || "");
+      navigate("/user");
+    } catch (e) {
+      console.error(e);
+      setErr(e.message || "Eroare la autentificarea cu Google.");
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-gray-800 px-4">
-      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 space-y-6">
-        <h2 className="text-2xl font-bold text-center text-gray-800">
-          Creează-ți un cont
-        </h2>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-white text-black rounded-xl shadow-lg p-6">
+        <h1 className="text-2xl font-bold mb-1">Creează cont</h1>
+        <p className="text-sm text-gray-600 mb-6">Cont unic, tipul îl alegi pe pagina de profil.</p>
 
-        <div className="space-y-4">
-          <input
-            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
-            placeholder="Nume complet"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-          />
-          <input
-            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-          />
-          <input
-            className="w-full text-black px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600"
-            placeholder="Parolă"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button
-            onClick={handleRegister}
-            disabled={loading}
-            className="w-full !bg-black !border-black !text-white font-semibold py-3 rounded-lg hover:!bg-gray-800 transition"
+        {err && (
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+            {err}
+          </div>
+        )}
+
+        <form onSubmit={onSubmit} className="space-y-3">
+          <div>
+            <label className="block text-sm mb-1">Nume afișat</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+              placeholder="Ex: Alex Pop"
+              autoComplete="name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm mb-1">Parolă</label>
+            <input
+              type="password"
+              required
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              minLength={6}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full mt-2"
+            isLoading={busy}
+            disabled={busy}
           >
-            {loading ? "Se creează contul..." : "🔐 Creează cont"}
-          </button>
+            Creează cont
+          </Button>
+        </form>
+
+        <div className="my-4 flex items-center gap-3">
+          <div className="h-px bg-gray-200 flex-1" />
+          <span className="text-xs text-gray-500">sau</span>
+          <div className="h-px bg-gray-200 flex-1" />
         </div>
+
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={signUpWithGoogle}
+          disabled={busy}
+        >
+          Continuă cu Google
+        </Button>
+
+        <p className="mt-4 text-sm text-gray-600">
+          Ai deja cont?{" "}
+          <Link to="/login" className="text-black underline">
+            Autentificare
+          </Link>
+        </p>
       </div>
     </div>
   );
