@@ -1,7 +1,7 @@
 // components/MainMenu.jsx
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import UserMenu from "./UserMenu";
 import { useAuth } from "../context/AuthContext";
 
@@ -25,9 +25,11 @@ function useHideOnScroll({ threshold = 80, disabled = false } = {}) {
   return hidden;
 }
 
+// forțează rute ABSOLUTE, previne to="events" -> "/user/:id/events"
+const abs = (p = "/") => (String(p).startsWith("/") ? p : `/${p}`);
+
 export default function MainMenu() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // 👇 pentru animația de închidere
   const [menuVisible, setMenuVisible] = useState(false);
   const [closing, setClosing] = useState(false);
 
@@ -35,7 +37,6 @@ export default function MainMenu() {
   const { user } = useAuth();
   const isAdmin = user?.email === "test@gmail.com";
 
-  // ascunde bara la scroll în jos; dezactivat cât timp meniul mobil e vizibil (și în timpul închiderii)
   const hidden = useHideOnScroll({ threshold: 80, disabled: menuVisible });
 
   // măsurăm înălțimea reală a header-ului pentru spacer
@@ -67,7 +68,6 @@ export default function MainMenu() {
       setMenuVisible(true);
       setClosing(false);
     } else if (menuVisible) {
-      // începe animația de închidere
       setClosing(true);
     }
   }, [mobileMenuOpen, menuVisible]);
@@ -86,7 +86,7 @@ export default function MainMenu() {
 
   return (
     <>
-      {/* header-ul FIXED care se translatează (are și bg-ul pe el!) — DESKTOP NEMODIFICAT */}
+      {/* header-ul FIXED */}
       <header
         ref={headerRef}
         className={`fixed top-0 inset-x-0 z-50 transition-transform duration-300 will-change-transform bg-black text-white shadow-md ${
@@ -94,7 +94,7 @@ export default function MainMenu() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between w-full rounded-b-2xl">
-          {/* 🔻 Logo */}
+          {/* Logo */}
           <div className="flex items-center space-x-8">
             <img
               src="https://firebasestorage.googleapis.com/v0/b/bookbeat-7cd25.firebasestorage.app/o/logo.png?alt=media&token=eeb7c5f9-55bf-44a3-bbc3-edfab19af216"
@@ -103,48 +103,60 @@ export default function MainMenu() {
             />
           </div>
 
-          {/* 🔹 Desktop Menu */}
-          <div className="hidden md:flex items-center w-full ml-8">
+          {/* Desktop Menu */}
+          <nav className="hidden md:flex items-center w-full ml-8" aria-label="Main">
             <ul className="flex space-x-6 font-medium text-gray-600">
               {leftItems.map(({ label, path }) => (
                 <li key={label}>
-                  <Link
-                    to={path}
-                    className={`uppercase !font-bold transition ${
-                      location.pathname === path ? "text-white" : "!text-white"
-                    } hover:text-violet-600`}
+                  <NavLink
+                    to={abs(path)}
+                    end={path === "/"} // root se activează doar exact pe "/"
+                    className={({ isActive }) =>
+                      `uppercase !font-bold transition ${
+                        isActive ? "text-white" : "!text-white"
+                      } hover:text-violet-600`
+                    }
                   >
                     {label}
-                  </Link>
+                  </NavLink>
                 </li>
               ))}
               {isAdmin && (
                 <li>
-                  <Link
+                  <NavLink
                     to="/admin"
-                    className="uppercase font-bold text-red-400 hover:text-red-600 transition"
+                    className={({ isActive }) =>
+                      `uppercase font-bold transition ${
+                        isActive ? "text-red-500" : "text-red-400"
+                      } hover:text-red-600`
+                    }
                   >
                     Admin
-                  </Link>
+                  </NavLink>
                 </li>
               )}
             </ul>
 
             <div className="ml-auto flex items-center space-x-4">
-              <Link
-                to={lastItem.path}
-                className={`uppercase !font-bold transition ${
-                  location.pathname === lastItem.path ? "text-white" : "!text-white"
-                } hover:text-violet-600`}
+              <NavLink
+                to={abs(lastItem.path)}
+                className={({ isActive }) =>
+                  `uppercase !font-bold transition ${
+                    isActive ? "text-white" : "!text-white"
+                  } hover:text-violet-600`
+                }
               >
                 {lastItem.label}
-              </Link>
+              </NavLink>
               <UserMenu />
             </div>
-          </div>
+          </nav>
 
           {/* ☰ Mobile toggle */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-3">
+            {/* Avatar / UserMenu pe mobil */}
+            <UserMenu />
+
             <button ref={toggleRef} onClick={() => setMobileMenuOpen((v) => !v)}>
               {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
@@ -175,7 +187,6 @@ export default function MainMenu() {
             }}
             onAnimationEnd={() => {
               if (closing) {
-                // după anim de închidere, demontăm overlay-ul
                 setMenuVisible(false);
                 setClosing(false);
               }
@@ -199,7 +210,6 @@ export default function MainMenu() {
               <X size={25} className="!fill-black" strokeWidth={5} />
             </button>
 
-
             <div
               className="px-6 pt-6 pb-5"
               style={{ paddingTop: "calc(env(safe-area-inset-top) + 16px)" }}
@@ -214,18 +224,18 @@ export default function MainMenu() {
                       animationDelay: `${300 + i * 150}ms`,
                     }}
                   >
-                    <Link
-                      to={path}
+                    <NavLink
+                      to={abs(path)}
+                      end={path === "/"}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`block !font-bold w-full rounded-xl px-2 py-1 text-[25px] font-extrabold tracking-wide transition
-                        ${
-                          location.pathname === path
-                            ? "!text-violet-700"
-                            : "!text-black"
-                        }`}
+                      className={({ isActive }) =>
+                        `block !font-bold w-full rounded-xl px-2 py-1 text-[25px] font-extrabold tracking-wide transition ${
+                          isActive ? "!text-violet-700" : "!text-black"
+                        }`
+                      }
                     >
                       {label.toUpperCase()}
-                    </Link>
+                    </NavLink>
                   </li>
                 ))}
                 {isAdmin && (
@@ -236,13 +246,17 @@ export default function MainMenu() {
                       animationDelay: `${120 + menuItems.length * 60}ms`,
                     }}
                   >
-                    <Link
+                    <NavLink
                       to="/admin"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block w-full rounded-xl px-2 py-2 text-[20px] font-extrabold tracking-wide text-red-600 hover:text-red-700 transition"
+                      className={({ isActive }) =>
+                        `block w-full rounded-xl px-2 py-2 text-[20px] font-extrabold tracking-wide transition ${
+                          isActive ? "text-red-700" : "text-red-600"
+                        }`
+                      }
                     >
                       ADMIN
-                    </Link>
+                    </NavLink>
                   </li>
                 )}
               </ul>
@@ -253,21 +267,10 @@ export default function MainMenu() {
 
           {/* keyframes locale */}
           <style>{`
-            @keyframes circleOpen {
-              to { clip-path: circle(150vmax at var(--cx) var(--cy)); }
-            }
-            @keyframes circleClose {
-              from { clip-path: circle(150vmax at var(--cx) var(--cy)); }
-              to   { clip-path: circle(0 at var(--cx) var(--cy)); }
-            }
-            @keyframes fadeUp {
-              from { transform: translateY(6px); opacity: 0; }
-              to   { transform: translateY(0);   opacity: 1; }
-            }
-            @keyframes fadeOut {
-              from { opacity: 1; }
-              to   { opacity: 0; }
-            }
+            @keyframes circleOpen { to { clip-path: circle(150vmax at var(--cx) var(--cy)); } }
+            @keyframes circleClose { from { clip-path: circle(150vmax at var(--cx) var(--cy)); } to { clip-path: circle(0 at var(--cx) var(--cy)); } }
+            @keyframes fadeUp { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
             @media (prefers-reduced-motion: reduce) {
               * { animation: none !important; transition: none !important; }
             }

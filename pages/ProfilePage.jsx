@@ -16,20 +16,13 @@ import MediaGallery from "../components/MediaGallery";
 import AvailabilityCalendar from "../components/AvailabilityCalendar";
 import DemosUploader from "../components/DemosUploader";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../src/components/ui/dialog";
-
 import { LogOut } from "lucide-react";
 
 import LoadingPage from "./LoadingPage";
 import EditableSpecializations from "../components/EditableSpecializations";
 import EditableBio from "../components/EditableBio";
-import Button from "../components/Button";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../components/uiux";
+
 import SectionTitle from "../components/SectionTitle";
 
 // Colaborări + summary din colaborări (se arată doar după alegerea tipului)
@@ -310,12 +303,14 @@ export default function ProfilePage() {
             />
 
             {/* Switcher tip cont – niciun buton nu e activ până nu alegi */}
-            <AccountTypeSwitcher
-              value={userData?.type}
-              onConfirm={openConfirmModal}
-              disabled={!isOwnProfile}
-              className="w-full"
-            />
+            {isOwnProfile && (
+              <AccountTypeSwitcher
+                value={userData?.type}
+                onConfirm={openConfirmModal}
+                disabled={!isOwnProfile}
+                className="w-full"
+              />
+            )}
 
             {/* Summary rating din colaborări – doar după alegerea tipului */}
             {isTypeChosen && (
@@ -461,6 +456,7 @@ export default function ProfilePage() {
             </section>
 
             {/* Social – comun */}
+            <SectionTitle>Social</SectionTitle>
             <SocialSection
               user={userData}
               canEdit={isOwnProfile}

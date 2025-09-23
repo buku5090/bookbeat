@@ -25,6 +25,7 @@ import AdminPage from "../pages/AdminPage";
 import Footer from "../components/Footer";
 import Onboarding from "../components/Onboarding";
 import CompleteProfile from "../components/CompleteProfile";
+import NotificationsPage from "../pages/NotificationsPage";
 import Test from "../pages/Test";
 
 // alias helper: /profile/:id -> /user/:id
@@ -52,6 +53,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
+        <Route path="/notificari" element={<NotificationsPage />} />
 
         {/* Profilul MEU (fără id) – protejat */}
         <Route

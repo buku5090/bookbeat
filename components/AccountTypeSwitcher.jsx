@@ -19,8 +19,8 @@ export default function AccountTypeSwitcher({
   };
 
   const base = "flex-1 py-2 px-4 rounded-lg border transition text-sm font-medium";
-  const active = "bg-black text-white border-black";
-  const inactive = "bg-white text-black border-gray-300 hover:bg-gray-50";
+  const active = "!bg-black !text-white border-black";
+  const inactive = "!bg-white !text-black !border-gray-300 hover:bg-gray-50";
 
   return (
     <div className={className}>

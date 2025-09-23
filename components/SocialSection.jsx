@@ -177,10 +177,6 @@ export default function SocialSection({
 
   return (
     <section className="relative">
-      <h3 className="font-extrabold tracking-tight text-black text-3xl md:text-4xl mb-2">
-        {title}
-      </h3>
-
       <IconsRow user={links} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">

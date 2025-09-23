@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Trash2, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 
-import Button from "./Button";
-import { Dialog, DialogContent } from "../src/components/ui/dialog";
+import {
+  Button, Input, Textarea, Label, Badge,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from "../components/uiux";
 
 import { storage } from "../src/firebase";
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
