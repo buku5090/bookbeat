@@ -180,7 +180,6 @@ export default function CollaborationsWithReviews({
   }, [profileUid, side, pageSize, hasMore, loading, usedDemo, cursor]);
 
   // ====== Slider / scroll + windowing ======
-  // punem un width fix pe card (trebuie să corespundă cu stilurile cardului)
   const ITEM_WIDTH = 176; // px: ~ card + gap (ajustează dacă schimbi stilul)
   const [scrollLeft, setScrollLeft] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -229,6 +228,18 @@ export default function CollaborationsWithReviews({
   const leftPad = startIndex * ITEM_WIDTH;
   const rightPad = Math.max(0, (totalCount - endIndex) * ITEM_WIDTH);
 
+  // ====== logică pentru afișarea butoanelor stânga/dreapta ======
+  const totalWidth = totalCount * ITEM_WIDTH;
+  const canScroll = totalWidth > (containerWidth || 0) + 1; // există overflow?
+  const ATOL = 4; // toleranță px pentru calcule
+  const atStart = scrollLeft <= ATOL;
+  const atEndNow = scrollLeft + (containerWidth || 0) >= totalWidth - ATOL;
+  // „final absolut”: nu mai avem pagini de încărcat și suntem la capătul pistei curente
+  const atAbsoluteEnd = !hasMore && atEndNow;
+
+  const showLeft = canScroll && !atStart;
+  const showRight = canScroll && !atAbsoluteEnd;
+
   // ====== butoane slider ======
   const scrollByPage = (dir = 1) => {
     const el = containerRef.current;
@@ -246,15 +257,17 @@ export default function CollaborationsWithReviews({
 
       <div className="relative">
         {/* buton stânga */}
-        <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 z-10 px-1">
-          <Button
-            variant="secondary"
-            className="pointer-events-auto shadow"
-            onClick={() => scrollByPage(-1)}
-          >
-            ←
-          </Button>
-        </div>
+        {showLeft && (
+          <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 z-10 px-1">
+            <Button
+              variant="secondary"
+              className="pointer-events-auto shadow"
+              onClick={() => scrollByPage(-1)}
+            >
+              ←
+            </Button>
+          </div>
+        )}
 
         {/* pista orizontală cu windowing */}
         <div
@@ -286,15 +299,17 @@ export default function CollaborationsWithReviews({
         </div>
 
         {/* buton dreapta */}
-        <div className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 z-10 px-1">
-          <Button
-            variant="secondary"
-            className="pointer-events-auto shadow"
-            onClick={() => scrollByPage(1)}
-          >
-            →
-          </Button>
-        </div>
+        {showRight && (
+          <div className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 z-10 px-1">
+            <Button
+              variant="secondary"
+              className="pointer-events-auto shadow"
+              onClick={() => scrollByPage(1)}
+            >
+              →
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* status / loader */}

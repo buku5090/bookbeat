@@ -3,15 +3,14 @@ import { Trash2, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 
 import {
   Button, Input, Textarea, Label, Badge,
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+  Dialog, DialogContent
 } from "../components/uiux";
 
 import { storage } from "../src/firebase";
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
-/* ---------------- helpers: validare + normalizare ---------------- */
+/* ---------------- helpers ---------------- */
 
-// accept DOAR http(s), blob:, data:image/ — NU rute relative “/…”
 const isValidUrlish = (s = "") =>
   /^(https?:\/\/|blob:|data:image\/)/i.test(String(s).trim());
 
@@ -25,14 +24,10 @@ function normalizeItems(arr = []) {
     if (typeof raw === "string") {
       const url = raw.trim();
       if (!isValidUrlish(url)) continue;
-      const key = url;
-      if (seen.has(key)) continue;
-      out.push({ id: key, url });
-      seen.add(key);
-      continue;
-    }
-
-    if (typeof raw === "object") {
+      if (seen.has(url)) continue;
+      out.push({ id: url, url });
+      seen.add(url);
+    } else if (typeof raw === "object") {
       const url = String(raw.url ?? raw.src ?? raw.imgUrl ?? "").trim();
       const id  = String(raw.id ?? raw.path ?? url ?? "").trim();
       if (!isValidUrlish(url)) continue;
@@ -48,7 +43,6 @@ function normalizeItems(arr = []) {
 const sig = (list = []) =>
   normalizeItems(list).map(it => `${it.id}|${it.url}`).join(";");
 
-// obține dimensiunile imaginii fără s-o urci
 async function getImageDimensions(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -67,32 +61,33 @@ async function getImageDimensions(file) {
   });
 }
 
-/* ---------------- componenta ---------------- */
+/* ---------------- component ---------------- */
 
 export default function MediaGallery({
   canEdit,
   authUser,
   items = [],
   max = 5,
-  addButtonMode = "hide",         // "hide" | "disable"
-  onChange,                       // primești lista curată
+  addButtonMode = "hide",
+  onChange,
   onExceedMax,
-
-  // <<< NOI: parametri de validare >>>
   maxFileSizeMB = 8,
   minWidth = 400,
   minHeight = 400,
   maxWidth = 6000,
   maxHeight = 6000,
-  onValidationError,              // opțional: callback(msg, details)
+  onValidationError,
 }) {
   const [list, setList] = useState(() => normalizeItems(items));
   const [uploadError, setUploadError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lbLoading, setLbLoading] = useState(false);
+  const inputRef = useRef(null);
 
-  // re-sync când items din props se schimbă
   useEffect(() => setList(normalizeItems(items)), [items]);
 
-  // auto-heal: dacă apar intrări invalide, curăță + emite
   const signature = useMemo(() => sig(list), [list]);
   useEffect(() => {
     const cleaned = normalizeItems(list);
@@ -102,12 +97,6 @@ export default function MediaGallery({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
-
-  const inputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [lbLoading, setLbLoading] = useState(false);
 
   const atLimit = list.length >= max;
   const remaining = Math.max(0, max - list.length);
@@ -138,11 +127,9 @@ export default function MediaGallery({
 
     try {
       for (const f of imageFiles) {
-        // 1) mărime fișier
         const maxBytes = maxFileSizeMB * 1024 * 1024;
         if (f.size > maxBytes) { skipped.tooLargeBytes++; continue; }
 
-        // 2) dimensiuni imagine
         try {
           const { width, height } = await getImageDimensions(f);
           if (width < minWidth || height < minHeight) { skipped.tooSmallRes++; continue; }
@@ -151,7 +138,6 @@ export default function MediaGallery({
           skipped.other++; continue;
         }
 
-        // 3) upload
         const safeName = f.name.replace(/\s+/g, "-");
         const path = `users/${authUser.uid}/gallery/${Date.now()}-${safeName}`;
         const ref = storageRef(storage, path);
@@ -162,7 +148,6 @@ export default function MediaGallery({
 
       if (results.length) emit([...list, ...results]);
 
-      // feedback pentru fișierele respinse
       if (skipped.tooLargeBytes || skipped.tooSmallRes || skipped.tooBigRes || skipped.other) {
         const parts = [];
         if (skipped.tooLargeBytes) parts.push(`${skipped.tooLargeBytes} fișier(e) > ${maxFileSizeMB}MB`);
@@ -192,14 +177,12 @@ export default function MediaGallery({
     }
   };
 
-  // dacă imaginea nu se încarcă => elimin-o din listă (și din DB prin onChange)
   const handleImgError = (it) => {
     emit(list.filter(x => (x.id || x.url) !== (it.id || it.url)));
   };
 
   const openLightbox = (idx) => { setLightboxIndex(idx); setLbLoading(true); setLightboxOpen(true); };
 
-  // navigare
   const next = useCallback(() => {
     if (!list.length) return;
     setLbLoading(true);
@@ -212,7 +195,6 @@ export default function MediaGallery({
     setLightboxIndex(i => (i - 1 + list.length) % list.length);
   }, [list.length]);
 
-  // prefetch curent + vecini
   useEffect(() => {
     if (!lightboxOpen || !list.length) return;
     const cur = new Image(); cur.src = list[lightboxIndex]?.url || "";
@@ -220,22 +202,9 @@ export default function MediaGallery({
     const p = new Image();   p.src = list[(lightboxIndex - 1 + list.length) % list.length]?.url || "";
   }, [lightboxOpen, lightboxIndex, list.length]);
 
-  const onAddClick = () => {
-    if (atLimit) { onExceedMax?.(max); return; }
-    inputRef.current?.click();
-  };
-
-  const showAddButton = canEdit && (addButtonMode === "disable" || !atLimit);
-  const addDisabled = addButtonMode === "disable" && atLimit;
-
-  const renderList = useMemo(
-    () => list.filter(it => it && isValidUrlish(it.url)),
-    [list]
-  );
-
-  // navigare cu taste (← →) + închidere cu Esc când lightboxul e deschis
+  // 🩹 Fix: protejăm accesul la `window`
   useEffect(() => {
-    if (!lightboxOpen) return;
+    if (!lightboxOpen || typeof window === "undefined") return;
     const onKey = (e) => {
       if (e.key === "ArrowRight") {
         e.preventDefault();
@@ -250,7 +219,25 @@ export default function MediaGallery({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxOpen, renderList.length, next, prev]);
+  }, [lightboxOpen, next, prev]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    setLbLoading(true);
+  }, [lightboxIndex, lightboxOpen]);
+
+  const onAddClick = () => {
+    if (atLimit) { onExceedMax?.(max); return; }
+    inputRef.current?.click();
+  };
+
+  const showAddButton = canEdit && (addButtonMode === "disable" || !atLimit);
+  const addDisabled = addButtonMode === "disable" && atLimit;
+
+  const renderList = useMemo(
+    () => list.filter(it => it && isValidUrlish(it.url)),
+    [list]
+  );
 
   return (
     <section className="relative">
@@ -260,7 +247,7 @@ export default function MediaGallery({
             <img
               src={img.url}
               alt=""
-              className="w-full h-full object-cover cursor-zoom-in"
+              className="w-full h-full object-cover cursor-zoom-in will-change-transform"
               onClick={() => openLightbox(idx)}
               onError={() => handleImgError(img)}
               loading="lazy"
@@ -269,6 +256,7 @@ export default function MediaGallery({
 
             {canEdit && (
               <Button
+                variant="outline"
                 onClick={() => deleteOne(img)}
                 className="!bg-white hover:!bg-gray-200 !border-gray-200 absolute top-2 right-2 transition !px-3"
                 title="Șterge"
@@ -278,9 +266,9 @@ export default function MediaGallery({
             )}
 
             <Button
+              variant="outline"
               onClick={() => openLightbox(idx)}
-              className="absolute bottom-2 right-2 !bg-white hover:!bg-gray-200 !border-gray-200
-                         opacity-100 md:opacity-0 md:group-hover:opacity-100 transition !px-3"
+              className="absolute bottom-2 right-2 !bg-white hover:!bg-gray-200 !border-gray-200 hidden md:flex transition !px-3"
               title="Mărește"
             >
               <Maximize2 className="w-4 h-4 text-black" />
@@ -288,7 +276,6 @@ export default function MediaGallery({
           </div>
         ))}
 
-        {/* Add tile */}
         {showAddButton && (
           <button
             type="button"
@@ -322,52 +309,75 @@ export default function MediaGallery({
               ? `Poți adăuga până la ${max} imagini. ${Math.max(0, max - renderList.length)} loc${Math.max(0, max - renderList.length) === 1 ? "" : "uri"} rămase.`
               : `Poți adăuga o singură imagine.`}
           </p>
-          {uploadError && (
-            <p className="text-xs text-red-600 mt-1">{uploadError}</p>
-          )}
+          {uploadError && <p className="text-xs text-red-600 mt-1">{uploadError}</p>}
         </>
       )}
 
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-5xl">
-          <div className="relative">
+        <DialogContent className="max-w-[95vw] sm:max-w-6xl p-0 bg-black/95">
+          <div
+            className="relative w-full h-[80vh] sm:h-[82vh] flex items-center justify-center"
+            onTouchStart={(e) => {
+              const t = e.touches?.[0];
+              e.currentTarget.dataset.tsx = String(t?.clientX ?? 0);
+              e.currentTarget.dataset.tsy = String(t?.clientY ?? 0);
+            }}
+            onTouchEnd={(e) => {
+              const sx = Number(e.currentTarget.dataset.tsx || 0);
+              const sy = Number(e.currentTarget.dataset.tsy || 0);
+              const t = e.changedTouches?.[0]; if (!t) return;
+              const dx = t.clientX - sx, dy = t.clientY - sy;
+              if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+                dx < 0 ? next() : prev();
+              }
+            }}
+          >
             {renderList.length > 0 && (
               <>
                 {lbLoading && (
                   <div className="absolute inset-0 grid place-items-center">
-                    <div className="h-10 w-10 rounded-full border-4 border-gray-300 border-t-black animate-spin" />
+                    <div className="h-10 w-10 rounded-full border-4 border-white/30 border-t-white animate-spin" />
                   </div>
                 )}
                 <img
                   src={renderList[lightboxIndex]?.url}
                   alt=""
-                  className={`w-full h-auto rounded ${lbLoading ? "opacity-0" : "opacity-100"} transition`}
+                  className={[
+                    "max-h-full max-w-full object-contain select-none transition-opacity duration-200",
+                    lbLoading ? "opacity-0" : "opacity-100",
+                  ].join(" ")}
                   loading="eager"
                   fetchpriority="high"
                   decoding="async"
                   onLoad={() => setLbLoading(false)}
+                  draggable={false}
                 />
                 {renderList.length > 1 && (
                   <>
-                    <Button
-                      variant="secondary"
-                      size="md"
+                    <button
+                      type="button"
                       onClick={prev}
-                      className="absolute left-2 top-1/2 -translate-y-1/2"
                       aria-label="Anterior"
+                      className="absolute left-0 !bg-white"
                     >
-                      <ChevronLeft className="w-5 h-5" />
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="md"
+                      <ChevronLeft
+                        className="w-15 h-15 sm:w-10 sm:h-10 !text-gray-800"
+                        strokeWidth={2.5}
+                      />
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={next}
-                      className="absolute right-2 top-1/2 -translate-y-1/2"
                       aria-label="Următor"
+                      className="absolute right-0 !bg-white"
                     >
-                      <ChevronRight className="w-5 h-5" />
-                    </Button>
+                      <ChevronRight 
+                        className="w-15 h-15 sm:w-10 sm:h-10 !text-gray-800" 
+                        strokeWidth={2.5}
+                        />
+                    </button>
                   </>
                 )}
               </>

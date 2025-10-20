@@ -26,6 +26,7 @@ import Footer from "../components/Footer";
 import Onboarding from "../components/Onboarding";
 import CompleteProfile from "../components/CompleteProfile";
 import NotificationsPage from "../pages/NotificationsPage";
+import EventDetailsPage from "../pages/EventDetailsPage";
 import Test from "../pages/Test";
 
 // alias helper: /profile/:id -> /user/:id
@@ -54,6 +55,8 @@ function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/notificari" element={<NotificationsPage />} />
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/:id" element={<EventDetailsPage />} />
 
         {/* Profilul MEU (fără id) – protejat */}
         <Route

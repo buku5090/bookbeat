@@ -1,5 +1,5 @@
 // components/EditableChips.jsx
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pencil } from "lucide-react";
 import SectionTitle from "./SectionTitle";
 import TopPopup from "./TopPopup";
@@ -22,6 +22,7 @@ export default function EditableChips({
   variant = "genres",
   customTheme,
   maxMessage,               // mesaj opțional pentru popup
+  onChipClick,              // ← NOU: click pe chip în modul VIEW
 }) {
   const [editing, setEditing] = useState(false);
   const [sel, setSel] = useState(Array.isArray(value) ? value : []);
@@ -45,7 +46,6 @@ export default function EditableChips({
   const showMaxPopup = (attempt) => {
     setPopupMsg(maxMessage || `Ai atins limita de ${max}.`);
     setPopupOpen(false);
-    // re-trigger animatia când se apasă rapid
     requestAnimationFrame(() => setPopupOpen(true));
     onExceedMax?.(max, attempt);
   };
@@ -98,14 +98,13 @@ export default function EditableChips({
 
   return (
     <section className="relative">
-      {/* Popup top, identic vizual peste tot */}
+      {/* Popup top */}
       <TopPopup
         open={popupOpen}
         message={popupMsg}
         onClose={() => setPopupOpen(false)}
         duration={2400}
       />
-
 
       {label && (
         <SectionTitle
@@ -133,13 +132,20 @@ export default function EditableChips({
         <div className="flex flex-wrap gap-2">
           {sel.length ? (
             sel.map((g) => (
-              <span
+              <button
                 key={g}
-                className="px-3 py-1 rounded-full text-sm border"
-                style={{ backgroundColor: theme.bg, color: theme.text, borderColor: theme.border }}
+                type="button"
+                onClick={() => onChipClick?.(g)}
+                className="px-3 py-1 rounded-full text-sm border focus:outline-none focus:ring"
+                style={{
+                  backgroundColor: theme.bg,
+                  color: theme.text,
+                  borderColor: theme.border,
+                }}
+                title={`Vezi rezultate pentru „${g}”`}
               >
                 {g}
-              </span>
+              </button>
             ))
           ) : (
             <span className="text-gray-500 text-sm">Nu a selectat încă.</span>

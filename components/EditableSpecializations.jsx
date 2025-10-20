@@ -11,6 +11,7 @@ export default function EditableSpecializations({
   canEdit,
   onSave,
   max = 8,
+  onChipClick, // ← NOU
 }) {
   return (
     <EditableChips
@@ -21,8 +22,8 @@ export default function EditableSpecializations({
       suggestions={SPECIALIZATION_OPTIONS}
       placeholder="Adaugă tip de eveniment"
       max={max}
-      allowCustom={false} // păstrăm controlul listelor pentru filtrare
-      // paletă separată pentru Preferințe (albastru pastel)
+      allowCustom={false}
+      onChipClick={onChipClick} // ← forward
       customTheme={{
         bg: "#FFE9F1",
         border: "#E7F0FF",

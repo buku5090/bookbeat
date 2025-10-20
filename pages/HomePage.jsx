@@ -2,11 +2,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import {
-  Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, // (le poți șterge dacă nu-ți trebuie aici)
+  Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
   Input, Textarea, Label, Badge,
 } from "../components/uiux";
+import EventCard from "../components/EventCard";
+import { events } from "../src/data/events";
+// 👉 ajustează importul după cum îl ai în proiect
+import { useAuth } from "../context/AuthContext";
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* HERO / BANNER */}
@@ -31,17 +37,31 @@ export default function HomePage() {
             <p className="mx-auto mt-4 max-w-2xl text-white/90 sm:text-lg">
               Descoperă DJ-i, trupe și locații (baruri, cluburi, cafenele) pregătite pentru evenimentul tău.
             </p>
+
             <div className="mt-8 flex items-center justify-center gap-4">
               <Link to="/discover">
                 <Button size="lg" className="bg-white text-black hover:opacity-90">
                   Descoperă artiști & locații
                 </Button>
               </Link>
-              <Link to="/login">
-                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
-                  Intră în cont
-                </Button>
-              </Link>
+
+              {/* Afișăm butonul de autentificare doar când NU ești logat.
+                  Când ești logat, arătăm "Contul meu". În timpul încărcării ascundem al doilea buton. */}
+              {!loading && (
+                user ? (
+                  <Link to="/account">
+                    <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
+                      Contul meu
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/login">
+                    <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
+                      Intră în cont
+                    </Button>
+                  </Link>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -67,12 +87,24 @@ export default function HomePage() {
 
       {/* CTA secundar */}
       <section className="mx-auto my-20 max-w-6xl px-4 sm:px-6">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center sm:p-12">
-          <h2 className="text-2xl font-semibold">Ești artist sau reprezinți o locație?</h2>
-          <p className="mt-2 text-white/80">Creează un profil și apari în căutări.</p>
-          <div className="mt-6">
-            <Link to="/onboarding">
-              <Button size="lg">Creează profil</Button>
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 sm:p-12">
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-semibold">Evenimente următoare</h2>
+            <p className="mt-2 text-white/80">Descoperă ce urmează în comunitatea BookMix.</p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...events]
+              .sort((a,b) => new Date(a.date) - new Date(b.date))
+              .slice(0,3)
+              .map(evt => <EventCard key={evt.id} event={evt} />)}
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <Link to="/events">
+              <Button variant="outline" className="border-white/40 text-white hover:bg-white/10">
+                Vezi toate evenimentele
+              </Button>
             </Link>
           </div>
         </div>

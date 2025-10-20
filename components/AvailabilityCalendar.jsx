@@ -1,6 +1,3 @@
-// components/AvailabilityCalendar.jsx
-// ❗ Fără titlu în componentă (îl pui tu în pagină)
-
 import React, { useEffect, useMemo, useState } from "react";
 import { db } from "../src/firebase";
 import {
@@ -13,14 +10,15 @@ import {
 } from "date-fns";
 
 import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
-import "../src/styles/availability.css";
 
 import {
   Button, Input, Textarea, Label, Badge,
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "../components/uiux";
 import { Plus, Trash2 } from "lucide-react";
+import AddAvailabilityDialog from "./AddAvailabilityDialog";
+import { ro } from "date-fns/locale";
+
 
 /* ----------------------- utils ----------------------- */
 const AVAIL_COLL = collection(db, "availability");
@@ -102,26 +100,28 @@ function Legend() {
   return (
     <div className="flex items-center gap-6 text-sm">
       <div className="flex items-center gap-2">
-        <span className="inline-block size-5 rounded-full bg-red-500" /> Ocupat
+        <span className="inline-block size-4 rounded-full bg-red-500" /> Ocupat
       </div>
       <div className="flex items-center gap-2">
-        <span className="inline-block size-5 rounded-full bg-emerald-500" /> Liber
+        <span className="inline-block size-4 rounded-full bg-emerald-500" /> Liber
       </div>
     </div>
   );
 }
 
 /**
- * AvailabilityCalendar (fără titlu intern)
- * Props:
- *  - userId: id-ul profilului afișat
- *  - currentUser: userul logat
- *  - type: tipul profilului afișat ("artist" | "location" | "user")
- *  - editable: dacă profilul afișat e al userului logat
+ * AvailabilityCalendar
  */
 export default function AvailabilityCalendar({ userId, currentUser, type, editable }) {
-  // luna afișată pe ecran
-  const [displayMonth, setDisplayMonth] = useState(new Date());
+  // data de azi (00:00)
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  // luna afișată pe ecran (blocat să nu meargă înapoi)
+  const [displayMonth, setDisplayMonth] = useState(startOfMonth(todayStart));
   // cache cu iteme per lună: { 'yyyy-MM': rows[] }
   const [itemsByMonth, setItemsByMonth] = useState({});
   // fetching state (nu afectează afișarea calendarului)
@@ -156,25 +156,26 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, monthKey]);
 
-  // când utilizatorul schimbă luna: ținem luna curentă pe ecran până vin noile date
+  // când utilizatorul schimbă luna: blocăm navigarea în trecut
   const handleMonthChange = (nextMonth) => {
+    if (isBefore(nextMonth, startOfMonth(todayStart))) return; // nu mergem în trecut
     const nextKey = format(nextMonth, "yyyy-MM");
     if (itemsByMonth[nextKey]) {
-      setDisplayMonth(nextMonth); // avem cache -> comutăm imediat
+      setDisplayMonth(nextMonth);
       return;
     }
     setIsFetching(true);
     fetchAvailabilityForMonth(userId, nextMonth).then((rows) => {
       setItemsByMonth((prev) => ({ ...prev, [nextKey]: rows }));
-      setDisplayMonth(nextMonth); // comută abia după ce avem datele
+      setDisplayMonth(nextMonth);
       setIsFetching(false);
     });
   };
 
   const items = itemsByMonth[monthKey] || [];
 
-  // Construim setul de zile ocupate, apoi „libere” = toate zilele lunii – ocupate.
-  const { busyDates, freeDates, dayEventsMap } = useMemo(() => {
+  // --- calculăm busyDates + map-ul de evenimente pe zile (doar viitorul) ---
+  const { busyDates, dayEventsMap } = useMemo(() => {
     const map = {};
     const busy = [];
 
@@ -184,21 +185,23 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
       const days = eachDayOfInterval({ start: ev.start, end: addDays(ev.end, -1) }); // end exclusiv
       days.forEach((d) => {
         if (!isValid(d)) return;
-        const key = format(d, "yyyy-MM-dd");
-        (map[key] ||= []).push(ev);
+        if (isBefore(d, todayStart)) return; // doar azi și viitorul
+        const k = format(d, "yyyy-MM-dd");
+        (map[k] ||= []).push(ev);
         busy.push(d);
       });
     });
 
-    const startM = startOfMonth(displayMonth);
-    const endM = endOfMonth(displayMonth);
-    const allDays = eachDayOfInterval({ start: startM, end: endM });
+    busy.sort((a, b) => a - b);
+    return { busyDates: busy, dayEventsMap: map };
+  }, [items, todayStart]);
 
-    const busyKeys = new Set(busy.map((d) => format(d, "yyyy-MM-dd")));
-    const free = allDays.filter((d) => !busyKeys.has(format(d, "yyyy-MM-dd")));
-
-    return { busyDates: busy, freeDates: free, dayEventsMap: map };
-  }, [items, displayMonth]);
+  // --- matcher pentru zile libere: viitor && nu e în busy ---
+  const freeMatcher = useMemo(() => {
+    const toKey = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const bset = new Set(busyDates.map(toKey));
+    return (date) => date >= todayStart && !bset.has(toKey(date));
+  }, [busyDates, todayStart]);
 
   async function handleCreate() {
     if (!isOwner || !range.from || !range.to) return;
@@ -236,7 +239,7 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
 
   return (
     <div className="w-full min-w-0">
-      {/* Buton vizibil DOAR dacă profilul e artist/location, userul e logat și nu e owner */}
+      {/* Buton „Book …” doar pentru vizitatori autentificați (nu owner) */}
       {canBook && !showCalendar && (
         <div className="mb-3">
           <Button className="w-full rounded-full h-10" onClick={() => setShowCalendar(true)}>
@@ -245,29 +248,60 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
         </div>
       )}
 
-      {/* Calendarul */}
       {(showCalendar || isOwner) && (
         <>
           <div className="rounded-2xl border p-2 overflow-hidden max-w-full">
             <DayPicker
+              locale={ro}
               mode="range"
+              weekStartsOn={1}
+              showOutsideDays
+              fixedWeeks
+              startMonth={todayStart}
               month={displayMonth}
-              onMonthChange={handleMonthChange} // menținem luna curentă pe ecran până se încarcă următoarea
+              onMonthChange={handleMonthChange}
+              disabled={{ before: todayStart }}      // trecutul e dezactivat
               selected={range}
               onSelect={setRange}
-              showOutsideDays
-              numberOfMonths={1}
-              onDayClick={(day) => setSelectedDay(day)}
-              modifiers={{ busy: busyDates, free: freeDates }}
-              modifiersClassNames={{
-                // cercuri compacte + spațiu între ele
-                busy: "bg-red-500 text-white rounded-full p-[2px]",
-                free: "bg-emerald-500 text-white rounded-full p-[2px]",
-              }}
-              className="rdp w-full max-w-full [--rdp-cell-size:34px]" // cercuri mai mici
+              onDayClick={(d) => setSelectedDay(d)}
+              // busy = roșu; free = toate celelalte zile din viitor
+              modifiers={{ busy: busyDates, free: freeMatcher }}
+              className="!bg-white !text-neutral-900 !p-0 !m-0"
               classNames={{
-                day: "rdp-day m-[4px] rounded-full",
-                caption_label: "text-xl font-semibold",
+                caption: "relative flex items-center justify-center mb-1",
+                caption_label: "text-base font-bold tracking-tight",
+                month_caption: "text-center mb-2",
+                nav: "flex justify-between",
+
+                // headerul zilelor (thead)
+                weekdays: "w-full",
+                weekday:
+                  "text-center py-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500",
+
+                // „tabelul” (v9 e tot <table>): îl lăsăm ca tabel, fix, full width
+                month_grid: "w-full table-fixed",
+
+                // ziua
+                day: "!text-center !p-0 !m-0",
+                day_button:
+                  "!m-0 !w-9 !h-9 !p-1 " +
+                  "!flex !items-center !justify-center " +
+                  "!text-base !font-semibold " +
+                  "!bg-transparent !border-0 !appearance-none " +
+                  "hover:!bg-neutral-100 focus:!outline-none !transition-none !shadow-none !cursor-pointer " +
+                  "!disabled:text-gray-300 !disabled:cursor-default !disabled:hover:!bg-transparent",
+
+                // zile din alte luni invizibile (dar păstrează înălțimea)
+                outside: "!text-gray-300",
+
+                // extra siguranță pentru disabled (gri)
+                disabled: "!text-gray-300",
+                button_next: "!bg-transparent",
+                button_previous: "!bg-transparent"
+              }}
+              modifiersClassNames={{
+                busy: "!text-red-500",
+                free: "text-emerald-500",
               }}
             />
 
@@ -275,28 +309,29 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
               <Legend />
             </div>
 
-            {isFetching && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Actualizez disponibilitatea pentru luna următoare…
-              </p>
-            )}
-
             {/* Panou detalii zi selectată */}
             {selectedDay && (
               <div className="mt-4 rounded-xl border p-3">
                 <div className="flex items-center justify-between">
-                  <div className="font-medium">{format(selectedDay, "EEEE, d LLLL yyyy")}</div>
+                  <div className="font-medium">
+                    {format(selectedDay, "EEEE, d LLLL yyyy")}
+                  </div>
                   <Button variant="secondary" size="lg" onClick={() => setSelectedDay(null)}>
                     Închide
                   </Button>
                 </div>
 
                 {eventsForSelected.length === 0 ? (
-                  <p className="text-sm text-muted-foreground mt-2">Nicio înregistrare în această zi.</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Nicio înregistrare în această zi.
+                  </p>
                 ) : (
                   <div className="mt-2 space-y-2">
                     {eventsForSelected.map((ev) => (
-                      <div key={ev.id} className="flex items-start justify-between gap-3 rounded-lg border p-2">
+                      <div
+                        key={ev.id}
+                        className="flex items-start justify-between gap-3 rounded-lg border p-2"
+                      >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <Badge variant={ev.status === "busy" ? "destructive" : "default"}>
@@ -304,10 +339,19 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
                             </Badge>
                             <div className="font-medium truncate">{ev.title}</div>
                           </div>
-                          {ev.notes ? <div className="text-sm text-muted-foreground mt-1 break-words">{ev.notes}</div> : null}
+                          {ev.notes ? (
+                            <div className="text-sm text-muted-foreground mt-1 break-words">
+                              {ev.notes}
+                            </div>
+                          ) : null}
                         </div>
                         {isOwner && (
-                          <Button variant="destructive" size="icon" onClick={() => handleDelete(ev.id)} title="Șterge blocarea">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => handleDelete(ev.id)}
+                            title="Șterge blocarea"
+                          >
                             <Trash2 className="size-4" />
                           </Button>
                         )}
@@ -335,68 +379,22 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
       )}
 
       {/* Dialog creare blocare */}
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Adaugă blocare de disponibilitate</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 gap-2">
-              <Label>Titlu</Label>
-              <Input
-                value={form.title}
-                onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))}
-                placeholder="Ex: Eveniment privat"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-2">
-              <Label>Notițe</Label>
-              <Textarea
-                value={form.notes}
-                onChange={(e) => setForm((s) => ({ ...s, notes: e.target.value }))}
-                placeholder="Detalii (opțional)"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-2">
-              <Label>Interval zile</Label>
-              <div className="rounded-md border p-2">
-                <DayPicker
-                  mode="range"
-                  selected={range}
-                  onSelect={setRange}
-                  showOutsideDays
-                  className="rdp"
-                  fromDate={new Date()}  // 🔒 doar azi încolo
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Sfârșitul este exclusiv (se salvează +1 zi automat).
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDialog(false)}>
-              Renunță
-            </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={
-                !isOwner ||
-                !range?.from ||
-                !range?.to ||
-                range.from < new Date().setHours(0, 0, 0, 0)
-              }
-            >
-              Salvează
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      <AddAvailabilityDialog
+        open={openDialog}
+        setOpen={setOpenDialog}
+        form={form}
+        setForm={setForm}
+        range={range}
+        setRange={setRange}
+        todayStart={todayStart}
+        handleCreate={handleCreate}
+        isOwner={isOwner}
+        // opțional – dacă vrei culorile busy/free și în dialog:
+        busyDates={busyDates}
+        freeMatcher={freeMatcher}
+        displayMonth={displayMonth}
+        onMonthChange={handleMonthChange}
+      />
 
     </div>
   );

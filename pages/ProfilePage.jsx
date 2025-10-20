@@ -15,6 +15,8 @@ import SocialSection from "../components/SocialSection";
 import MediaGallery from "../components/MediaGallery";
 import AvailabilityCalendar from "../components/AvailabilityCalendar";
 import DemosUploader from "../components/DemosUploader";
+import EditableDJEquipment from "../components/EditableDJEquipment";
+
 
 import { LogOut } from "lucide-react";
 
@@ -52,6 +54,11 @@ export default function ProfilePage() {
   const isTypeChosen = !!userData?.type;
   const isArtist = userData?.type === "artist";
   const isLocation = userData?.type === "location";
+  const goToGenre = (term) =>
+    navigate(`/search?q=${encodeURIComponent(term)}&type=genre`);
+
+  const goToPref = (term) =>
+    navigate(`/search?q=${encodeURIComponent(term)}&type=pref`);
 
   const normalizeRate = useCallback((v) => {
     if (v == null) return "";
@@ -211,13 +218,14 @@ export default function ProfilePage() {
     if (!userData) return 0;
     if (!isTypeChosen) return 0;
     const fields = isArtist
-      ? ["stageName", "realName", "bio", "genres", "rate", "instagram", "photoURL", "demos"]
-      : ["locationName", "address", "locationType", "capacity", "equipment", "acceptedGenres", "googleMaps", "schedule", "photoURL", "instagram"];
+      ? ["stageName", "realName", "bio", "genres", "djEquipment", "rate", "instagram", "photoURL", "demos"]
+      : ["locationName", "address", "locationType", "capacity", "djEquipment", "acceptedGenres", "googleMaps", "schedule", "photoURL", "instagram"];
     const filled = fields.filter((f) =>
       Array.isArray(userData[f]) ? userData[f].length > 0 : !!userData[f]
     );
     return Math.round((filled.length / fields.length) * 100);
   }, [userData, isTypeChosen, isArtist]);
+
 
   const imageSrc =
     userData?.photoURL ||
@@ -380,16 +388,26 @@ export default function ProfilePage() {
             {/* Secțiuni specifice tipului */}
             {isArtist && (
               <>
+                <EditableDJEquipment
+                  type="artist"
+                  value={userData.djEquipment}
+                  canEdit={isOwnProfile}
+                  onSave={(payload) => openConfirmModal({ field: "djEquipment", value: payload })}
+                />
+                {/* Preferinte / Specilizari */}
                 <EditableSpecializations
                   value={Array.isArray(userData.specializations) ? userData.specializations : []}
                   canEdit={isOwnProfile}
                   onSave={(arr) => openConfirmModal({ field: "specializations", value: arr })}
+                  onChipClick={goToPref}
                 />
 
+                {/* Genuri */}
                 <EditableGenres
                   value={Array.isArray(userData.genres) ? userData.genres : []}
                   canEdit={isOwnProfile}
                   onSave={(genres) => openConfirmModal({ field: "genres", value: genres })}
+                  onChipClick={goToGenre}
                 />
 
                 <section>
@@ -417,6 +435,13 @@ export default function ProfilePage() {
 
             {isLocation && (
               <>
+                <EditableDJEquipment
+                  type="location"
+                  value={userData.djEquipment}
+                  canEdit={isOwnProfile}
+                  onSave={(payload) => openConfirmModal({ field: "djEquipment", value: payload })}
+                />
+
                 <EditableGenres
                   value={Array.isArray(userData.acceptedGenres) ? userData.acceptedGenres : []}
                   canEdit={isOwnProfile}
@@ -454,14 +479,6 @@ export default function ProfilePage() {
                 maxHeight={5000}
               />
             </section>
-
-            {/* Social – comun */}
-            <SectionTitle>Social</SectionTitle>
-            <SocialSection
-              user={userData}
-              canEdit={isOwnProfile}
-              onConfirm={openConfirmModal}
-            />
           </div>
         </div>
       </div>

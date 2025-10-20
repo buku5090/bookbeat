@@ -1,0 +1,36 @@
+// src/data/events.js
+export const events = [
+  {
+    id: "evt-1",
+    title: "Room 5 – Electro Manele Party",
+    date: "2025-07-02T21:00:00",
+    venue: "Mechano Pub, Regie, București",
+    genres: ["Techno", "Manele"],
+    price: "30 RON",
+    cover: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=1200&auto=format&fit=crop",
+    description: "Party studențesc cu mix de techno și manele. ~200 participanți.",
+    status: "confirmed",
+  },
+  {
+    id: "evt-2",
+    title: "Deep House Night",
+    date: "2025-07-10T22:00:00",
+    venue: "Kong, București",
+    genres: ["Deep House"],
+    price: "Gratis",
+    cover: "https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?q=80&w=1200&auto=format&fit=crop",
+    description: "Selecție smooth de deep house, warm & groovy.",
+    status: "tentative",
+  },
+  {
+    id: "evt-3",
+    title: "Live Acoustic Session",
+    date: "2025-07-18T20:00:00",
+    venue: "Haraua Specialty Coffee",
+    genres: ["Acoustic", "Indie"],
+    price: "50 RON",
+    cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200&auto=format&fit=crop",
+    description: "Seară intimă cu artiști locali și atmosferă cozy.",
+    status: "confirmed",
+  },
+];
