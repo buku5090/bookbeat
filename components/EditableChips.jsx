@@ -115,7 +115,7 @@ export default function EditableChips({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="absolute -top-2 right-0 p-2 rounded !bg-white !px-3 !py-1 !text-gray-400 transition"
+                className="absolute right-0 !top-2 !p-3 rounded !bg-white !px-3 !py-1 !text-gray-400 transition"
                 title="Editează"
               >
                 <Pencil size={14} />

@@ -86,8 +86,9 @@ export default function Register() {
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-white text-black rounded-xl shadow-lg p-6">
         <h1 className="text-2xl font-bold mb-1">Creează cont</h1>
-        <p className="text-sm text-gray-600 mb-6">Cont unic, tipul îl alegi pe pagina de profil.</p>
-
+        <p className="text-sm text-gray-600 mb-6">
+          Creează-ți contul și intră în comunitate. Restul detaliilor le poți adăuga oricând din profil.
+        </p>
         {err && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">
             {err}
@@ -96,7 +97,7 @@ export default function Register() {
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm mb-1">Nume afișat</label>
+            <label className="block text-sm mb-1">Username</label>
             <input
               type="text"
               value={name}

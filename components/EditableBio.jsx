@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
+import SectionTitle from "./SectionTitle";
 
 /** Escape HTML simplu (pt. view mode) */
 function escapeHtml(s = "") {
@@ -72,15 +73,20 @@ export default function EditableBio({ value, canEdit, onSave, maxLength = 1000 }
   return (
     <div className="relative">
       {canEdit && !editing && (
-        <button
+        <div className="flex items-center justify-between">
+          <SectionTitle>Despre</SectionTitle>
+
+          <button
             onClick={start}
-            className="absolute -top-2 right-0 p-2 rounded !bg-white !px-3 !py-1 !text-gray-400 hover:!text-gray-600 transition"
+            className="right-0 !p-3 rounded !bg-white !text-gray-400 hover:!text-gray-600 transition"
             aria-label="Editează"
             title="Editează"
-        >
+          >
             <Pencil size={14} />
-        </button>
-        )}
+          </button>
+        </div>
+      )}
+
 
       {!editing ? (
         <div

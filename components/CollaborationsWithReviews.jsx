@@ -249,16 +249,17 @@ export default function CollaborationsWithReviews({
 
   return (
     <div className="relative">
-      {/* ascunde bara de scroll vizual (opțional) */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       <div className="relative">
-        {/* buton stânga */}
+        {/* ===== ARROW LEFT ===== */}
+
+        {/* Desktop (>= md): păstrăm butonul actual */}
         {showLeft && (
-          <div className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 z-10 px-1">
+          <div className="hidden md:block pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 z-10 px-1">
             <Button
               variant="secondary"
               className="pointer-events-auto shadow"
@@ -269,38 +270,55 @@ export default function CollaborationsWithReviews({
           </div>
         )}
 
-        {/* pista orizontală cu windowing */}
+        {/* Mobile/Tablet (< md): doar indicator vizual, fără click */}
+        {showLeft && (
+          <div className="md:hidden pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 z-10">
+            <div
+              aria-hidden
+              className="h-6 w-6 rounded-full bg-black/20 text-white/70 ring-1 ring-white/30 shadow-sm flex items-center justify-center text-xs"
+            >
+              ‹
+            </div>
+          </div>
+        )}
+
+        {/* Pista orizontală */}
         <div
           ref={containerRef}
-          className="no-scrollbar overflow-x-auto overflow-y-hidden"
+          className="no-scrollbar overflow-x-auto overflow-y-hidden relative"
           style={{ paddingBottom: 8 }}
         >
+          {/* Edge fades (opționale, doar pe mobil) */}
+          {canScroll && (
+            <>
+              {!atStart && (
+                <div className="md:hidden pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white/80 to-transparent" />
+              )}
+              {!atAbsoluteEnd && (
+                <div className="md:hidden pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white/80 to-transparent" />
+              )}
+            </>
+          )}
+
           <div
             className="flex items-stretch"
             style={{ width: Math.max(totalCount * ITEM_WIDTH, containerWidth || 0) }}
           >
-            {/* spacer stânga */}
             {leftPad > 0 && <div style={{ width: leftPad, flex: "0 0 auto" }} />}
-
-            {/* elemente vizibile */}
             {data.slice(startIndex, endIndex).map((c) => (
-              <div
-                key={c.id}
-                style={{ width: ITEM_WIDTH, flex: "0 0 auto" }}
-                className="px-2"
-              >
+              <div key={c.id} style={{ width: ITEM_WIDTH, flex: "0 0 auto" }} className="px-2">
                 <CollaborationCard collab={c} viewerSide={side} authUser={authUser} />
               </div>
             ))}
-
-            {/* spacer dreapta */}
             {rightPad > 0 && <div style={{ width: rightPad, flex: "0 0 auto" }} />}
           </div>
         </div>
 
-        {/* buton dreapta */}
+        {/* ===== ARROW RIGHT ===== */}
+
+        {/* Desktop (>= md): păstrăm butonul actual */}
         {showRight && (
-          <div className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 z-10 px-1">
+          <div className="hidden md:block pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 z-10 px-1">
             <Button
               variant="secondary"
               className="pointer-events-auto shadow"
@@ -308,6 +326,18 @@ export default function CollaborationsWithReviews({
             >
               →
             </Button>
+          </div>
+        )}
+
+        {/* Mobile/Tablet (< md): doar indicator vizual, fără click */}
+        {showRight && (
+          <div className="md:hidden pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 z-10">
+            <div
+              aria-hidden
+              className="h-6 w-6 rounded-full bg-black/20 text-white/70 ring-1 ring-white/30 shadow-sm flex items-center justify-center text-xs"
+            >
+              ›
+            </div>
           </div>
         )}
       </div>

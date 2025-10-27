@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "./uiux/dialog";
@@ -34,25 +34,44 @@ export default function AddAvailabilityDialog({
 }) {
   const noop = () => {};
 
-  // normalizare la miezul nopții pentru comparații rapide
+  // ————— helpers reset —————
+  const resetSelection = useCallback(() => {
+    // curăță selecția din calendar
+    setRange?.(undefined);
+  }, [setRange]);
+
+  const resetFormLight = useCallback(() => {
+    // păstrează alte câmpuri din form, curăță doar title/notes
+    setForm?.((s) => ({ ...s, title: "", notes: "" }));
+  }, [setForm]);
+
+  const handleClose = useCallback(() => {
+    resetSelection();
+    resetFormLight();
+    setOpen?.(false);
+  }, [resetSelection, resetFormLight, setOpen]);
+
+  const handleSave = useCallback(async () => {
+    // dacă ai nevoie să aștepți un API call, handleCreate poate fi async
+    await Promise.resolve(handleCreate?.());
+    handleClose();
+  }, [handleCreate, handleClose]);
+
+  // ————— busy dates utils —————
   const keyOf = (d) =>
     new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 
-  // set pentru lookup O(1) al zilelor ocupate
   const busySet = useMemo(
     () => new Set((busyDates || []).map(keyOf)),
     [busyDates]
   );
 
-  // zile libere = viitor && nu e busy
   const isFree = (date) => date >= todayStart && !busySet.has(keyOf(date));
 
-  // validare selecție: intervalul nu poate conține zile busy
   const handleRangeSelect = (next) => {
     if (!next?.from) return setRange({ from: undefined, to: undefined });
     if (!next.to) return setRange({ from: next.from, to: undefined });
 
-    // dacă tot intervalul e liber -> acceptă
     let ok = true;
     for (const d of eachDayOfInterval({ start: next.from, end: next.to })) {
       if (!isFree(d)) {
@@ -62,7 +81,6 @@ export default function AddAvailabilityDialog({
     }
     if (ok) return setRange(next);
 
-    // altfel, taie la ultima zi liberă înainte de prima zi ocupată
     let lastFree = next.from;
     for (const d of eachDayOfInterval({ start: next.from, end: next.to })) {
       if (!isFree(d)) break;
@@ -72,13 +90,22 @@ export default function AddAvailabilityDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        // când se închide din orice motiv, resetează selecția + formularul
+        if (!next) {
+          resetSelection();
+          resetFormLight();
+        }
+        setOpen(next);
+      }}
+    >
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Adaugă blocare de disponibilitate</DialogTitle>
         </DialogHeader>
 
-        {/* GRID: stânga calendar, dreapta detalii; pe mobil devine o coloană */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* STÂNGA: Calendar */}
           <div className="rounded-xl border p-3">
@@ -91,39 +118,24 @@ export default function AddAvailabilityDialog({
               startMonth={todayStart}
               month={displayMonth}
               onMonthChange={onMonthChange || noop}
-
-              // dezactivează trecutul și zilele ocupate
-              disabled={(date) =>
-                date < todayStart || busySet.has(keyOf(date))
-              }
-
+              disabled={(date) => date < todayStart || busySet.has(keyOf(date))}
               selected={range}
               onSelect={handleRangeSelect}
               onDayClick={onDayClick || noop}
-
-              // marcaje: ocupat (busy), liber (free)
               modifiers={{
                 busy: (d) => busySet.has(keyOf(d)),
                 free: (d) => isFree(d),
               }}
-
               className="!bg-white !text-neutral-900 !p-0 !m-0"
               classNames={{
-                // caption & nav
                 caption: "relative flex items-center justify-center mb-1",
                 caption_label: "text-base font-bold tracking-tight",
                 month_caption: "text-center mb-2",
                 nav: "flex justify-between",
-
-                // header zile (thead)
                 weekdays: "w-full",
                 weekday:
                   "text-center py-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500",
-
-                // „tabelul” lunii (v9)
                 month_grid: "w-full table-fixed",
-
-                // celula & buton zi – fără margini orizontale -> bandă continuă la range
                 day: "!text-center !p-0 !m-0",
                 day_button:
                   "!m-0 !w-9 !h-9 !p-0 " +
@@ -132,17 +144,11 @@ export default function AddAvailabilityDialog({
                   "!bg-transparent !border-0 !appearance-none " +
                   "hover:!bg-transparent focus:!outline-none !transition-none !shadow-none !cursor-pointer " +
                   "!disabled:text-gray-300 !disabled:cursor-default !disabled:hover:!bg-transparent",
-
-                // zile din alte luni invizibile (păstrează 6 rânduri fixe)
                 outside: "invisible",
-
-                // de siguranță pentru disabled
                 disabled: "!text-gray-300",
                 button_next: "!bg-transparent",
                 button_previous: "!bg-transparent",
               }}
-
-              // culori: busy/free + range conectat
               modifiersClassNames={{
                 busy: "!text-red-500",
                 free: "!text-emerald-500",
@@ -188,11 +194,11 @@ export default function AddAvailabilityDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={handleClose}>
             Renunță
           </Button>
           <Button
-            onClick={handleCreate}
+            onClick={handleSave}
             disabled={
               !isOwner || !range?.from || !range?.to || range.from < todayStart
             }

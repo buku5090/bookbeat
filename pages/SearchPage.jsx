@@ -20,6 +20,10 @@ const GENRES =
   GENRES_MOD.genres ||
   [];
 
+// hărți pentru potriviri rapide de gen
+const GENRES_LIST = Array.isArray(GENRES) ? GENRES : [];
+const GENRE_BY_NORM = new Map(GENRES_LIST.map((g) => [norm(g), g]));
+
 function bigrams(s) {
   const t = norm(s);
   const res = new Set();
@@ -49,23 +53,58 @@ const TYPE_BY_PREFIX = Object.fromEntries(
   Object.entries(TOKEN_TYPES).map(([k, v]) => [v, k])
 );
 
-// returnează [{type:'user'|'genre'|'pref'|'event'|'free', value:'text'}]
+// returnează { tokens, currentRaw } și unește free tokens în genuri multi-cuvânt
 function parseQuery(q) {
-  const parts = (q || "").split(/\s+/).filter((x) => x.length > 0);
-  const tokens = [];
+  const parts = (q || "").split(/\s+/).filter(Boolean);
+  const rawTokens = [];
   let currentRaw = "";
+
   for (const p of parts) {
     const prefix = p[0];
     const type = TYPE_BY_PREFIX[prefix];
     if (type) {
       const value = p.slice(1);
-      if (value.length) tokens.push({ type, value });
+      if (value.length) rawTokens.push({ type, value });
       else currentRaw = p;
     } else {
-      tokens.push({ type: "free", value: p });
+      rawTokens.push({ type: "free", value: p });
     }
   }
-  return { tokens, currentRaw };
+
+  // ── unește token-urile free adiacente dacă formează un gen cunoscut
+  const merged = [];
+  for (let i = 0; i < rawTokens.length; ) {
+    const t = rawTokens[i];
+    if (t.type !== "free") {
+      merged.push(t);
+      i++;
+      continue;
+    }
+
+    let j = i;
+    let bestEnd = -1;
+    let bestDisplay = null;
+    let phrase = "";
+    while (j < rawTokens.length && rawTokens[j].type === "free") {
+      phrase = (phrase ? phrase + " " : "") + rawTokens[j].value;
+      const hit = GENRE_BY_NORM.get(norm(phrase));
+      if (hit) {
+        bestEnd = j;
+        bestDisplay = hit;
+      }
+      j++;
+    }
+
+    if (bestEnd >= i) {
+      merged.push({ type: "genre", value: bestDisplay });
+      i = bestEnd + 1;
+    } else {
+      merged.push(t);
+      i++;
+    }
+  }
+
+  return { tokens: merged, currentRaw };
 }
 
 function itemTextBlobs(item) {
@@ -129,10 +168,10 @@ export default function SearchPage() {
       setRawQuery("");
       return;
     }
-    // dacă vine cu tip, adaugă prefixul corespunzător (ex: >house, <club)
-    const pref = TOKEN_TYPES[type] || ""; // dacă lipsesc, îl lăsăm free-text
+    const pref = TOKEN_TYPES[type] || "";
     const composed = pref ? `${pref}${qParam} ` : qParam;
     setRawQuery(composed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
   const [users, setUsers] = useState([]);
@@ -142,20 +181,19 @@ export default function SearchPage() {
   const { tokens } = useMemo(() => parseQuery(rawQuery), [rawQuery]);
   const [page, setPage] = useState(1);
 
-  // 2) (opțional) sincronizează inputul în URL, ca link shareable
+  // 2) sincronizează inputul în URL cu debounce 500ms (ca să nu-ți reseteze pagina la fiecare tastă)
   useEffect(() => {
-    // extragem un „q” lizibil (fără să stricăm prefixele)
-    const qForUrl = rawQuery.trim();
-    const params = new URLSearchParams(location.search);
-    // păstrăm &type doar dacă utilizatorul a venit cu el inițial;
-    // când user tastează liber, scoatem type (devine liber).
-    params.set("q", qForUrl);
-    params.delete("type");
-    // evită push-uri inutile
-    const next = `?${params.toString()}`;
-    if (next !== location.search) {
-      navigate({ pathname: "/search", search: next }, { replace: true });
-    }
+    const timeout = setTimeout(() => {
+      const qForUrl = rawQuery.trim();
+      const params = new URLSearchParams(location.search);
+      params.set("q", qForUrl);
+      params.delete("type");
+      const next = `?${params.toString()}`;
+      if (next !== location.search) {
+        navigate({ pathname: "/search", search: next }, { replace: true });
+      }
+    }, 500);
+    return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawQuery]);
 
@@ -172,7 +210,7 @@ export default function SearchPage() {
             id: u.id,
             name: u.name || u.displayName || "",
             username: u.username || "",
-            description: u.description || "",
+            description: u.bio || u.description || "",
             location: u.city || u.location || "",
             type: u.type, // artist | location
             photoURL: u.photoURL,
@@ -209,34 +247,34 @@ export default function SearchPage() {
     fetchData();
   }, []);
 
-  // ---- SUGESTII pentru tokenul curent ---------------------------------------
+  // ---- SUGESTII (include GENRES chiar și fără prefix) -----------------------
   const [suggestions, setSuggestions] = useState([]);
   useEffect(() => {
     const last = rawQuery.split(/\s+/).pop() || "";
     const prefix = last[0];
-    const type = TYPE_BY_PREFIX[prefix];
-    const needle = norm(last.slice(1));
+    const type = TYPE_BY_PREFIX[prefix]; // poate fi undefined
+    const needle = norm(type ? last.slice(1) : last);
 
-    if (!type || !prefix) {
+    // dacă nu scrie nimic, ascunde sugestiile
+    if (!needle) {
       setSuggestions([]);
       return;
     }
 
-    const poolUsers = users;
-    const poolEvents = events;
-
+    // surse de sugestii:
+    // - pentru genre -> din GENRES_LIST;
+    // - fără prefix -> tot genuri, ca UX „smart”;
+    // - pentru user/pref/event păstrăm logica inițială, dar prioritatea cerută e GENRES.
     let values = [];
-    if (type === "user") {
-      values = poolUsers.map((u) => u.name).filter(Boolean);
-    } else if (type === "genre") {
-      const fromUsers = poolUsers.flatMap((u) => u.genres || []);
-      const fromEvents = poolEvents.flatMap((e) => e.genres || []);
-      const fromList = Array.isArray(GENRES) ? GENRES : [];
-      values = [...fromUsers, ...fromEvents, ...fromList];
+
+    if (!type || type === "genre") {
+      values = GENRES_LIST.slice();
+    } else if (type === "user") {
+      values = users.map((u) => u.name).filter(Boolean);
     } else if (type === "pref") {
-      values = poolUsers.flatMap((u) => u.preferences || []);
+      values = users.flatMap((u) => u.preferences || []);
     } else if (type === "event") {
-      values = poolEvents.map((e) => e.title).filter(Boolean);
+      values = events.map((e) => e.title).filter(Boolean);
     }
 
     const uniq = Array.from(
@@ -244,32 +282,30 @@ export default function SearchPage() {
         values
           .map((v) => v?.toString?.() || "")
           .filter(Boolean)
-          .sort((a, b) => a.localeCompare(b))
       )
     );
 
     const filtered =
-      needle.length === 0
-        ? uniq.slice(0, 6)
-        : uniq
-            .map((v) => ({ v, sc: Math.max(dice(needle, norm(v)), 0) }))
-            .filter((x) => x.sc > 0.2 || norm(x.v).includes(needle))
-            .sort((a, b) => b.sc - a.sc)
-            .slice(0, 6)
-            .map((x) => x.v);
+      uniq
+        .map((v) => ({ v, sc: Math.max(dice(needle, norm(v)), 0) }))
+        .filter((x) => x.sc > 0.2 || norm(x.v).includes(needle))
+        .sort((a, b) => b.sc - a.sc || a.v.localeCompare(b.v))
+        .slice(0, 10)
+        .map((x) => x.v);
 
     setSuggestions(filtered);
   }, [rawQuery, users, events]);
 
   const applySuggestion = (s) => {
-    const parts = rawQuery.split(/\s+/);
-    if (parts.length === 0) {
-      setRawQuery(s);
-      return;
-    }
-    const prefix = parts[parts.length - 1][0];
+    const parts = rawQuery.trimRight().split(/\s+/);
+    const last = parts[parts.length - 1] || "";
+    const hasPrefix = !!TYPE_BY_PREFIX[last[0]];
+
+    // dacă ultimul token are prefix, îl păstrăm; altfel, forțăm prefix de gen ">"
+    const prefix = hasPrefix ? last[0] : ">";
     parts[parts.length - 1] = `${prefix}${s}`;
-    setRawQuery(parts.join(" ") + " ");
+    const next = parts.join(" ") + " ";
+    setRawQuery(next);
   };
 
   const removeToken = (idx) => {
@@ -327,10 +363,87 @@ export default function SearchPage() {
   const totalPages = Math.max(1, Math.ceil(scored.length / PAGE_SIZE));
   const pageSlice = scored.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // ---- card renderer (același layout / mărime fixă) -------------------------
+  const renderCard = ({ item, allMatch }) => {
+    const isUser = item.kind === "user";
+    const title = isUser ? (item.name || "Profil") : (item.title || "Eveniment");
+    const subtitle = isUser
+      ? (item.location || "—")
+      : (item.venueName || item.location || "—");
+    const badgeText = isUser ? item.type : "event";
+    const imgSrc =
+      (isUser ? item.photoURL : item.cover) ||
+      (isUser
+        ? `https://placehold.co/800x450?text=${encodeURIComponent(item.type || "user")}`
+        : `https://placehold.co/800x450?text=Event`);
+
+    const href = isUser ? `/user/${item.id}` : `/event/${item.id}`;
+    const tags = (item.genres || []).slice(0, 3);
+
+    return (
+      <li key={`${item.kind}-${item.id}`} className="h-full">
+        <Link
+          to={href}
+          className="group block h-full bg-white text-black rounded-xl overflow-hidden shadow-lg hover:shadow-violet-400 hover:scale-[1.01] transition"
+        >
+          {/* imagine 16:9 */}
+          <div className="w-full aspect-[16/9] overflow-hidden bg-gray-100">
+            <img
+              src={imgSrc}
+              alt={title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              loading="lazy"
+            />
+          </div>
+
+          {/* conținut – înălțime egală */}
+          <div className="p-4 flex flex-col h-[210px]">
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                  isUser
+                    ? "bg-pink-100 text-pink-700"
+                    : "bg-violet-100 text-violet-700"
+                }`}
+              >
+                {badgeText}
+              </span>
+              {allMatch && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                  potrivire completă
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-lg font-bold mt-2 line-clamp-1">{title}</h2>
+            <p className="text-xs text-gray-600 line-clamp-1">{subtitle}</p>
+
+            <p className="text-gray-700 text-sm mt-2 line-clamp-2">
+              {item.description}
+            </p>
+
+            <div className="flex-1" />
+
+            <div className="mt-3 flex gap-2 flex-wrap">
+              {tags.map((g) => (
+                <span
+                  key={g}
+                  className="text-[11px] px-2 py-1 rounded-full bg-gray-100"
+                >
+                  {g}
+                </span>
+              ))}
+            </div>
+          </div>
+        </Link>
+      </li>
+    );
+  };
+
   // ---- render ---------------------------------------------------------------
   return (
     <div className="min-h-screen bg-black text-white md:px-4 md:py-8">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-6 text-center">Căutare</h1>
 
         {/* bara de căutare */}
@@ -354,7 +467,7 @@ export default function SearchPage() {
                 className="inline-flex items-center gap-2 rounded-full border border-violet-600 bg-black/40 px-3 py-1 text-sm"
               >
                 <span className="opacity-80">
-                  {TOKEN_TYPES[t.type] || ""}
+                  {t.type === "genre" ? ">" : TOKEN_TYPES[t.type] || ""}
                   {t.value}
                 </span>
                 <button
@@ -368,9 +481,9 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* sugestii autocomplete */}
+        {/* sugestii autocomplete (din GENRES + altele în funcție de context) */}
         {suggestions.length > 0 && (
-          <ul className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          <ul className="mb-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
             {suggestions.map((s) => (
               <li key={s}>
                 <button
@@ -391,90 +504,9 @@ export default function SearchPage() {
           </div>
         ) : pageSlice.length > 0 ? (
           <>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {pageSlice.map(({ item, allMatch }) =>
-                item.kind === "user" ? (
-                  <li key={item.id}>
-                    <Link
-                      to={`/user/${item.id}`}
-                      className="block bg-white text-black rounded-xl overflow-hidden shadow-lg transition hover:shadow-violet-400 hover:scale-[1.02]"
-                    >
-                      <img
-                        src={
-                          item.photoURL ||
-                          `https://placehold.co/600x320?text=${item.type}`
-                        }
-                        alt={item.name}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="p-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs uppercase font-bold text-pink-600">
-                            {item.type}
-                          </span>
-                          {allMatch && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
-                              potrivire completă
-                            </span>
-                          )}
-                        </div>
-                        <h2 className="text-xl font-bold mt-1">{item.name}</h2>
-                        <p className="text-gray-700 mt-1 line-clamp-2">
-                          {item.description}
-                        </p>
-                        <div className="mt-2 flex gap-2 flex-wrap">
-                          {(item.genres || []).slice(0, 3).map((g) => (
-                            <span
-                              key={g}
-                              className="text-xs px-2 py-1 rounded-full bg-gray-100"
-                            >
-                              {g}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </Link>
-                  </li>
-                ) : (
-                  <li key={item.id}>
-                    <Link
-                      to={`/event/${item.id}`}
-                      className="block bg-white text-black rounded-xl overflow-hidden shadow-lg transition hover:shadow-violet-400 hover:scale-[1.02]"
-                    >
-                      <img
-                        src={item.cover || `https://placehold.co/600x320?text=Event`}
-                        alt={item.title}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="p-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs uppercase font-bold text-violet-600">
-                            event
-                          </span>
-                          {allMatch && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
-                              potrivire completă
-                            </span>
-                          )}
-                        </div>
-                        <h2 className="text-xl font-bold mt-1">{item.title}</h2>
-                        <p className="text-gray-700 mt-1 line-clamp-2">
-                          {item.description}
-                        </p>
-                        <div className="mt-2 flex gap-2 flex-wrap">
-                          {(item.genres || []).slice(0, 3).map((g) => (
-                            <span
-                              key={g}
-                              className="text-xs px-2 py-1 rounded-full bg-gray-100"
-                            >
-                              {g}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </Link>
-                  </li>
-                )
+                renderCard({ item, allMatch })
               )}
             </ul>
 
@@ -500,7 +532,12 @@ export default function SearchPage() {
             </div>
           </>
         ) : (
-          <p className="text-center text-gray-300">Nimic găsit.</p>
+          <div className="text-center text-gray-300 mt-10">
+            <p className="mb-3">Nimic găsit pentru interogarea ta.</p>
+            <p className="text-sm opacity-80">
+              Sugestie: încearcă un gen (ex: <code>&gt;house</code>), un user (ex: <code>@andrei</code>) sau un eveniment (ex: <code>#room5</code>).
+            </p>
+          </div>
         )}
       </div>
     </div>

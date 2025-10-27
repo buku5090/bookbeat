@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { Pencil } from "lucide-react";
 import AvatarCropModal from "./AvatarCropModal";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -6,6 +6,7 @@ import { storage } from "../src/firebase";
 
 export default function ProfileAvatarWithProgress({
   imageSrc,
+  // acceptă fie number 0..100, fie { percent, missing }
   progress = 0,
   size = 128,
   strokeWidth = 8,
@@ -17,44 +18,67 @@ export default function ProfileAvatarWithProgress({
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  // —— unificare progress: number sau { percent, missing }
+  const percent = useMemo(() => {
+    const p =
+      typeof progress === "number"
+        ? progress
+        : typeof progress === "object" && progress
+        ? progress.percent ?? 0
+        : 0;
+    return Math.max(0, Math.min(100, Number(p) || 0));
+  }, [progress]);
+
+  const strokeColor = percent < 33 ? "#ef4444" : percent < 66 ? "#f59e0b" : "#22c55e";
+  const radius = size / 2 - strokeWidth / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = ((100 - percent) / 100) * circumference;
+  const innerSize = size - strokeWidth * 2;
+  const imageSize = innerSize - avatarPadding * 2;
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    const isGif = file.type === "image/gif";
-    if (isGif) {
-      const filename = `avatars/${Date.now()}.gif`;
-      const imageRef = ref(storage, filename);
-      uploadBytes(imageRef, file).then(async () => {
+    try {
+      const isGif = file.type === "image/gif";
+      if (isGif) {
+        const filename = `avatars/${Date.now()}.gif`;
+        const imageRef = ref(storage, filename);
+        await uploadBytes(imageRef, file);
         const downloadURL = await getDownloadURL(imageRef);
-        handleAvatarChange(downloadURL);
-      });
-    } else {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-        setCropModalOpen(true);
-      };
-      reader.readAsDataURL(file);
+        handleAvatarChange?.(downloadURL);
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setSelectedImage(reader.result);
+          setCropModalOpen(true);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      // opțional: poți adăuga un toast/alert aici
+    } finally {
+      // reset input ca să poți reselecta același fișier ulterior
+      e.target.value = "";
     }
   };
 
   const handleCropComplete = async (croppedBlob) => {
-    const filename = `avatars/${Date.now()}.jpg`;
-    const imageRef = ref(storage, filename);
-    await uploadBytes(imageRef, croppedBlob);
-    const downloadURL = await getDownloadURL(imageRef);
-    handleAvatarChange(downloadURL);
-    setCropModalOpen(false);
+    try {
+      const filename = `avatars/${Date.now()}.jpg`;
+      const imageRef = ref(storage, filename);
+      await uploadBytes(imageRef, croppedBlob);
+      const downloadURL = await getDownloadURL(imageRef);
+      handleAvatarChange?.(downloadURL);
+    } catch (err) {
+      console.error("Avatar crop upload error:", err);
+    } finally {
+      setCropModalOpen(false);
+      setSelectedImage(null);
+    }
   };
-
-  const p = Math.max(0, Math.min(100, progress));
-  const strokeColor = p < 33 ? "#ef4444" : p < 66 ? "#f59e0b" : "#22c55e";
-  const radius = size / 2 - strokeWidth / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = ((100 - p) / 100) * circumference;
-  const innerSize = size - strokeWidth * 2;
-  const imageSize = innerSize - avatarPadding * 2;
 
   return (
     <>
@@ -65,6 +89,7 @@ export default function ProfileAvatarWithProgress({
             height={size}
             className="absolute inset-0 z-0"
             style={{ transform: "rotate(-90deg)" }}
+            aria-hidden="true"
           >
             <circle
               cx={size / 2}
@@ -106,6 +131,7 @@ export default function ProfileAvatarWithProgress({
             alt="avatar"
             className="rounded-full object-cover w-full h-full block"
             style={{ width: imageSize, height: imageSize }}
+            draggable={false}
           />
         </div>
 
@@ -113,10 +139,13 @@ export default function ProfileAvatarWithProgress({
         {canEdit && (
           <>
             <button
-              onClick={() => fileInputRef.current.click()}
-              className="w-10 h-10 absolute bottom-0 right-0 z-10 !bg-white !rounded-full border border-gray-300 grid place-items-center !p-0"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-10 h-10 absolute bottom-0 right-0 z-10 bg-white rounded-full border border-gray-300 grid place-items-center p-0"
+              aria-label="Schimbă fotografia de profil"
+              title="Schimbă fotografia de profil"
             >
-              <Pencil size={14} className="text-gray-400 align-center" />
+              <Pencil size={14} className="text-gray-400" />
             </button>
 
             <input
@@ -133,7 +162,10 @@ export default function ProfileAvatarWithProgress({
       {cropModalOpen && selectedImage && (
         <AvatarCropModal
           image={selectedImage}
-          onCancel={() => setCropModalOpen(false)}
+          onCancel={() => {
+            setCropModalOpen(false);
+            setSelectedImage(null);
+          }}
           onCropComplete={handleCropComplete}
         />
       )}

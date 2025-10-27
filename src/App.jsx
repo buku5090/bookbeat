@@ -6,6 +6,7 @@ import {
   Route,
   Navigate,
   useParams,
+  useLocation,
 } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
@@ -25,6 +26,7 @@ import AdminPage from "../pages/AdminPage";
 import Footer from "../components/Footer";
 import Onboarding from "../components/Onboarding";
 import CompleteProfile from "../components/CompleteProfile";
+import ScrollToTop from "../components/ScrollToTop";
 import NotificationsPage from "../pages/NotificationsPage";
 import EventDetailsPage from "../pages/EventDetailsPage";
 import Test from "../pages/Test";
@@ -35,28 +37,30 @@ function ProfileIdAlias() {
   return <Navigate to={`/user/${id}`} replace />;
 }
 
-function App() {
-  const { loading } = useAuth();
+function AppShell() {
+  const location = useLocation();
 
-  if (loading) return <LoadingPage />;
-
+  // folosim location.key (unic la fiecare navigare) pentru a remonta TOT layout-ul
   return (
-    <Router>
+    <div key={location.key}>
       <MainMenu />
 
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/discover" element={<DiscoverPage />} />
+
+        {/* IMPORTANT: param obligatoriu + redirect separat */}
+        <Route path="/discover/:page" element={<DiscoverPage />} />
+        <Route path="/discover" element={<Navigate to="/discover/1" replace />} />
+
         <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/:id" element={<EventDetailsPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/notificari" element={<NotificationsPage />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/events/:id" element={<EventDetailsPage />} />
 
         {/* Profilul MEU (fără id) – protejat */}
         <Route
@@ -84,6 +88,18 @@ function App() {
       </Routes>
 
       <Footer />
+    </div>
+  );
+}
+
+function App() {
+  const { loading } = useAuth();
+  if (loading) return <LoadingPage />;
+
+  return (
+    <Router>
+      <ScrollToTop />
+      <AppShell />
     </Router>
   );
 }

@@ -1,5 +1,6 @@
 // components/EditableDJEquipment.jsx
 import { useEffect, useState } from "react";
+import { Pencil } from "lucide-react";
 import SectionTitle from "./SectionTitle";
 import { Button } from "./uiux";
 
@@ -22,7 +23,7 @@ const OPTIONS_BY_TYPE = {
 
 export default function EditableDJEquipment({
   type = "artist",                // "artist" | "location"
-  value,                          // poate fi string sau { preset, notes }
+  value,                          // string sau { preset, notes }
   canEdit = false,
   onSave,                         // primește { preset, notes }
 }) {
@@ -39,7 +40,6 @@ export default function EditableDJEquipment({
   const [notes, setNotes] = useState(initial.notes);
 
   useEffect(() => {
-    // sincronizare când vin date noi din Firestore
     const next = (() => {
       if (!value) return { preset: "", notes: "" };
       if (typeof value === "string") return { preset: value, notes: "" };
@@ -61,25 +61,23 @@ export default function EditableDJEquipment({
 
   return (
     <section>
-      <SectionTitle
-        actions={
-          canEdit && !editing ? (
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="text-sm underline decoration-dotted"
-            >
-              Editează
-            </button>
-          ) : null
-        }
-      >
-        Echipament DJ
-      </SectionTitle>
-
       {/* VIEW */}
       {!editing && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="relative bg-white">
+          {/* buton edit identic cu EditableField */}
+          {canEdit && !editing && (
+            <div className="flex items-center justify-between">
+                <SectionTitle>Echipament DJ</SectionTitle>
+                <button
+                    onClick={() => setEditing(true)}
+                    aria-label="Editează"
+                    className="absolute right-0 !bg-white !px-3 !py-1 !text-gray-400 hover:text-gray-700 transition rounded"
+                        >
+                        <Pencil size={14} />
+                </button>
+            </div>
+          )}
+
           {preset ? (
             <>
               <p className="font-medium">{preset}</p>
@@ -131,7 +129,14 @@ export default function EditableDJEquipment({
           </div>
 
           <div className="flex gap-2 justify-end">
-            <Button variant="secondary" onClick={() => { setEditing(false); setPreset(initial.preset); setNotes(initial.notes); }}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setEditing(false);
+                setPreset(initial.preset);
+                setNotes(initial.notes);
+              }}
+            >
               Anulează
             </Button>
             <Button variant="primary" onClick={handleSave} disabled={!preset}>
