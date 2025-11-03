@@ -50,10 +50,21 @@ export function EditableField({
           {isPrice && (
             <label className="flex items-center gap-2 text-sm">
               <input
-                type="checkbox"
-                checked={isFree}
-                onChange={() => setIsFree(!isFree)}
+                className={`border p-2 w-full rounded text-sm ${isFree ? "bg-gray-100" : ""}`}
+                value={localValue}
+                onChange={(e) => setLocalValue(e.target.value)}
+                onInput={(e) => {
+                  if (type === "number") e.target.value = e.target.value.replace(/\D/g, "");
+                }}
+                onKeyDown={(e) => {
+                  if (type === "number" && ["e", "E", "+", "-", "."].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                type={isPrice ? "number" : type}
+                disabled={isFree}
               />
+
               Este gratis
             </label>
           )}

@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable no-undef */
 // pages/ProfilePage.jsx
+
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { auth, db, storage } from "../src/firebase";
 import { doc, deleteDoc, updateDoc, onSnapshot as onDocSnapshot } from "firebase/firestore";
@@ -21,15 +22,26 @@ import { LogOut } from "lucide-react";
 import LoadingPage from "./LoadingPage";
 import EditableSpecializations from "../components/EditableSpecializations";
 import EditableBio from "../components/EditableBio";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/uiux";
+import { Button } from "../components/uiux";
 
 import SectionTitle from "../components/SectionTitle";
 import CollaborationsWithReviews from "../components/CollaborationsWithReviews";
 import ReviewsSummaryFromCollabs from "../components/ReviewsSummaryFromCollabs";
 import AccountTypeSwitcher from "../components/AccountTypeSwitcher";
+import LocationAddressSimple from "../components/LocationAddressSimple";
+import KYCDialog from "../components/KYCDialog";
+import cities from "../src/data/cities";
 
 /* ----------------------------- Helpers (local) ----------------------------- */
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// taie tot ce nu e cifră
+const toNumberOnly = (v) => {
+  if (v == null) return null;
+  const digits = String(v).replace(/[^\d]/g, "");
+  if (!digits) return null;
+  return Number(digits);
+};
 
 /* ============================== PAGE ============================== */
 export default function ProfilePage() {
@@ -41,17 +53,9 @@ export default function ProfilePage() {
   const [authUser, setAuthUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [pendingUpdate, setPendingUpdate] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   // KYC modal (buletin)
   const [kycOpen, setKycOpen] = useState(false);
-  const [kycFront, setKycFront] = useState(null);
-  const [kycBack, setKycBack] = useState(null);
-  const [kycLoading, setKycLoading] = useState(false);
-  const [kycError, setKycError] = useState("");
 
   const isOwnProfile = useMemo(() => !id || (authUser && authUser.uid === id), [id, authUser]);
   const profileUid = useMemo(() => id || authUser?.uid, [id, authUser]);
@@ -114,10 +118,64 @@ export default function ProfilePage() {
     };
   }, [id, navigate]);
 
+  // doar ca să nu mai existe dialogul vechi pe schimbarea rutei
   useEffect(() => {
-    setModalOpen(false);
+    // nimic aici acum
   }, [location.pathname]);
 
+  /* ------------------------------------------------------------------ */
+  /* 1. helper general: salvează direct în Firestore, fără dialog       */
+  /* ------------------------------------------------------------------ */
+  const applyUpdate = useCallback(
+    async ({ field, value }) => {
+      if (!authUser) return;
+      const userRef = doc(db, "users", authUser.uid);
+
+      // ștergere cont – păstrăm confirmare de browser
+      if (field === "deleteAccount") {
+        const ok = window.confirm("Ești sigur că vrei să ștergi contul? Acțiunea e definitivă.");
+        if (!ok) return;
+        try {
+          await deleteDoc(userRef);
+        } catch (e) {
+          console.warn("Nu s-a putut șterge documentul:", e?.message || e);
+        }
+        try {
+          await deleteUser(authUser);
+        } catch (e) {
+          if (e?.code === "auth/requires-recent-login") {
+            await signOut(auth);
+            navigate("/login");
+            return;
+          }
+          throw e;
+        }
+        await signOut(auth);
+        setUserData(null);
+        navigate("/", { replace: true });
+        return;
+      }
+
+      // toggle tip cont
+      if (field === "type") {
+        const currentType = userData?.type ?? "user";
+        const clickedType = value;
+        value = currentType === clickedType ? "user" : clickedType;
+      }
+
+      try {
+        await updateDoc(userRef, { [field]: value });
+        setUserData((prev) => ({ ...prev, [field]: value }));
+      } catch (err) {
+        console.error("Eroare la salvare imediată:", err);
+      }
+    },
+    [authUser, navigate, userData]
+  );
+
+  /* ------------------------------------------------------------------ */
+  /* 2. upload avatar -> salvează direct                                */
+  /* ------------------------------------------------------------------ */
   const uploadAvatarAndGetUrl = useCallback(
     async (file) => {
       if (!authUser || !file) throw new Error("Nu ești autentificat sau nu există fișier.");
@@ -137,80 +195,19 @@ export default function ProfilePage() {
   const handleAvatarChange = useCallback(
     async (payload) => {
       try {
-        setErrorMsg("");
         let url = null;
         if (typeof payload === "string" && payload.startsWith("http")) url = payload;
         else if (payload?.target?.files?.[0]) url = await uploadAvatarAndGetUrl(payload.target.files[0]);
         else if (payload instanceof File) url = await uploadAvatarAndGetUrl(payload);
         else return;
-        setPendingUpdate({ field: "photoURL", value: url });
-        setModalOpen(true);
+
+        await applyUpdate({ field: "photoURL", value: url });
       } catch (err) {
         console.error(err);
-        setErrorMsg(err.message || "Eroare la uploadul avatarului.");
       }
     },
-    [uploadAvatarAndGetUrl]
+    [uploadAvatarAndGetUrl, applyUpdate]
   );
-
-  const openConfirmModal = useCallback(({ field, value }) => {
-    setPendingUpdate({ field, value });
-    setModalOpen(true);
-  }, []);
-
-  const confirmSave = useCallback(async () => {
-    if (!authUser || !pendingUpdate) return;
-    setSaving(true);
-    setErrorMsg("");
-
-    try {
-      const userRef = doc(db, "users", authUser.uid);
-      let { field, value } = pendingUpdate;
-
-      // ȘTERGERE CONT
-      if (field === "deleteAccount") {
-        try {
-          await deleteDoc(userRef);
-        } catch (e) {
-          console.warn("Nu s-a putut șterge documentul:", e?.message || e);
-        }
-        try {
-          await deleteUser(authUser);
-        } catch (e) {
-          if (e?.code === "auth/requires-recent-login") {
-            setErrorMsg("Pentru a șterge contul, trebuie să te reconectezi. Te redirecționez acum.");
-            await signOut(auth);
-            navigate("/login");
-            setSaving(false);
-            return;
-          }
-          throw e;
-        }
-        await signOut(auth);
-        setUserData(null);
-        setAuthUser(null);
-        navigate("/", { replace: true });
-        return;
-      }
-
-      // Toggle tip cont
-      if (field === "type") {
-        const currentType = userData?.type ?? "user";
-        const clickedType = value;
-        value = currentType === clickedType ? "user" : clickedType;
-      }
-
-      await updateDoc(userRef, { [field]: value });
-      setUserData((prev) => ({ ...prev, [field]: value }));
-      setPendingUpdate(null);
-      setModalOpen(false);
-    } catch (err) {
-      console.error("Eroare confirmSave:", err);
-      setErrorMsg("A apărut o eroare la salvare. Încearcă din nou.");
-    } finally {
-      setSaving(false);
-    }
-  }, [authUser, pendingUpdate, userData, navigate]);
 
   /* ---------------------------- DEMO LINKS (artist) ---------------------------- */
   const addDemos = useCallback(
@@ -253,14 +250,25 @@ export default function ProfilePage() {
     return userData?.name || "Utilizator";
   }, [isArtist, isLocation, userData]);
 
-  const handleUsernameSave = useCallback(
-    (val) => {
-      if (!isTypeChosen) return openConfirmModal({ field: "name", value: val });
-      if (isArtist) return openConfirmModal({ field: "stageName", value: val });
-      return openConfirmModal({ field: "locationName", value: val });
-    },
-    [isTypeChosen, isArtist, openConfirmModal]
-  );
+  // NEW: badge "Nou" dacă profilul a fost creat în ultimele 3 zile
+  const isNewAccount = useMemo(() => {
+    try {
+      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+      let createdAtMs = null;
+      // Folosește users.createdAt (Firestore Timestamp) dacă există
+      if (userData?.createdAt?.toMillis) {
+        createdAtMs = userData.createdAt.toMillis();
+      }
+      // Fallback: metadata din Firebase Auth
+      if (!createdAtMs && authUser?.metadata?.creationTime) {
+        createdAtMs = Date.parse(authUser.metadata.creationTime);
+      }
+      if (!createdAtMs || Number.isNaN(createdAtMs)) return false;
+      return Date.now() - createdAtMs <= THREE_DAYS_MS;
+    } catch {
+      return false;
+    }
+  }, [userData?.createdAt, authUser?.metadata?.creationTime]);
 
   // progress bar (simplu)
   const progress = useMemo(() => {
@@ -282,9 +290,10 @@ export default function ProfilePage() {
           { key: "locationName", label: "numele locației" },
           { key: "capacity", label: "capacitatea" },
           { key: "djEquipment", label: "echipamentul" },
-          { key: "acceptedGenres", label: "genurile acceptate" },
           { key: "photoURL", label: "fotografia locației" },
-          { key: "mapLocation", label: "harta" },
+          { key: "address", label: "adresa" },
+          { key: "budget", label: "bugetul" },
+          { key: "city", label: "orașul" },
         ];
 
     const filled = fields.filter((f) => {
@@ -347,7 +356,7 @@ export default function ProfilePage() {
         )}
 
         <div className="md:flex gap-10">
-          {/* Stânga */}
+          {/* STÂNGA */}
           <div className="w-full md:w-1/4 flex flex-col items-center md:items-start">
             <div className="relative w-[128px] h-[128px] rounded-full overflow-visible">
               <ProfileAvatarWithProgress
@@ -360,16 +369,86 @@ export default function ProfilePage() {
             </div>
 
             {/* Nume + badge-uri */}
-            <EditableField
-              value={username}
-              placeholder="Nume profil"
-              canEdit={isOwnProfile}
-              onSave={handleUsernameSave}
-              inputClassName="text-2xl font-bold"
-            />
+            {/* Nume (non-editabil in pagina de profil) */}
+            <SectionTitle>{username}</SectionTitle>
+
+            {/* Oraș / Comună — identic pentru artist și locație */}
+            <div className="mt-3 w-full">
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Oraș / Comună</label>
+              {isOwnProfile ? (
+                <CityAutocomplete
+                  value={userData.city || ""}
+                  onChange={(val) => applyUpdate({ field: "city", value: String(val).trim() })}
+                  options={cities}
+                  placeholder="ex: București"
+                />
+              ) : (
+                <div className="border rounded-lg px-3 py-2 bg-gray-100 text-gray-800">
+                  {userData.city || "—"}
+                </div>
+              )}
+            </div>
+
+            {/* doar pentru locații: capacitate + buget */}
+            {isLocation && (
+              <div className="mt-2 w-full space-y-2">
+                {/* CAPACITATE – numeric only */}
+                <EditableField
+                  label="Capacitate"
+                  value={Number.isFinite(userData.capacity) ? String(userData.capacity) : ""}
+                  placeholder="ex: 120"
+                  canEdit={isOwnProfile}
+                  inputProps={{
+                    inputMode: "numeric",
+                    pattern: "[0-9]*",
+                    onInput: (e) => {
+                      // taie orice nu e cifră
+                      e.target.value = e.target.value.replace(/\D/g, "");
+                    },
+                    onKeyDown: (e) => {
+                      // blochează e, E, +, -, .
+                      if (["e", "E", "+", "-", "."].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    },
+                  }}
+                  onSave={(val) => {
+                    const num = toNumberOnly(val);
+                    applyUpdate({
+                      field: "capacity",
+                      value: num,
+                    });
+                  }}
+                />
+
+                {/* BUGET – numeric only */}
+                <EditableField
+                  label="Buget (RON)"
+                  value={typeof userData.budget === "number" ? String(userData.budget) : ""}
+                  placeholder="ex: 500"
+                  canEdit={isOwnProfile}
+                  inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+                  onSave={(val) => {
+                    const num = toNumberOnly(val);
+                    applyUpdate({
+                      field: "budget",
+                      value: num,
+                    });
+                  }}
+                />
+              </div>
+            )}
 
             {/* Badges vizuale */}
             <div className="flex flex-wrap items-center gap-2 mt-2">
+              {isNewAccount && (
+                <span
+                  title="Profil creat recent"
+                  className="text-xs font-semibold uppercase bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1"
+                >
+                  <span>✨</span> Nou
+                </span>
+              )}
               {userData?.promoted && (
                 <span className="text-xs font-semibold uppercase bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
                   Promovat
@@ -387,18 +466,10 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <EditableField
-              value={userData.realName || "Anonim"}
-              placeholder="Nume real"
-              canEdit={isOwnProfile}
-              onSave={(val) => openConfirmModal({ field: "realName", value: val })}
-              inputClassName="text-sm text-gray-500 mb-3"
-            />
-
             {isOwnProfile && (
               <AccountTypeSwitcher
                 value={userData?.type}
-                onConfirm={openConfirmModal}
+                onConfirm={applyUpdate}
                 disabled={!isOwnProfile}
                 className="w-full"
               />
@@ -415,18 +486,8 @@ export default function ProfilePage() {
                   value={normalizedRate}
                   isPrice
                   canEdit={isOwnProfile}
-                  onSave={(val) => openConfirmModal({ field: "rate", value: normalizeRate(val) })}
+                  onSave={(val) => applyUpdate({ field: "rate", value: normalizeRate(val) })}
                   inputClassName={rateClass}
-                />
-              )}
-
-              {isArtist && (
-                <EditableField
-                  label="Oraș"
-                  value={userData.city || ""}
-                  placeholder="ex: București"
-                  canEdit={isOwnProfile}
-                  onSave={(val) => openConfirmModal({ field: "city", value: String(val).trim() })}
                 />
               )}
 
@@ -436,7 +497,7 @@ export default function ProfilePage() {
                   <span className="text-sm font-medium">Promovat</span>
                   <Button
                     variant={userData?.promoted ? "secondary" : "primary"}
-                    onClick={() => openConfirmModal({ field: "promoted", value: !userData?.promoted })}
+                    onClick={() => applyUpdate({ field: "promoted", value: !userData?.promoted })}
                   >
                     {userData?.promoted ? "Dezactivează" : "Activează"}
                   </Button>
@@ -467,7 +528,9 @@ export default function ProfilePage() {
               <div className="mt-6">
                 <SectionTitle>Disponibilitate</SectionTitle>
                 {!isTypeChosen ? (
-                  <p className="text-xs text-gray-500">Alege tipul de cont pentru a seta disponibilitatea (Artist / Locație).</p>
+                  <p className="text-xs text-gray-500">
+                    Alege tipul de cont pentru a seta disponibilitatea (Artist / Locație).
+                  </p>
                 ) : (
                   <AvailabilityCalendar
                     userId={profileUid}
@@ -481,13 +544,22 @@ export default function ProfilePage() {
 
             {isOwnProfile && (
               <div className="flex flex-col gap-3 w-full mt-6">
-                <Button variant="secondary" onClick={handleLogout} className="w-full" leftIcon={<LogOut className="w-4 h-4" />}>
+                <Button variant="primary" onClick={() => navigate("/settings")} className="w-full">
+                  Setări avansate
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  onClick={handleLogout}
+                  className="w-full"
+                  leftIcon={<LogOut className="w-4 h-4" />}
+                >
                   Deconectare
                 </Button>
 
                 <Button
                   variant="destructive"
-                  onClick={() => setPendingUpdate({ field: "deleteAccount", value: true }) || setModalOpen(true)}
+                  onClick={() => applyUpdate({ field: "deleteAccount", value: true })}
                   className="w-full"
                 >
                   Șterge contul
@@ -496,42 +568,57 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Dreapta */}
+          {/* DREAPTA */}
           <div className="w-full md:w-2/3 space-y-8">
-            <section>
-              <EditableBio
-                value={userData.bio || ""}
-                canEdit={isOwnProfile}
-                onSave={(val) => openConfirmModal({ field: "bio", value: val })}
-                maxLength={1000}
-                minLength={0}
-              />
-            </section>
+            {/* DESPRE – doar dacă e al tău sau are conținut */}
+            {(isOwnProfile || (userData.bio && userData.bio.trim().length > 0)) && (
+              <section>
+                <EditableBio
+                  value={userData.bio || ""}
+                  canEdit={isOwnProfile}
+                  onSave={(val) => applyUpdate({ field: "bio", value: val })}
+                  maxLength={1000}
+                  minLength={0}
+                />
+              </section>
+            )}
 
+            {/* ARTIST */}
             {isArtist && (
               <>
-                <EditableDJEquipment
-                  type="artist"
-                  value={userData.djEquipment}
-                  canEdit={isOwnProfile}
-                  onSave={(payload) => openConfirmModal({ field: "djEquipment", value: payload })}
-                />
+                {(isOwnProfile || (userData.djEquipment && userData.djEquipment.length > 0)) && (
+                  <EditableDJEquipment
+                    type="artist"
+                    value={userData.djEquipment}
+                    canEdit={isOwnProfile}
+                    onSave={(payload) => applyUpdate({ field: "djEquipment", value: payload })}
+                  />
+                )}
+
                 <EditableSpecializations
                   value={Array.isArray(userData.specializations) ? userData.specializations : []}
                   canEdit={isOwnProfile}
-                  onSave={(arr) => openConfirmModal({ field: "specializations", value: arr })}
+                  onSave={(arr) => applyUpdate({ field: "specializations", value: arr })}
                   onChipClick={goToPref}
                 />
+
                 <EditableGenres
                   value={Array.isArray(userData.genres) ? userData.genres : []}
                   canEdit={isOwnProfile}
-                  onSave={(genres) => openConfirmModal({ field: "genres", value: genres })}
+                  onSave={(genres) => applyUpdate({ field: "genres", value: genres })}
                   onChipClick={goToGenre}
                 />
+
                 <section>
                   <SectionTitle>Colaborări</SectionTitle>
-                  <CollaborationsWithReviews profileUid={profileUid} side="artist" authUser={authUser} pageSize={20} />
+                  <CollaborationsWithReviews
+                    profileUid={profileUid}
+                    side="artist"
+                    authUser={authUser}
+                    pageSize={20}
+                  />
                 </section>
+
                 <section>
                   <SectionTitle>Demo-uri</SectionTitle>
                   <ArtistDemos
@@ -548,49 +635,45 @@ export default function ProfilePage() {
               </>
             )}
 
+            {/* LOCAȚIE */}
             {isLocation && (
               <>
-                <EditableDJEquipment
-                  type="location"
-                  value={userData.djEquipment}
-                  canEdit={isOwnProfile}
-                  onSave={(payload) => openConfirmModal({ field: "djEquipment", value: payload })}
-                />
-                <EditableGenres
-                  value={Array.isArray(userData.acceptedGenres) ? userData.acceptedGenres : []}
-                  canEdit={isOwnProfile}
-                  onSave={(genres) => openConfirmModal({ field: "acceptedGenres", value: genres })}
-                />
-
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <EditableField
-                    label="Capacitate maximă"
-                    value={userData.capacity ?? ""}
-                    placeholder="ex: 150"
+                {(isOwnProfile || (userData.djEquipment && userData.djEquipment.length > 0)) && (
+                  <EditableDJEquipment
+                    type="location"
+                    value={userData.djEquipment}
                     canEdit={isOwnProfile}
-                    onSave={(val) => {
-                      const num = Number(String(val).replace(/[^\d]/g, ""));
-                      openConfirmModal({ field: "capacity", value: Number.isFinite(num) ? num : null });
+                    onSave={(payload) => applyUpdate({ field: "djEquipment", value: payload })}
+                  />
+                )}
+
+                {/* ADRESĂ SIMPLĂ */}
+                <section>
+                  <SectionTitle>Adresă</SectionTitle>
+                  <LocationAddressSimple
+                    address={userData.address}
+                    mapsLink={userData.googleMapsLink}
+                    canEdit={isOwnProfile}
+                    onChange={({ address, googleMapsLink }) => {
+                      applyUpdate({ field: "address", value: address });
+                      applyUpdate({ field: "googleMapsLink", value: googleMapsLink });
                     }}
                   />
                 </section>
 
                 <section>
-                  <SectionTitle>Adresă (hartă interactivă)</SectionTitle>
-                  <MapLocationEditor
-                    value={userData.mapLocation}
-                    canEdit={isOwnProfile}
-                    onSave={(val) => openConfirmModal({ field: "mapLocation", value: val })}
-                  />
-                </section>
-
-                <section>
                   <SectionTitle>Colaborări</SectionTitle>
-                  <CollaborationsWithReviews profileUid={profileUid} side="location" authUser={authUser} pageSize={20} />
+                  <CollaborationsWithReviews
+                    profileUid={profileUid}
+                    side="location"
+                    authUser={authUser}
+                    pageSize={20}
+                  />
                 </section>
               </>
             )}
 
+            {/* GALERIE */}
             <section>
               <SectionTitle>Galerie media</SectionTitle>
               <MediaGallery
@@ -613,288 +696,177 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Modal confirmare update generice */}
-      {isOwnProfile && (
-        <Dialog open={modalOpen} onOpenChange={(open) => !saving && setModalOpen(open)}>
-          <DialogContent
-            className="sm:max-w-lg"
-            onInteractOutside={(e) => saving && e.preventDefault()}
-            onEscapeKeyDown={(e) => saving && e.preventDefault()}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !saving) confirmSave();
-              if (e.key === "Escape" && !saving) setModalOpen(false);
-            }}
-          >
-            <DialogHeader>
-              <DialogTitle className="text-2xl">Confirmă modificarea</DialogTitle>
-              <DialogDescription className="mt-1 text-base text-gray-600">
-                Ești sigur că vrei să salvezi această modificare?
-              </DialogDescription>
-            </DialogHeader>
+      {/* KYC rămâne */}
+      <KYCDialog
+        open={kycOpen}
+        onOpenChange={setKycOpen}
+        authUser={authUser}
+        userData={userData}
+        setUserData={setUserData}
+      />
+    </div>
+  );
+}
 
-            {errorMsg && <p className="mt-3 text-sm text-red-600">{errorMsg}</p>}
+/* ========================================================================== */
+/* ====================== COMPONENTE MICI (în același fișier) ================ */
+/* ========================================================================== */
 
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={saving}>
-                Anulează
-              </Button>
-              <Button variant="primary" onClick={confirmSave} isLoading={saving}>
-                Salvează
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+function CityAutocomplete({ value, onChange, options, placeholder = "Caută oraș..." }) {
+  const [query, setQuery] = useState(value || "");
+  const [open, setOpen] = useState(false);
 
-      {/* Modal KYC (buletin) */}
-      <Dialog open={kycOpen} onOpenChange={(open) => !kycLoading && setKycOpen(open)}>
-        <DialogContent
-          className="sm:max-w-lg !bg-white !text-black !p-6 !rounded-2xl !shadow-2xl !border !border-violet-200"
-          onInteractOutside={(e) => kycLoading && e.preventDefault()}
-          onEscapeKeyDown={(e) => kycLoading && e.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle className="!text-2xl !font-extrabold !tracking-tight">
-              Verificare identitate
-            </DialogTitle>
-            <DialogDescription className="!mt-1 !text-base !text-gray-600">
-              Încarcă fața și verso-ul buletinului. Datele sunt folosite doar pentru verificare.
-            </DialogDescription>
-          </DialogHeader>
-
-          {kycError && (
-            <p className="mt-3 text-sm !text-red-600 !font-medium !bg-red-50 !border !border-red-200 !rounded-lg !px-3 !py-2">
-              {kycError}
-            </p>
-          )}
-
-          <div className="mt-4 space-y-4">
-            {/* Față */}
-            <div>
-              <label className="text-sm font-semibold !text-gray-900 uppercase tracking-wide">
-                Buletin – Față
-              </label>
-
-              <label
-                className="mt-2 block w-full cursor-pointer rounded-xl border-2 border-dashed !border-violet-300 bg-violet-50/40 hover:bg-violet-50 transition p-4"
-                title="Click pentru a selecta imaginea (față)"
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setKycFront(e.target.files?.[0] || null)}
-                  disabled={kycLoading}
-                />
-                <div className="flex items-center gap-3">
-                  <div className="shrink-0 w-12 h-12 rounded-lg bg-white border !border-violet-200 grid place-items-center">
-                    <span className="text-violet-600 text-xs font-bold">FAȚĂ</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      {kycFront?.name || "Alege fișierul..."}
-                    </p>
-                    <p className="text-xs text-gray-500">JPG, PNG sau HEIC • max 10MB</p>
-                  </div>
-                </div>
-              </label>
-
-              {kycFront && (
-                <div className="mt-2">
-                  <img
-                    src={URL.createObjectURL(kycFront)}
-                    alt="Preview față"
-                    className="w-full max-h-40 object-contain rounded-lg border !border-gray-200 bg-gray-50"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Verso */}
-            <div>
-              <label className="text-sm font-semibold !text-gray-900 uppercase tracking-wide">
-                Buletin – Verso
-              </label>
-
-              <label
-                className="mt-2 block w-full cursor-pointer rounded-xl border-2 border-dashed !border-violet-300 bg-violet-50/40 hover:bg-violet-50 transition p-4"
-                title="Click pentru a selecta imaginea (verso)"
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setKycBack(e.target.files?.[0] || null)}
-                  disabled={kycLoading}
-                />
-                <div className="flex items-center gap-3">
-                  <div className="shrink-0 w-12 h-12 rounded-lg bg-white border !border-violet-200 grid place-items-center">
-                    <span className="text-violet-600 text-xs font-bold">VERSO</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      {kycBack?.name || "Alege fișierul..."}
-                    </p>
-                    <p className="text-xs text-gray-500">JPG, PNG sau HEIC • max 10MB</p>
-                  </div>
-                </div>
-              </label>
-
-              {kycBack && (
-                <div className="mt-2">
-                  <img
-                    src={URL.createObjectURL(kycBack)}
-                    alt="Preview verso"
-                    className="w-full max-h-40 object-contain rounded-lg border !border-gray-200 bg-gray-50"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-between">
-            <p className="text-xs text-gray-500">
-              * Asigură-te că datele sunt clare și complet vizibile.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => setKycOpen(false)}
-                disabled={kycLoading}
-                className="!border !border-gray-300 !text-gray-800 hover:!bg-gray-100"
-              >
-                Renunță
-              </Button>
-              <Button
-                variant="primary"
-                onClick={async () => {
-                  if (!authUser) return;
-                  if (!kycFront || !kycBack) {
-                    setKycError("Te rog încarcă ambele imagini (față și verso).");
-                    return;
-                  }
-                  setKycLoading(true);
-                  setKycError("");
-                  try {
-                    const up = async (file, name) => {
-                      const path = `users/${authUser.uid}/kyc/${name}`;
-                      const ref = storageRef(storage, path);
-                      await uploadBytes(ref, file);
-                      return await getDownloadURL(ref);
-                    };
-                    const frontURL = await up(kycFront, "front.jpg");
-                    const backURL = await up(kycBack, "back.jpg");
-
-                    const userRef = doc(db, "users", authUser.uid);
-                    await updateDoc(userRef, {
-                      verificationStatus: "pending",
-                      kyc: {
-                        frontURL,
-                        backURL,
-                        submittedAt: new Date().toISOString(),
-                      },
-                    });
-                    setUserData((p) => ({
-                      ...p,
-                      verificationStatus: "pending",
-                      kyc: { frontURL, backURL, submittedAt: new Date().toISOString() },
-                    }));
-                    setKycOpen(false);
-                  } catch (e) {
-                    console.error(e);
-                    setKycError("A apărut o eroare la trimiterea verificării. Încearcă din nou.");
-                  } finally {
-                    setKycLoading(false);
-                  }
-                }}
-                isLoading={kycLoading}
-                disabled={kycLoading}
-                className="!bg-black !text-white hover:!bg-neutral-900"
-              >
-                Trimite pentru verificare
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-          </div>
-        );
-      }
-
-/* ============================== MapLocationEditor ============================== */
-function MapLocationEditor({ value, canEdit, onSave }) {
-  const [lat, setLat] = useState(() => Number(value?.lat ?? 44.4268)); // București default
-  const [lng, setLng] = useState(() => Number(value?.lng ?? 26.1025));
-  const [zoom, setZoom] = useState(() => clamp(Number(value?.zoom ?? 14), 3, 18));
-
-  useEffect(() => {
-    if (value?.lat != null) setLat(Number(value.lat));
-    if (value?.lng != null) setLng(Number(value.lng));
-    if (value?.zoom != null) setZoom(clamp(Number(value.zoom), 3, 18));
-  }, [value?.lat, value?.lng, value?.zoom]);
-
-  const mapSrc = useMemo(() => {
-    const d = 0.01 * (19 / zoom);
-    const left = lng - d,
-      right = lng + d,
-      top = lat + d,
-      bottom = lat - d;
-    const marker = `${lat}%2C${lng}`;
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${marker}`;
-  }, [lat, lng, zoom]);
-
-  const handleSave = () => onSave({ lat: Number(lat), lng: Number(lng), zoom: Number(zoom) });
+  const filtered = useMemo(() => {
+    if (!query) return options.slice(0, 30);
+    const q = query.toLowerCase();
+    return options.filter((c) => c.label.toLowerCase().includes(q)).slice(0, 30);
+  }, [query, options]);
 
   return (
-    <div className="w-full">
-      <div className="rounded-xl overflow-hidden border">
-        <iframe title="OSM map" className="w-full h-[320px]" src={mapSrc} />
-      </div>
-      {canEdit && (
-        <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Latitudine</label>
-            <input
-              type="number"
-              step="0.000001"
-              value={lat}
-              onChange={(e) => setLat(Number(e.target.value))}
-              className="w-full border rounded px-2 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Longitudine</label>
-            <input
-              type="number"
-              step="0.000001"
-              value={lng}
-              onChange={(e) => setLng(Number(e.target.value))}
-              className="w-full border rounded px-2 py-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Zoom</label>
-            <input
-              type="number"
-              min={3}
-              max={18}
-              value={zoom}
-              onChange={(e) => setZoom(clamp(Number(e.target.value), 3, 18))}
-              className="w-full border rounded px-2 py-2"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="primary" onClick={handleSave}>
-              Salvează locația
-            </Button>
-          </div>
+    <div className="relative">
+      <input
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-30 mt-1 w-full max-h-56 overflow-y-auto bg-white border rounded-lg shadow-lg">
+          {filtered.map((c) => (
+            <div
+              key={c.label}
+              onClick={() => {
+                setQuery(c.label);
+                setOpen(false);
+                onChange?.(c.label);
+              }}
+              className="px-3 py-2 text-sm text-gray-800 hover:bg-violet-50 cursor-pointer"
+            >
+              {c.label}
+              {c.county ? <span className="text-xs text-gray-400 ml-1">({c.county})</span> : null}
+            </div>
+          ))}
         </div>
       )}
-      <p className="text-xs text-gray-500 mt-2">
-        Poți muta poziția modificând coordonatele sau zoom-ul. Harta este interactivă pentru explorare, iar poziția
-        salvată determină marker-ul.
-      </p>
+    </div>
+  );
+}
+
+function AddressSearchGlovoLike({
+  value,
+  onSelect,
+  placeholder = "Caută adresa...",
+  enableCurrentLocation = true,
+}) {
+  const [query, setQuery] = useState(value || "");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setQuery(value || "");
+  }, [value]);
+
+  const ADDRESS_SUGGESTIONS = useMemo(
+    () => [
+      { label: "Aleea Lunca Cernei", city: "București", country: "România" },
+      { label: "Aleea Lunca Mureșului", city: "București", country: "România" },
+      { label: "Aleea Lunca Bradului", city: "București", country: "România" },
+      { label: "Aleea Lunca Siretului", city: "București", country: "România" },
+      { label: "Aleea Lunca Moldovei", city: "București", country: "România" },
+      { label: "Bulevardul Unirii", city: "București", country: "România" },
+      { label: "Strada Doamnei", city: "București", country: "România" },
+    ],
+    []
+  );
+
+  const filtered = useMemo(() => {
+    if (!query) return ADDRESS_SUGGESTIONS.slice(0, 6);
+    const q = query.toLowerCase();
+    return ADDRESS_SUGGESTIONS.filter((item) => item.label.toLowerCase().includes(q)).slice(0, 8);
+  }, [query, ADDRESS_SUGGESTIONS]);
+
+  const handleSelect = (item) => {
+    const full = `${item.label}, ${item.city}, ${item.country}`;
+    setQuery(full);
+    setOpen(false);
+    onSelect?.(full, item);
+  };
+
+  return (
+    <div className="relative">
+      <div className="flex items-center gap-2 border rounded-full px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-violet-500">
+        <span className="text-gray-400 text-lg">🔍</span>
+        <input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder={placeholder}
+          className="flex-1 outline-none bg-transparent text-sm text-gray-900"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setOpen(true);
+              onSelect?.("");
+            }}
+            className="text-gray-400 hover:text-gray-600 text-lg"
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      {open && (
+        <div className="absolute z-30 mt-2 w-full bg-white rounded-2xl shadow-2xl overflow-hidden border">
+          {enableCurrentLocation && (
+            <button
+              type="button"
+              onClick={() => {
+                if (!navigator.geolocation) return;
+                navigator.geolocation.getCurrentPosition((pos) => {
+                  const fakeText = "Locația ta curentă";
+                  setQuery(fakeText);
+                  setOpen(false);
+                  onSelect?.(fakeText, {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                  });
+                });
+              }}
+              className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-violet-50"
+            >
+              📍
+              <span className="font-medium text-gray-800">Utilizează locația curentă</span>
+            </button>
+          )}
+
+          {filtered.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-gray-400">Nicio adresă găsită.</div>
+          ) : (
+            filtered.map((item) => (
+              <button
+                key={item.label + item.city}
+                type="button"
+                onClick={() => handleSelect(item)}
+                className="w-full text-left px-4 py-3 hover:bg-violet-50"
+              >
+                <div className="text-sm font-medium text-gray-900">{item.label}</div>
+                <div className="text-xs text-gray-500">
+                  {item.city}, {item.country}
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

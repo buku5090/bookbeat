@@ -1,9 +1,26 @@
+// pages/ProfilesPage.jsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../src/firebase";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useLoading as useGlobalLoading } from "../context/LoadingContext";
 
 const PER_PAGE = 10;
+
+// 👇 cache global, rămâne între remount-uri
+let USERS_CACHE = null;
+let USERS_TOTAL = null;
+
+/* ====== hook safe pentru loader ====== */
+function useSafeLoading() {
+  try {
+    const ctx = useGlobalLoading();
+    return ctx || { isLoading: false, startLoading: () => {}, stopLoading: () => {} };
+  } catch {
+    return { isLoading: false, startLoading: () => {}, stopLoading: () => {} };
+  }
+}
 
 /* ====== Stars ====== */
 function RatingStars({ value = 0, outOf = 5 }) {
@@ -14,26 +31,30 @@ function RatingStars({ value = 0, outOf = 5 }) {
 
   const Icon = ({ className }) => (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/>
+      <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor" />
     </svg>
   );
 
   return (
     <div className="flex items-center gap-1">
-      {[...Array(full)].map((_, i) => <Icon key={`f${i}`} className="w-4 h-4 text-yellow-400" />)}
+      {[...Array(full)].map((_, i) => (
+        <Icon key={`f${i}`} className="w-4 h-4 text-yellow-400" />
+      ))}
       {hasHalf && (
         <div className="relative w-4 h-4">
           <Icon className="absolute inset-0 text-gray-300" />
           <Icon className="absolute inset-0 text-yellow-400" style={{ clipPath: "inset(0 50% 0 0)" }} />
         </div>
       )}
-      {[...Array(empty)].map((_, i) => <Icon key={`e${i}`} className="w-4 h-4 text-gray-300" />)}
+      {[...Array(empty)].map((_, i) => (
+        <Icon key={`e${i}`} className="w-4 h-4 text-gray-300" />
+      ))}
       <span className="ml-1 text-xs text-gray-400">{v.toFixed(1)}</span>
     </div>
   );
 }
 
-/* ====== Badges & Ribbon ====== */
+/* ====== Badges ====== */
 function VerifiedBadge() {
   return (
     <span className="flex items-center gap-1 text-[10px] md:text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
@@ -45,29 +66,35 @@ function VerifiedBadge() {
   );
 }
 
-function PromotedOverImage() {
+function NewBadge({ className = "" }) {
   return (
-    <div className="absolute -top-3 -left-7 rotate-[-35deg] z-20 pointer-events-none">
-      <div
-        className="min-w-[160px] text-center
-        bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-700
-        text-white text-[10px] md:text-[11px] font-extrabold
-        px-0 py-[5px] uppercase tracking-wider
-        rounded-sm border border-violet-400/60
-        shadow-[0_4px_12px_rgba(168,85,247,0.6)] backdrop-blur-[2px]"
-      >
-        PROMOVAT
-      </div>
-    </div>
+    <span
+      className={
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold " +
+        "uppercase tracking-wide text-white " +
+        "bg-gradient-to-r from-blue-600 to-indigo-600 " +
+        "shadow-lg ring-1 ring-white/25 backdrop-blur-sm " +
+        className
+      }
+      title="Profil creat recent"
+    >
+      <span className="text-sm leading-none">✨</span>
+      Nou
+    </span>
   );
 }
+
 
 /* ====== helpers ====== */
 const toChips = (v) =>
   Array.isArray(v)
     ? v.filter(Boolean).slice(0, 6)
     : typeof v === "string" && v.trim()
-    ? v.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 6)
+    ? v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 6)
     : [];
 
 const priceLabelFrom = (p) => {
@@ -80,9 +107,81 @@ const priceLabelFrom = (p) => {
 
 const cityFrom = (p) => p?.city || p?.locationCity || p?.location?.city || p?.addressCity || null;
 
+function ChipRow({ items = [], className = "" }) {
+  const rowRef = React.useRef(null);
+  const [overflowing, setOverflowing] = React.useState(false);
+
+  React.useLayoutEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+
+    const check = () => setOverflowing(el.scrollWidth > el.clientWidth + 1);
+    check();
+
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    window.addEventListener("resize", check);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", check);
+    };
+  }, []);
+
+  return (
+    <div className={`relative min-w-0 ${className}`}>
+      {/* un singur rând, cu spațiu extra în dreapta */}
+      <div
+        ref={rowRef}
+        className="flex flex-nowrap gap-1.5 whitespace-nowrap overflow-hidden pr-12 pl-1 min-w-0"
+        style={{
+          maskImage: "linear-gradient(to right, black 85%, transparent)",
+          WebkitMaskImage: "linear-gradient(to right, black 85%, transparent)",
+        }}
+      >
+        {items.map((text, i) => (
+          <span
+            key={i}
+            className="shrink-0 px-2.5 py-1 rounded-lg text-[11px] bg-white/5 border border-white/10 text-white/85"
+            title={text}
+          >
+            {text}
+          </span>
+        ))}
+      </div>
+
+      {overflowing && (
+        <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
+          <span className="px-2 py-0.5 rounded-md text-[11px] bg-white/5 border border-white/10 text-white/70">
+            …
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====== date helpers ====== */
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+const getDate = (val) => {
+  if (!val) return new Date(0);
+  if (typeof val?.toDate === "function") return val.toDate(); // Firestore Timestamp
+  if (typeof val === "number") return new Date(val);
+  if (typeof val === "string") return new Date(val);
+  return new Date(0);
+};
+const isNewProfile = (p) => {
+  if (p?.isNewAccount === true) return true;
+  const d = getDate(p?.createdAt);
+  if (!d || isNaN(d.getTime())) return false;
+  return Date.now() - d.getTime() <= THREE_DAYS_MS;
+};
+
 export default function ProfilesPage() {
-  const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { startLoading, stopLoading } = useSafeLoading();
+
+  const [profiles, setProfiles] = useState(USERS_CACHE || []);
+  const [loading, setLoading] = useState(!USERS_CACHE); // dacă avem cache, nu mai arătăm loaderul local
+  const [totalResults, setTotalResults] = useState(USERS_TOTAL); // dacă avem cache, îl folosim
 
   const [filter, setFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
@@ -93,30 +192,45 @@ export default function ProfilesPage() {
 
   const [userChangedControls, setUserChangedControls] = useState(false);
 
+  // ====== fetch din Firestore ======
   useEffect(() => {
     let mounted = true;
+
+    // 1) dacă avem cache, afișăm instant fără 0 rezultate
+    if (USERS_CACHE && mounted) {
+      setProfiles(USERS_CACHE);
+      setTotalResults(USERS_TOTAL);
+      setLoading(false);
+    }
+
+    // 2) dar tot facem fetch, ca să fie fresh
     (async () => {
+      startLoading();
       try {
         const snap = await getDocs(collection(db, "users"));
         if (!mounted) return;
         const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+        // salvăm în state
         setProfiles(data);
+        setTotalResults(data.length);
+        setLoading(false);
+
+        // salvăm și în cache global
+        USERS_CACHE = data;
+        USERS_TOTAL = data.length;
       } catch (err) {
         console.error("Eroare la încărcarea profilurilor:", err);
-      } finally {
         if (mounted) setLoading(false);
+      } finally {
+        stopLoading();
       }
     })();
-    return () => { mounted = false; };
-  }, []);
 
-  const getDate = (val) => {
-    if (!val) return new Date(0);
-    if (typeof val?.toDate === "function") return val.toDate();
-    if (typeof val === "number") return new Date(val);
-    if (typeof val === "string") return new Date(val);
-    return new Date(0);
-  };
+    return () => {
+      mounted = false;
+    };
+  }, [startLoading, stopLoading]);
 
   const filteredSorted = useMemo(() => {
     const filtered = profiles.filter((p) => (filter === "all" ? true : p.type === filter));
@@ -151,11 +265,29 @@ export default function ProfilesPage() {
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
-  const goPrev = () => { if (canPrev) navigate(`/discover/${page - 1}`); };
-  const goNext = () => { if (canNext) navigate(`/discover/${page + 1}`); };
+  const goPrev = () => {
+    if (canPrev) navigate(`/discover/${page - 1}`);
+  };
+  const goNext = () => {
+    if (canNext) navigate(`/discover/${page + 1}`);
+  };
 
-  const onFilterChange = (e) => { setFilter(e.target.value); setUserChangedControls(true); };
-  const onSortChange = (e) => { setSortOrder(e.target.value); setUserChangedControls(true); };
+  const onFilterChange = (e) => {
+    setFilter(e.target.value);
+    setUserChangedControls(true);
+  };
+  const onSortChange = (e) => {
+    setSortOrder(e.target.value);
+    setUserChangedControls(true);
+  };
+
+  // AICI e cheia: dacă avem total salvat, îl afișăm, altfel — (dar nu 0)
+  const displayCount =
+    typeof totalResults === "number"
+      ? totalResults
+      : profiles.length > 0
+      ? profiles.length
+      : 0;
 
   return (
     <div className="flex flex-col md:flex-row p-6 gap-6 bg-black min-h-screen text-white">
@@ -210,21 +342,30 @@ export default function ProfilesPage() {
       <div className="w-full md:w-3/4 flex flex-col gap-6">
         {/* Top bar */}
         <div className="flex items-center justify-between">
-          <div className="text-white/70">{filteredSorted.length} rezultate</div>
+          <div className="text-white/70">
+            {displayCount} rezultate
+          </div>
+
           <div className="flex items-center gap-2">
             <button
               onClick={goPrev}
               disabled={!canPrev}
-              className={`px-3 py-2 rounded-xl border text-sm transition-colors ${canPrev ? "border-white/30 text-white hover:bg-white/10" : "border-white/10 text-white/40 cursor-not-allowed"}`}
+              className={`px-3 py-2 rounded-xl border text-sm transition-colors ${
+                canPrev ? "border-white/30 text-white hover:bg-white/10" : "border-white/10 text-white/40 cursor-not-allowed"
+              }`}
               aria-label="Înapoi"
             >
               ← Înapoi
             </button>
-            <div className="text-xs text-white/70 px-2">Pagina {Math.min(page, totalPages)} / {totalPages}</div>
+            <div className="text-xs text-white/70 px-2">
+              Pagina {Math.min(page, totalPages)} / {totalPages}
+            </div>
             <button
               onClick={goNext}
               disabled={!canNext}
-              className={`px-3 py-2 rounded-xl border text-sm transition-colors ${canNext ? "border-white/30 text-white hover:bg-white/10" : "border-white/10 text-white/40 cursor-not-allowed"}`}
+              className={`px-3 py-2 rounded-xl border text-sm transition-colors ${
+                canNext ? "border-white/30 text-white hover:bg-white/10" : "border-white/10 text-white/40 cursor-not-allowed"
+              }`}
               aria-label="Înainte"
             >
               Înainte →
@@ -249,7 +390,8 @@ export default function ProfilesPage() {
               const { id, name, stageName, type, photoURL, avatarUrl, rating = 0, preferences, genres, specializations } = p;
 
               const isPromoted = !!p.promoted;
-              const isVerified = true;//p.verificationStatus === "verified" || p.verified === true;
+              const isVerified = true;
+              const isNew = isNewProfile(p);
 
               const title = stageName || name || "—";
               const label = (type || "profile").toUpperCase();
@@ -265,122 +407,166 @@ export default function ProfilesPage() {
               const availability = p?.availabilityNote || p?.availability || null;
 
               return (
-                <Link
-                  key={id}
-                  to={`/user/${id}`}
-                  className={`relative group grid grid-cols-[96px_1fr] md:grid-cols-[120px_1fr] gap-4 p-4 md:p-5 rounded-2xl shadow-sm min-h-[168px]
-                    text-white border transition-all
-                    ${isPromoted
-                      ? "bg-gradient-to-br from-violet-800/20 via-fuchsia-700/10 to-transparent border-2 border-violet-500/60 ring-2 ring-violet-400/40 hover:ring-violet-300/60 hover:border-fuchsia-400/80 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
-                      : "bg-white/5 border-white/10 hover:border-white/30 hover:shadow-lg hover:-translate-y-[1px]"}
+                <div key={id} className={isPromoted ? "relative mb-1 z-10" : "relative z-0"}>
+                  {isPromoted ? (
+                    <div className="relative rounded-2xl p-[1px] bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
+                      <Link to={`/user/${id}`} className="relative block rounded-t-2xl bg-[#121016] text-white group">
+                        <div className="pointer-events-none absolute inset-0 rounded-t-2xl bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-pink-500/8" />
+                        
+                        {/* Badges layer */}
+                        <div className="absolute left-3 top-3 z-20 flex items-center gap-2">
+                          {isNew && <NewBadge />}
+                        </div>
+                        <div className="absolute right-3 top-3 z-20 flex items-center gap-2">
+                          {isVerified && <VerifiedBadge />}
+                        </div>
 
-                  `}
-                >
-                  {/* BADGE VERIFICAT – dreapta sus */}
-                  {isVerified && (
-                    <div className="absolute top-3 right-3 z-10">
-                      <VerifiedBadge />
+                        <div className="relative grid grid-cols-[96px_1fr] md:grid-cols-[120px_1fr] gap-4 p-4 md:p-5 min-h-[168px]">
+                          <div className="relative w-24 h-24 md:w-28 md:h-28">
+                            <div className="w-full h-full rounded-xl overflow-hidden border border-white/10">
+                              <img
+                                src={imageSrc}
+                                alt={title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = placeholder;
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 flex flex-col justify-between h-full relative">
+                            <div className="flex items-start justify-between gap-3">
+                              <h3 className="text-lg md:text-xl font-semibold tracking-tight truncate">{title}</h3>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-white">
+                              <RatingStars value={Number(rating) || 0} />
+
+                              {city && (
+                                <div className="text-xs text-white/70 flex items-center gap-1">
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
+                                  {city}
+                                </div>
+                              )}
+
+                              {priceLabel && (
+                                <div className="text-xs text-white/70 flex items-center gap-1">
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
+                                  {priceLabel}
+                                </div>
+                              )}
+
+                              {availability && (
+                                <div className="text-xs text-white/70 flex items-center gap-1">
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
+                                  {availability}
+                                </div>
+                              )}
+                            </div>
+
+                            {gens.length > 0 && (
+                              <div className="mt-2">
+                                <ChipRow items={gens} />
+                              </div>
+                            )}
+
+                            {(prefs.length > 0 || specs.length > 0) && (
+                               <div className="mt-2">
+                                <ChipRow items={[...prefs, ...specs]} />
+                              </div>
+                            )}
+
+                          
+                          </div>
+                        </div>
+
+                      </Link>
+                      <div className="text-center py-1.5 text-white text-[10px] md:text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 rounded-b-2xl">
+                        PROMOVAT
+                      </div>
                     </div>
+                  ) : (
+                    <Link
+                      to={`/user/${id}`}
+                      className="block relative z-0 rounded-2xl bg-[#161616] text-white border border-white/10
+                                hover:border-white/25 hover:shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition-all"
+                    >
+                      {/* Badges layer */}
+                      <div className="absolute inset-x-3 top-3 z-10 flex items-center justify-between">
+                        <div className="flex items-center gap-2">{isNew && <NewBadge />}</div>
+                        <div className="flex items-center gap-2">{isVerified && <VerifiedBadge />}</div>
+                      </div>
+
+                      <div className="grid grid-cols-[96px_1fr] md:grid-cols-[120px_1fr] gap-4 p-4 md:p-5 min-h-[168px]">
+                        <div className="relative w-24 h-24 md:w-28 md:h-28">
+                          <div className="w-full h-full rounded-xl overflow-hidden border border-white/10">
+                            <img
+                              src={imageSrc}
+                              alt={title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = placeholder;
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 flex flex-col justify-between h-full relative">
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="text-lg md:text-xl font-semibold tracking-tight truncate">{title}</h3>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-white">
+                            <RatingStars value={Number(rating) || 0} />
+
+                            {city && (
+                              <div className="text-xs text-white/70 flex items-center gap-1">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
+                                {city}
+                              </div>
+                            )}
+
+                            {priceLabel && (
+                              <div className="text-xs text-white/70 flex items-center gap-1">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
+                                {priceLabel}
+                              </div>
+                            )}
+
+                            {availability && (
+                              <div className="text-xs text-white/70 flex items-center gap-1">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
+                                {availability}
+                              </div>
+                            )}
+                          </div>
+
+                          {gens.length > 0 && (
+                            <div className="mt-2">
+                              <ChipRow items={gens} />
+                            </div>
+                          )}
+
+                          {(prefs.length > 0 || specs.length > 0) && (
+                            <div className="mt-2">
+                              <ChipRow items={[...prefs, ...specs]} />
+                            </div>
+                          )}
+
+                          <div className="absolute right-0 bottom-0 translate-y-1/2 pr-0">
+                        </div>
+                            <div className="text-[10px] md:text-xs font-medium uppercase tracking-wide text-white/45">
+                              {type === "artist" ? "ARTIST" : type === "location" ? "LOCAȚIE" : "PROFIL"}
+                            </div>
+                          </div>
+                      </div>
+                    </Link>
                   )}
-
-                  {/* THUMB + BADGE PROMOVAT (poate ieși în afara pozei) */}
-                  <div className="relative w-24 h-24 md:w-28 md:h-28">
-                    {/* wrapperul care taie doar imaginea, pentru colțuri rotunjite */}
-                    <div className="w-full h-full rounded-xl overflow-hidden border border-white/10">
-                      <img
-                        src={imageSrc}
-                        alt={title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = placeholder; }}
-                      />
-                    </div>
-
-                    {/* badge-ul stă ÎN AFARA acestui wrapper => nu mai e tăiat */}
-                    {isPromoted && <PromotedOverImage />}
-                  </div>
-
-
-                  <div className="min-w-0 flex flex-col justify-between h-full relative">
-                    {/* TITLU */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <h3 className="text-lg md:text-xl font-semibold tracking-tight truncate">{title}</h3>
-                        {/* <- nu mai punem “Promovat”/alt chip aici ca să nu se calce */}
-                      </div>
-                    </div>
-
-                    {/* META */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                      <RatingStars value={Number(rating) || 0} />
-                      {city && (
-                        <div className="text-xs text-white/70 flex items-center gap-1">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
-                          {city}
-                        </div>
-                      )}
-                      {priceLabel && (
-                        <div className="text-xs text-white/70 flex items-center gap-1">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
-                          {priceLabel}
-                        </div>
-                      )}
-                      {availability && (
-                        <div className="text-xs text-white/70 flex items-center gap-1">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />
-                          {availability}
-                        </div>
-                      )}
-                      <span className="ml-auto text-xs text-violet-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                        Vezi profil →
-                      </span>
-                    </div>
-
-                    {/* GENURI */}
-                    {gens.length > 0 && (
-                      <div className="mt-2">
-                        <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1">Genuri</div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {gens.map((g, i) => (
-                            <span
-                              key={`g-${i}`}
-                              className="px-2.5 py-1 rounded-lg text-[11px] bg-violet-500/10 border border-violet-400/20 text-violet-100"
-                            >
-                              {g}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* PREFERINȚE */}
-                    {(prefs.length > 0 || specs.length > 0) && (
-                      <div className="mt-2">
-                        <div className="text-[11px] uppercase tracking-wider text-white/50 mb-1">Preferințe</div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {prefs.map((tag, i) => (
-                            <span key={`p-${i}`} className="px-2.5 py-1 rounded-lg text-[11px] bg-white/5 border border-white/12 text-white/85">
-                              {tag}
-                            </span>
-                          ))}
-                          {specs.map((s, i) => (
-                            <span key={`s-${i}`} className="px-2.5 py-1 rounded-lg text-[11px] bg-white/5 border border-white/12 text-white/85">
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* TIP CONT – dreapta jos */}
-                    <div className="absolute right-0 bottom-0 translate-y-1/2 pr-0">
-                      <div className="text-[10px] md:text-xs font-medium uppercase tracking-wide text-white/60">
-                        {type === "artist" ? "ARTIST" : type === "location" ? "LOCAȚIE" : "PROFIL"}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                </div>
               );
-
             })
           )}
         </div>
@@ -390,15 +576,21 @@ export default function ProfilesPage() {
           <button
             onClick={goPrev}
             disabled={!canPrev}
-            className={`px-4 py-2 rounded-xl border transition-colors ${canPrev ? "border-white/30 text-white hover:bg-white/10" : "border-white/10 text-white/40 cursor-not-allowed"}`}
+            className={`px-4 py-2 rounded-xl border transition-colors ${
+              canPrev ? "border-white/30 text-white hover:bg-white/10" : "border-white/10 text-white/40 cursor-not-allowed"
+            }`}
           >
             Înapoi
           </button>
-          <div className="text-sm text-white/80">Pagina {Math.min(page, totalPages)} din {totalPages}</div>
+          <div className="text-sm text-white/80">
+            Pagina {Math.min(page, totalPages)} din {totalPages}
+          </div>
           <button
             onClick={goNext}
             disabled={!canNext}
-            className={`px-4 py-2 rounded-xl border transition-colors ${canNext ? "border-white/30 text-white hover:bg-white/10" : "border-white/10 text-white/40 cursor-not-allowed"}`}
+            className={`px-4 py-2 rounded-xl border transition-colors ${
+              canNext ? "border-white/30 text-white hover:bg-white/10" : "border-white/10 text-white/40 cursor-not-allowed"
+            }`}
           >
             Înainte
           </button>

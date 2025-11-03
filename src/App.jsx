@@ -23,12 +23,13 @@ import RequireAuth from "../components/RequireAuth";
 import NotFoundPage from "../pages/NotFoundPage";
 import LoadingPage from "../pages/LoadingPage";
 import AdminPage from "../pages/AdminPage";
-import Footer from "../components/Footer";
+import Footer from "../components/Footer";  
 import Onboarding from "../components/Onboarding";
 import CompleteProfile from "../components/CompleteProfile";
 import ScrollToTop from "../components/ScrollToTop";
 import NotificationsPage from "../pages/NotificationsPage";
 import EventDetailsPage from "../pages/EventDetailsPage";
+import AdvancedSettingsPage from "../pages/AdvancedSettingsPage";
 import Test from "../pages/Test";
 
 // alias helper: /profile/:id -> /user/:id
@@ -79,6 +80,7 @@ function AppShell() {
         <Route path="/profile" element={<Navigate to="/profil" replace />} />
         <Route path="/profile/:id" element={<ProfileIdAlias />} />
         <Route path="/user" element={<Navigate to="/profil" replace />} />
+        <Route path="/settings" element={<AdvancedSettingsPage />} />
 
         {/* Test */}
         <Route path="/test" element={<Test />} />

@@ -37,17 +37,17 @@ export default function AvatarCropModal({ image, onCancel, onCropComplete }) {
           />
         </div>
 
-        <div className="flex items-center justify-center gap-4 py-4">
+        <div className="!flex !items-center !justify-center gap-4 py-4">
           <button
             onClick={() => handleZoom(-1)}
-            className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full text-xl font-bold"
+            className="!w-10 !h-10 !bg-gray-100 hover:!bg-gray-200 !rounded-full !text-xl !font-bold"
           >
             −
           </button>
           <span className="text-sm text-gray-600">Zoom: {zoom.toFixed(1)}x</span>
           <button
             onClick={() => handleZoom(1)}
-            className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full text-xl font-bold"
+            className="w-10 h-10 !bg-gray-100 hover:bg-gray-200 rounded-full text-xl font-bold"
           >
             +
           </button>
