@@ -4,17 +4,20 @@ import App from './App.jsx'
 import './index.css'
 import { AuthProvider } from '../context/AuthContext.jsx'
 import { LoadingProvider } from '../context/LoadingContext.jsx'
+import { LanguageProvider } from '../context/LanguageContext.jsx' // ✅ imporți Provider-ul, nu Context-ul
+import "./i18n/i18n.js";
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <LoadingProvider>
       <AuthProvider>
-        {/* 📦 Container global pentru toată aplicația */}
-        <div className="min-h-screen bg-red">
-          <div className="max-w-7xl mx-auto md:px-4"> 
-            <App />
+        <LanguageProvider>   {/* 🌍 Global language container */}
+          <div className="min-h-screen bg-red">
+            <div className="max-w-7xl mx-auto md:px-4"> 
+              <App />
+            </div>
           </div>
-        </div>
+        </LanguageProvider>
       </AuthProvider>
     </LoadingProvider>
   </React.StrictMode>

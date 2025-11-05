@@ -1,0 +1,19 @@
+{
+  "hello": "Bonjour",
+  "login": "Connexion",
+  "register": "Inscription",
+  "logout": "Déconnexion",
+  "my_account": "Mon compte",
+  "notifications": "Notifications",
+  "select_language": "Choisir la langue",
+  "editable_bio": {
+    "edit": "Modifier",
+    "placeholder": "Écris quelques lignes sur toi…",
+    "counter": "{{count}}/{{max}}",
+    "save_hint": "Enregistrer (Ctrl/Cmd+Entrée)"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  }
+}

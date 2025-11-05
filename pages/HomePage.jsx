@@ -5,7 +5,7 @@ import {
   Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
   Input, Textarea, Label, Badge,
 } from "../components/uiux";
-import EventCard from "../components/EventCard";
+import EventCard from "../components/eventspage/EventCard";
 import { events } from "../src/data/events";
 // 👉 ajustează importul după cum îl ai în proiect
 import { useAuth } from "../context/AuthContext";

@@ -1,6 +1,6 @@
 // src/pages/EventsPage.jsx
 import React from "react";
-import EventCard from "../components/EventCard";
+import EventCard from "../components/eventspage/EventCard";
 import { events } from "../src/data/events";
 
 export default function EventsPage() {

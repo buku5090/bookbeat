@@ -11,7 +11,7 @@ import {
 
 import { useAuth } from "../context/AuthContext";
 
-import MainMenu from "../components/MainMenu";
+import MainMenu from "../components/utilities/MainMenu";
 import HomePage from "../pages/HomePage";
 import DiscoverPage from "../pages/DiscoverPage";
 import EventsPage from "../pages/EventsPage";
@@ -19,14 +19,14 @@ import SearchPage from "../pages/SearchPage";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import ProfilePage from "../pages/ProfilePage";
-import RequireAuth from "../components/RequireAuth";
+import RequireAuth from "../components/utilities/RequireAuth";
 import NotFoundPage from "../pages/NotFoundPage";
 import LoadingPage from "../pages/LoadingPage";
 import AdminPage from "../pages/AdminPage";
-import Footer from "../components/Footer";  
+import Footer from "../components/utilities/Footer";  
 import Onboarding from "../components/Onboarding";
-import CompleteProfile from "../components/CompleteProfile";
-import ScrollToTop from "../components/ScrollToTop";
+import CompleteProfile from "../components/profilepage/CompleteProfile";
+import ScrollToTop from "../components/utilities/ScrollToTop";
 import NotificationsPage from "../pages/NotificationsPage";
 import EventDetailsPage from "../pages/EventDetailsPage";
 import AdvancedSettingsPage from "../pages/AdvancedSettingsPage";

@@ -1,0 +1,68 @@
+{
+  "hello": "Salut",
+  "login": "Autentificare",
+  "register": "Înregistrare",
+  "logout": "Deconectare",
+  "my_account": "Contul meu",
+  "notifications": "Notificări",
+  "select_language": "Selectează limba",
+  "editable_bio": {
+    "edit": "Editează",
+    "placeholder": "Scrie câteva rânduri despre tine…",
+    "counter": "{{count}}/{{max}}",
+    "save_hint": "Salvează (Ctrl/Cmd+Enter)"
+  },
+  "common": {
+    "save": "Salvează",
+    "cancel": "Anulează"
+  },
+  "editable_chips": {
+    "add": "Adaugă",
+    "edit": "Editează",
+    "remove": "Elimină",
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "placeholder": "Adaugă…",
+    "no_selection": "Nu a selectat încă.",
+    "view_results_for": "Vezi rezultate pentru „{{item}}”",
+    "limit_reached": "Ai atins limita de {{max}}.",
+    "count": "{{count}}/{{max}}"
+  },
+
+  "editable_dj_equipment": {
+    "title": "Echipament DJ",
+    "edit": "Editează",
+    "not_specified": "Nu a fost specificat încă.",
+    "options": {
+      "artist": {
+        "none": "Nu am echipament",
+        "controller_only": "Am doar consolă/controller",
+        "mixer_players": "Am mixer + player(e)",
+        "full_mobile": "Echipament complet și mobil (PA inclus)",
+        "other": "Altă configurație"
+      },
+      "location": {
+        "full_ready": "Echipament complet – artistul doar vine și pune muzică",
+        "speakers_only": "Avem doar boxe – artistul trebuie să aducă mixer/consolă",
+        "mixer_only": "Avem doar mixer – artistul aduce player(e)/laptop",
+        "space_only": "Doar spațiu – artistul aduce tot",
+        "other": "Altă configurație"
+      }
+    },
+    "details_label": "Detalii (opțional)",
+    "placeholder_other": "Descrie configurația: mărci, modele, cerințe, etc.",
+    "placeholder_default": "Ex: „prefer conectare pe XLR”, „am flight-case”, „PA 2x1kW + sub”",
+    "save": "Salvează",
+    "cancel": "Anulează"
+  },
+
+  "editable_field": {
+    "is_free": "Este gratis",
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "no_value": "Fără valoare",
+    "edit": "Editează",
+    "currency_format": "{{price}} RON / set"
+  }
+}
+

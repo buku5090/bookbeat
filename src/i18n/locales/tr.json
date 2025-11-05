@@ -1,0 +1,19 @@
+{
+  "hello": "Merhaba",
+  "login": "Giriş Yap",
+  "register": "Kayıt Ol",
+  "logout": "Çıkış Yap",
+  "my_account": "Hesabım",
+  "notifications": "Bildirimler",
+  "select_language": "Dili seçin",
+  "editable_bio": {
+    "edit": "Düzenle",
+    "placeholder": "Kendin hakkında birkaç satır yaz…",
+    "counter": "{{count}}/{{max}}",
+    "save_hint": "Kaydet (Ctrl/Cmd+Enter)"
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal"
+  }
+}

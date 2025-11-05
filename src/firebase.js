@@ -2,6 +2,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 import {
   initializeFirestore,
   getFirestore,
@@ -39,6 +40,7 @@ if (import.meta?.env?.DEV) {
 // ——— Auth & Storage ———
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app /*, "europe-west1" */);
 
 // Log simplu pentru statusul autentificării (util la debugging)
 onAuthStateChanged(auth, async (u) => {
