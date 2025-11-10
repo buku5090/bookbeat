@@ -1,5 +1,5 @@
 // App.jsx
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -12,24 +12,26 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 import MainMenu from "../components/utilities/MainMenu";
-import HomePage from "../pages/HomePage";
-import DiscoverPage from "../pages/DiscoverPage";
-import EventsPage from "../pages/EventsPage";
-import SearchPage from "../pages/SearchPage";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-import ProfilePage from "../pages/ProfilePage";
 import RequireAuth from "../components/utilities/RequireAuth";
-import NotFoundPage from "../pages/NotFoundPage";
-import LoadingPage from "../pages/LoadingPage";
-import AdminPage from "../pages/AdminPage";
 import Footer from "../components/utilities/Footer";
-import CompleteProfile from "../components/profilepage/CompleteProfile";
 import ScrollToTop from "../components/utilities/ScrollToTop";
-import NotificationsPage from "../pages/NotificationsPage";
-import EventDetailsPage from "../pages/EventDetailsPage";
-import AdvancedSettingsPage from "../pages/AdvancedSettingsPage";
-import Test from "../pages/Test";
+import LoadingPage from "../pages/LoadingPage";
+
+// ── Route components lazy-loaded ──────────────────────────────────────────────
+const HomePage = lazy(() => import("../pages/HomePage"));
+const DiscoverPage = lazy(() => import("../pages/DiscoverPage"));
+const EventsPage = lazy(() => import("../pages/EventsPage"));
+const Login = lazy(() => import("../pages/Login"));
+const Register = lazy(() => import("../pages/Register"));
+const ProfilePage = lazy(() => import("../pages/ProfilePage"));
+const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
+const AdminPage = lazy(() => import("../pages/AdminPage"));
+const CompleteProfile = lazy(() => import("../components/profilepage/CompleteProfile"));
+const NotificationsPage = lazy(() => import("../pages/NotificationsPage"));
+const EventDetailsPage = lazy(() => import("../pages/EventDetailsPage"));
+const AdvancedSettingsPage = lazy(() => import("../pages/AdvancedSettingsPage"));
+const LanguageSettingsPage = lazy(() => import("../pages/LanguageSettingsPage"));
+const Test = lazy(() => import("../pages/Test"));
 
 // alias helper: /profile/:id -> /user/:id
 function ProfileIdAlias() {
@@ -38,54 +40,59 @@ function ProfileIdAlias() {
 }
 
 function AppShell() {
+  // IMPORTANT: am eliminat cheia bazată pe location.key ca să NU se mai remonteze layout-ul.
+  // Astfel, MainMenu (și logo-ul din el) rămâne montat și nu "clipește" la navigare.
   const location = useLocation();
 
-  // folosim location.key (unic la fiecare navigare) pentru a remonta TOT layout-ul
   return (
-    <div key={location.key}>
+    <div>
+      {/* Logo-ul trăiește aici, în afara Suspense: nu se demontează la schimbarea rutei */}
       <MainMenu />
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/admin" element={<AdminPage />} />
+      {/* Orice pagină care se încarcă (lazy) va afișa LoadingPage ca fallback */}
+      <Suspense fallback={<LoadingPage />}>
+        <Routes location={location}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/admin" element={<AdminPage />} />
 
-        {/* IMPORTANT: param obligatoriu + redirect separat */}
-        <Route path="/discover/:page" element={<DiscoverPage />} />
-        <Route path="/discover" element={<Navigate to="/discover/1" replace />} />
+          {/* IMPORTANT: param obligatoriu + redirect separat */}
+          <Route path="/discover/:page" element={<DiscoverPage />} />
+          <Route path="/discover" element={<Navigate to="/discover/1" replace />} />
 
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/events/:id" element={<EventDetailsPage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/complete-profile" element={<CompleteProfile />} />
-        <Route path="/notificari" element={<NotificationsPage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/events/:id" element={<EventDetailsPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
+          <Route path="/notificari" element={<NotificationsPage />} />
+          <Route path="/settings/language" element={<LanguageSettingsPage />} />
 
-        {/* Profilul MEU (fără id) – protejat */}
-        <Route
-          path="/profil"
-          element={
-            <RequireAuth>
-              <ProfilePage />
-            </RequireAuth>
-          }
-        />
+          {/* Profilul MEU (fără id) – protejat */}
+          <Route
+            path="/profil"
+            element={
+              <RequireAuth>
+                <ProfilePage />
+              </RequireAuth>
+            }
+          />
 
-        {/* Profil public cu id */}
-        <Route path="/user/:id" element={<ProfilePage />} />
+          {/* Profil public cu id */}
+          <Route path="/user/:id" element={<ProfilePage />} />
 
-        {/* Aliasuri ca să evităm 404-uri pe linkuri vechi */}
-        <Route path="/profile" element={<Navigate to="/profil" replace />} />
-        <Route path="/profile/:id" element={<ProfileIdAlias />} />
-        <Route path="/user" element={<Navigate to="/profil" replace />} />
-        <Route path="/settings" element={<AdvancedSettingsPage />} />
+          {/* Aliasuri ca să evităm 404-uri pe linkuri vechi */}
+          <Route path="/profile" element={<Navigate to="/profil" replace />} />
+          <Route path="/profile/:id" element={<ProfileIdAlias />} />
+          <Route path="/user" element={<Navigate to="/profil" replace />} />
+          <Route path="/settings" element={<AdvancedSettingsPage />} />
 
-        {/* Test */}
-        <Route path="/test" element={<Test />} />
+          {/* Test */}
+          <Route path="/test" element={<Test />} />
 
-        {/* 404 */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
 
       <Footer />
     </div>
@@ -94,12 +101,20 @@ function AppShell() {
 
 function App() {
   const { loading } = useAuth();
-  if (loading) return <LoadingPage />;
 
+  // În loc să returnăm direct LoadingPage (care ar ascunde logo-ul),
+  // ținem layout-ul montat și, dacă vrei, poți afișa un overlay în plus când Auth se încarcă.
   return (
     <Router>
       <ScrollToTop />
       <AppShell />
+
+      {/* Overlay global opțional în timpul încărcării Auth (nu obligă, dar util). */}
+      {loading && (
+        <div className="fixed inset-0 z-[9999]">
+          <LoadingPage />
+        </div>
+      )}
     </Router>
   );
 }

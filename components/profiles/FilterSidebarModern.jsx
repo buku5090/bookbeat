@@ -7,18 +7,18 @@ export default function FilterSidebarModern(props) {
 
   const {
     filter: filterProp,
-    sortOrder: sortProp,
+    sortOrder: sortProp,          // primit dar NU mai e randat în UI
     artistFilters: artistProp,
     venueFilters: venueProp,
     onFilterChange,
-    onSortChange,
+    onSortChange,                 // păstrat în API, nefolosit vizual
     setArtistFilters,
     setVenueFilters,
     requestLocation,
     onReset,
     onFiltersChange,
     initialFilter = "all",
-    initialSortOrder = "newest",
+    initialSortOrder = "relevance",
     initialArtist = { maxDistanceKm: 0, minRating: 0, budgetTo: 0, verifiedOnly: false },
     initialVenue = { capacityFrom: "", capacityTo: "", maxDistanceKm: 0, budgetFrom: "", budgetTo: "", types: [], verifiedOnly: false }
   } = props;
@@ -87,8 +87,7 @@ export default function FilterSidebarModern(props) {
     setLocError("");
     setLocLoading(true);
     try {
-      if (!("geolocation" in navigator))
-        throw new Error(t("filters.location.error"));
+      if (!("geolocation" in navigator)) throw new Error(t("filters.location.error"));
 
       const coords = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
@@ -107,7 +106,6 @@ export default function FilterSidebarModern(props) {
       setMyCoords(coords);
       setMyAddress(addr);
       requestLocation && requestLocation({ ...coords, address: addr });
-
     } catch (e) {
       setLocError(e.message || t("filters.location.error"));
     } finally {
@@ -117,10 +115,9 @@ export default function FilterSidebarModern(props) {
 
   return (
     <div className="bg-zinc-950/60 border border-white/10 backdrop-blur-sm shadow-2xl rounded-2xl">
-      
       {/* HEADER */}
       <div className="p-4 border-b border-white/10 relative">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="text-base font-semibold flex items-center gap-2 text-white">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M6 8h12M9 12h6M11 16h2"/>
@@ -143,7 +140,6 @@ export default function FilterSidebarModern(props) {
 
       {/* BODY */}
       <div className="p-4 space-y-5">
-
         {/* TIP PROFIL */}
         <div className="flex flex-col gap-2">
           <label className="text-white/70 text-sm mb-1">{t("filters.profileType")}</label>
@@ -197,8 +193,8 @@ export default function FilterSidebarModern(props) {
                 min={0}
                 max={200}
                 step={5}
-                value={toNumber(artistFilters?.maxDistanceKm, 0)}
-                onChange={(n) => setArtist(s => ({ ...s, maxDistanceKm: n }))}
+                value={Number(artistFilters?.maxDistanceKm || 0)}
+                onChange={(n) => setArtist((s) => ({ ...s, maxDistanceKm: n }))}
               />
             </Row>
 
@@ -207,8 +203,8 @@ export default function FilterSidebarModern(props) {
                 min={0}
                 max={5}
                 step={0.5}
-                value={toNumber(artistFilters?.minRating, 0)}
-                onChange={(n) => setArtist(s => ({ ...s, minRating: n }))}
+                value={Number(artistFilters?.minRating || 0)}
+                onChange={(n) => setArtist((s) => ({ ...s, minRating: n }))}
                 checkpoints={[0, 1, 2, 3, 4, 5]}
               />
             </Row>
@@ -218,8 +214,8 @@ export default function FilterSidebarModern(props) {
                 min={0}
                 max={10000}
                 step={50}
-                value={toNumber(artistFilters?.budgetTo, 0)}
-                onChange={(n) => setArtist(s => ({ ...s, budgetTo: n }))}
+                value={Number(artistFilters?.budgetTo || 0)}
+                onChange={(n) => setArtist((s) => ({ ...s, budgetTo: n }))}
               />
             </Row>
 
@@ -227,7 +223,7 @@ export default function FilterSidebarModern(props) {
               <div className="flex justify-end">
                 <Switch
                   checked={!!artistFilters?.verifiedOnly}
-                  onChange={(v) => setArtist(s => ({ ...s, verifiedOnly: !!v }))}
+                  onChange={(v) => setArtist((s) => ({ ...s, verifiedOnly: !!v }))}
                 />
               </div>
             </Row>
@@ -244,7 +240,7 @@ export default function FilterSidebarModern(props) {
                   min={0}
                   placeholder="min"
                   value={venueFilters?.capacityFrom ?? ""}
-                  onChange={(e) => setVenue(s => ({ ...s, capacityFrom: toNumber(e.target.value, "") }))}
+                  onChange={(e) => setVenue((s) => ({ ...s, capacityFrom: Number(e.target.value) || "" }))}
                   className="w-24 h-9 rounded-xl bg-black border border-white/15 text-white/90 px-3"
                 />
                 <input
@@ -252,7 +248,7 @@ export default function FilterSidebarModern(props) {
                   min={0}
                   placeholder="max"
                   value={venueFilters?.capacityTo ?? ""}
-                  onChange={(e) => setVenue(s => ({ ...s, capacityTo: toNumber(e.target.value, "") }))}
+                  onChange={(e) => setVenue((s) => ({ ...s, capacityTo: Number(e.target.value) || "" }))}
                   className="w-24 h-9 rounded-xl bg-black border border-white/15 text-white/90 px-3"
                 />
               </div>
@@ -263,8 +259,8 @@ export default function FilterSidebarModern(props) {
                 min={0}
                 max={200}
                 step={5}
-                value={toNumber(venueFilters?.maxDistanceKm, 0)}
-                onChange={(n) => setVenue(s => ({ ...s, maxDistanceKm: n }))}
+                value={Number(venueFilters?.maxDistanceKm || 0)}
+                onChange={(n) => setVenue((s) => ({ ...s, maxDistanceKm: n }))}
               />
             </Row>
 
@@ -275,7 +271,7 @@ export default function FilterSidebarModern(props) {
                   min={0}
                   placeholder="min"
                   value={venueFilters?.budgetFrom ?? ""}
-                  onChange={(e) => setVenue(s => ({ ...s, budgetFrom: toNumber(e.target.value, "") }))}
+                  onChange={(e) => setVenue((s) => ({ ...s, budgetFrom: Number(e.target.value) || "" }))}
                   className="w-24 h-9 rounded-xl bg-black border border-white/15 text-white/90 px-3"
                 />
                 <input
@@ -283,7 +279,7 @@ export default function FilterSidebarModern(props) {
                   min={0}
                   placeholder="max"
                   value={venueFilters?.budgetTo ?? ""}
-                  onChange={(e) => setVenue(s => ({ ...s, budgetTo: toNumber(e.target.value, "") }))}
+                  onChange={(e) => setVenue((s) => ({ ...s, budgetTo: Number(e.target.value) || "" }))}
                   className="w-24 h-9 rounded-xl bg-black border border-white/15 text-white/90 px-3"
                 />
               </div>
@@ -299,7 +295,7 @@ export default function FilterSidebarModern(props) {
                     <button
                       type="button"
                       onClick={() =>
-                        setVenue(s => ({ ...s, types: (s.types || []).filter((_, idx) => idx !== i) }))
+                        setVenue((s) => ({ ...s, types: (s.types || []).filter((_, idx) => idx !== i) }))
                       }
                       className="text-white/60 hover:text-white"
                     >
@@ -318,7 +314,7 @@ export default function FilterSidebarModern(props) {
                       e.preventDefault();
                       const v = venueTypeInput.trim();
                       if (!v) return;
-                      setVenue(s => ({ ...s, types: [...(s.types || []), v] }));
+                      setVenue((s) => ({ ...s, types: [...(s.types || []), v] }));
                       setVenueTypeInput("");
                     }
                   }}
@@ -330,7 +326,7 @@ export default function FilterSidebarModern(props) {
                   onClick={() => {
                     const v = venueTypeInput.trim();
                     if (!v) return;
-                    setVenue(s => ({ ...s, types: [...(s.types || []), v] }));
+                    setVenue((s) => ({ ...s, types: [...(s.types || []), v] }));
                     setVenueTypeInput("");
                   }}
                   className="h-9 px-3 rounded-xl bg-violet-600/90 text-white hover:bg-violet-600"
@@ -344,7 +340,7 @@ export default function FilterSidebarModern(props) {
               <div className="flex justify-end">
                 <Switch
                   checked={!!venueFilters?.verifiedOnly}
-                  onChange={(v) => setVenue(s => ({ ...s, verifiedOnly: !!v }))}
+                  onChange={(v) => setVenue((s) => ({ ...s, verifiedOnly: !!v }))}
                 />
               </div>
             </Row>
@@ -386,7 +382,7 @@ function Switch({ checked, onChange }) {
   );
 }
 
-function NumberWithSlider({ value, onChange, min = 0, max = 100, step = 1, checkpoints, icon }) {
+function NumberWithSlider({ value, onChange, min = 0, max = 100, step = 1, checkpoints }) {
   const [internal, setInternal] = useState(value || 0);
   useEffect(() => { setInternal(value || 0); }, [value]);
 

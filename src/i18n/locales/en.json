@@ -1,9 +1,9 @@
 {
   "hello": "Hello",
-  "login": "Login",
-  "register": "Register",
-  "logout": "Logout",
-  "my_account": "My Account",
+  "login": "Log in",
+  "register": "Sign up",
+  "logout": "Log out",
+  "my_account": "My account",
   "notifications": "Notifications",
   "select_language": "Select language",
   "editable_bio": {
@@ -14,6 +14,605 @@
   },
   "common": {
     "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "select": "Select…",
+    "free": "Free",
+    "clear": "Clear",
+    "delete": "Delete",
+    "prev": "Previous",
+    "loading": "Loading...",
+    "loading_short": "Loading",
+    "close": "Close",
+    "confirm": "Confirm",
+    "or": "or",
+    "all": "All",
+    "view": "View"
+  },
+  "editable_chips": {
+    "add": "Add",
+    "edit": "Edit",
+    "remove": "Remove",
+    "save": "Save",
+    "cancel": "Cancel",
+    "placeholder": "Add…",
+    "no_selection": "Nothing selected yet.",
+    "view_results_for": "View results for “{{item}}”",
+    "limit_reached": "You’ve reached the limit of {{max}}.",
+    "count": "{{count}}/{{max}}"
+  },
+  "editable_dj_equipment": {
+    "title": "DJ Equipment",
+    "edit": "Edit",
+    "not_specified": "Not specified yet.",
+    "options": {
+      "artist": {
+        "none": "I don’t have equipment",
+        "controller_only": "Controller/console only",
+        "mixer_players": "Mixer + player(s)",
+        "full_mobile": "Full and mobile setup (PA included)",
+        "other": "Other setup"
+      },
+      "location": {
+        "full_ready": "Full setup – artist just plugs in and plays",
+        "speakers_only": "Speakers only – artist must bring mixer/controller",
+        "mixer_only": "Mixer only – artist brings player(s)/laptop",
+        "space_only": "Space only – artist brings everything",
+        "other": "Other setup"
+      }
+    },
+    "details_label": "Details (optional)",
+    "placeholder_other": "Describe the setup: brands, models, requirements, etc.",
+    "placeholder_default": "Ex: “prefer XLR connection”, “have a flight case”, “PA 2x1kW + sub”",
+    "save": "Save",
     "cancel": "Cancel"
+  },
+  "editable_field": {
+    "is_free": "It’s free",
+    "save": "Save",
+    "cancel": "Cancel",
+    "no_value": "No value",
+    "edit": "Edit",
+    "currency_format": "{{price}} RON / set"
+  },
+  "editable_genres": {
+    "label": "MUSIC GENRES",
+    "placeholder": "Choose genres",
+    "max_message": "You already selected 5 genres. Remove one to add another."
+  },
+  "editable_specializations": {
+    "label": "PREFERENCES",
+    "placeholder": "Add event type"
+  },
+  "event_card": {
+    "confirmed": "Confirmed",
+    "tentative": "Tentative",
+    "details": "Details"
+  },
+  "account_type": {
+    "title": "Account type",
+    "artist": "Artist",
+    "location": "Location",
+    "aria_artist": "Set account type to Artist (press again to switch back to user)",
+    "aria_location": "Set account type to Location (press again to switch back to user)",
+    "title_artist": "Click Artist again to switch back to user",
+    "title_location": "Click Location again to switch back to user",
+    "current_user": "Current type: user. You can switch to Artist or Location.",
+    "current_selected": "Current type: {{type}}. Press the same button again to switch back to user."
+  },
+  "availability": {
+    "note_end": "End is exclusive (+1 day is stored automatically).",
+    "title_label": "Title",
+    "notes_label": "Notes",
+    "placeholder_title": "Ex: Private event",
+    "placeholder_notes": "Details (optional)",
+    "cancel": "Cancel",
+    "save": "Save",
+    "title": "Availability",
+    "choose_account_type": "Choose an account type to set availability."
+  },
+  "demos": {
+    "placeholder": "YouTube / SoundCloud / Spotify / Mixcloud link",
+    "add": "Add",
+    "delete": "Delete",
+    "unsupported": "Only links from YouTube / SoundCloud / Spotify / Mixcloud are accepted.",
+    "duplicate": "This link already exists.",
+    "max_reached": "You can add up to 3 demo links.",
+    "remaining": "{{count}} slot(s) left. Accepted: YouTube, SoundCloud, Spotify, Mixcloud.",
+    "empty": "Add up to 3 links to mixes or live sets.",
+    "uploading": "Uploading…",
+    "limit_reached": "Limit reached (3)",
+    "note": "Max 3 audio files. Saved automatically after upload."
+  },
+  "availability_calendar": {
+    "busy": "Busy",
+    "free": "Free",
+    "reserved": "Reserved",
+    "book_artist": "Book artist",
+    "book_location": "Book location",
+    "book_generic": "Book",
+    "close": "Close",
+    "no_entries": "No entries on this day.",
+    "delete": "Delete block",
+    "add_block": "Add block"
+  },
+  "dialog": {
+    "confirm_title": "Confirm change",
+    "confirm_text": "Are you sure you want to save this change?",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "avatar_crop": {
+    "zoom": "Zoom: {{value}}x",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "city_autocomplete": {
+    "placeholder": "Search city..."
+  },
+  "collab": {
+    "no_reviews_yet": "No reviews yet",
+    "unknown_location": "Location",
+    "no_collabs": "No collaborations yet — they’ll appear automatically after bookings.",
+    "back": "Back",
+    "forward": "Forward",
+    "loading": "Loading…",
+    "none_available": "No collaborations available.",
+    "all_loaded": "All collaborations loaded.",
+    "demo_data": "(Demo data)",
+    "nav_back": "Back",
+    "nav_forward": "Forward"
+  },
+  "collab_review": {
+    "stars_aria": "{{count}} stars",
+    "comment_placeholder": "Comment (optional)",
+    "submit": "Submit"
+  },
+  "complete_profile": {
+    "title": "Complete your profile",
+    "account_type": "Account type:",
+    "progress": "Progress:",
+    "placeholder_fields": "Your dedicated fields go here ({{role}}).",
+    "required_fields": "Essential fields (example):",
+    "verifying": "Verifying...",
+    "publish": "Publish profile",
+    "published_success": "✅ Profile published!",
+    "missing_fields_info": "ℹ️ You still have fields to complete.",
+    "publish_error": "Publish error: {{message}}"
+  },
+  "demo": {
+    "collab_good": "Great collaboration, excellent vibe.",
+    "collab_sound_ok": "Sound OK, very friendly staff.",
+    "collab_org_ok": "Good organization, happy to return.",
+    "collab_delay": "It was OK, small setup delays.",
+    "collab_energy": "Nice crowd, high energy.",
+    "adding": "Adding demo collaborations…",
+    "added_success": "✅ Demo collaborations added.",
+    "add_error": "❌ Insert error.",
+    "deleting": "Deleting demo collaborations…",
+    "delete_success": "✅ Demos deleted.",
+    "delete_error": "❌ Delete error.",
+    "button_add": "Add demo collaborations",
+    "button_delete": "Delete demos",
+    "artist_you": "Artist (you)",
+    "location_you": "Location (you)"
+  },
+  "gallery": {
+    "open": "Open gallery"
+  },
+  "settings": {
+    "advanced": "Advanced settings"
+  },
+  "account": {
+    "delete": "Delete account",
+    "switch_title": "Switch account type?",
+    "switch_desc": "Switching to another account type will permanently delete most of your current type–specific settings and data (rate/budget, capacity, genres, equipment, addresses, demos, gallery, city, promoted/verified status, etc.). This action cannot be undone.",
+    "fields_reset_title": "Fields that will be reset:",
+    "confirm_switch": "Yes, delete and switch type"
+  },
+  "kyc": {
+    "title": "Identity verification",
+    "desc": "Upload the front and back of your ID. Data is used only for verification.",
+    "front_label": "ID – Front",
+    "back_label": "ID – Back",
+    "front_chip": "FRONT",
+    "back_chip": "BACK",
+    "pick_front_title": "Click to select image (front)",
+    "pick_back_title": "Click to select image (back)",
+    "choose_file": "Choose file...",
+    "file_hint": "JPG, PNG or HEIC • max 10MB",
+    "front_preview_alt": "Front preview",
+    "back_preview_alt": "Back preview",
+    "note_clear": "* Make sure the data is clear and fully visible.",
+    "submit": "Submit for verification",
+    "error_both_required": "Please upload both images (front and back).",
+    "error_submit": "An error occurred on submit. Try again.",
+    "verify_btn": "Verify identity",
+    "verified_btn": "Verified",
+    "status_verified": "Verified account",
+    "status_pending": "Verification in progress",
+    "status_locked": "Available after profile is 100% complete"
+  },
+  "locationAddress": {
+    "empty": "Address not provided",
+    "open_in_maps": "Open in Google Maps",
+    "label": "Location address",
+    "placeholder": "e.g., Str. X nr. Y, Bucharest"
+  },
+  "mediaGallery": {
+    "reached_limit": "You’ve reached the limit of {{max}} images",
+    "add_images": "Add images",
+    "enlarge": "Enlarge",
+    "hint_multi": "You can add up to {{max}} images. {{remaining}} slot(s) left.",
+    "hint_single": "You can add a single image.",
+    "some_ignored": "Some files were ignored: {{bytes}} file(s) > {{sizeMB}}MB; {{small}} under {{minW}}×{{minH}}px; {{big}} over {{maxW}}×{{maxH}}px; {{other}} invalid."
+  },
+  "avatar": {
+    "alt": "profile photo",
+    "change": "Change profile photo"
+  },
+  "progressBanner": {
+    "choose_type": "⚠️ Select the account type (Artist or Location). Until then you can edit general fields.",
+    "complete": "✅ Profile complete!",
+    "progress": "⚠️ Progress: {{percent}}% — still missing {{missing}}."
+  },
+  "reviews": {
+    "avg_out_of": "{{avg}} / 5",
+    "no_rating_yet": "No ratings yet",
+    "login_to_review": "Log in to leave a review",
+    "submit_review": "Submit review",
+    "comment_placeholder": "Leave a comment (optional)",
+    "stars_aria": "{{count}} stars"
+  },
+  "badges.verified": "Verified profile",
+  "badges.unverified": "Unverified profile",
+  "badges.new": "Recently created profile",
+  "badges.label.verified": "Verified",
+  "badges.label.unverified": "Unverified",
+  "badges.label.new": "New",
+  "badges.type.artist": "ARTIST",
+  "badges.type.location": "LOCATION",
+  "badges.type.profile": "PROFILE",
+  "chiprow.ellipsis": "…",
+  "filters.title": "Filters",
+  "filters.reset": "Reset",
+  "filters.profileType": "Profile type",
+  "filters.profileType.all": "All",
+  "filters.profileType.artist": "Artists",
+  "filters.profileType.location": "Locations",
+  "filters.position": "My position",
+  "filters.useLocation": "Use location",
+  "filters.usingLocation": "Determining location…",
+  "filters.location.error": "Geolocation error.",
+  "filters.artist.distanceMax": "Max distance (km)",
+  "filters.artist.minRating": "Minimum rating",
+  "filters.artist.budgetMax": "Max budget (RON/set)",
+  "filters.artist.verifiedOnly": "Verified only",
+  "filters.location.capacity": "Capacity (min / max)",
+  "filters.location.distanceMax": "Max distance (km)",
+  "filters.location.budget": "Budget (min / max)",
+  "filters.location.types": "Location types",
+  "filters.location.types.placeholder": "e.g., Bar, Café, Club (Enter)",
+  "filters.location.types.add": "Add",
+  "filters.location.verifiedOnly": "Verified only",
+  "pricing": {
+    "currency": "RON",
+    "free": "Free",
+    "perSet": "{{amount}} {{currency}} / set",
+    "range": "{{from}}–{{to}} {{currency}}",
+    "from": "from {{amount}} {{currency}}",
+    "to": "up to {{amount}} {{currency}}",
+    "amount": "{{amount}} {{currency}}"
+  },
+  "footer": {
+    "all_rights_reserved": "All rights reserved.",
+    "about": "About",
+    "contact": "Contact",
+    "terms": "Terms"
+  },
+  "language": {
+    "select": "Select language",
+    "choose_description": "Choose your preferred app language"
+  },
+  "languages": {
+    "ro": "Romanian",
+    "en": "English",
+    "tr": "Turkish",
+    "fr": "French",
+    "es": "Spanish"
+  },
+  "save": "Save",
+  "menu": {
+    "home": "Home",
+    "discover": "Discover",
+    "events": "Events",
+    "search": "Search",
+    "admin": "Admin",
+    "close_menu": "Close menu"
+  },
+  "current_language": "current",
+  "user": {
+    "default_display_name": "User"
+  },
+  "error_boundary": {
+    "generic": "There was a problem displaying this section."
+  },
+  "__meta": {
+    "files": [
+      "components/TopPopup.jsx",
+      "components/UserMenu.jsx",
+      "components/ErrorBoundary.jsx"
+    ],
+    "generated": "en"
+  },
+  "admin": {
+    "title": "Admin Dashboard — BookMix",
+    "search_placeholder": "Search name, email, bio...",
+    "filter_by": "Filter by",
+    "filters": {
+      "all": "All",
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "flagged": "Flagged"
+    },
+    "count_accounts": "{{count}} accounts",
+    "bulk": {
+      "verify_selected": "Verify selected",
+      "promote_selected": "Promote selected",
+      "flag_selected": "Mark “flagged”",
+      "delete_selected": "Delete selected"
+    },
+    "note": {
+      "auth_deletion": "⚠️ Deleting from Auth must be done server-side (Cloud Functions/Admin SDK)."
+    },
+    "select_all": "Select all",
+    "select_account": "Select account",
+    "table": {
+      "user": "User",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "no_accounts": "No accounts found.",
+    "status": {
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "flagged": "Flagged",
+      "suspicious": "Suspicious",
+      "suspicious_hint": "Suspicious bio — mark as flagged"
+    },
+    "actions": {
+      "details": "Details",
+      "verify": "Verify",
+      "revoke": "Revoke",
+      "promote": "Promote",
+      "cancel_promo": "Cancel promo",
+      "flag": "Flag",
+      "unflag": "Unflag",
+      "delete": "Delete",
+      "verify_account": "Verify account",
+      "revoke_verify": "Revoke verification",
+      "mark_flagged": "Mark as flagged",
+      "delete_account": "Delete account"
+    },
+    "details_audit": "Details & Audit",
+    "registered": "Registered",
+    "bio": "Bio",
+    "bio_suspicious": "Suspicious bio (auto detection)",
+    "id_photos": "ID photos",
+    "no_id_photos": "No ID photos yet.",
+    "audit": {
+      "latest_actions": "Latest actions",
+      "none": "No recent events."
+    },
+    "select_an_account": "Select an account to view details. You can view bio, ID photos, and action history.",
+    "confirm": {
+      "title": "Confirmation",
+      "delete_one": "Confirm permanent deletion of this account?",
+      "bulk_delete": "Confirm deletion of all selected accounts?",
+      "bulk_verify": "Confirm verification of all selected accounts?",
+      "bulk_promote": "Confirm promotion of selected accounts?",
+      "bulk_flag": "Confirm marking selected accounts as “flagged”?"
+    }
+  },
+  "advancedSettings": {
+    "title": "Advanced settings",
+    "back_to_profile": "Back to profile",
+    "common": {
+      "saving": "Saving..."
+    },
+    "messages": {
+      "username_updated": "Username updated.",
+      "username_update_error": "Error updating username.",
+      "google_linked_change_in_google": "Account is linked via Google. Password changes must be done in Google, not in BookMix.",
+      "enter_current_password": "Enter current password to reauthenticate.",
+      "password_min_length": "New password must be at least 6 characters.",
+      "passwords_do_not_match": "Passwords do not match.",
+      "password_updated": "Password updated.",
+      "password_update_error": "Error updating password."
+    },
+    "auth_method": {
+      "title": "Authentication method",
+      "email_password_enabled": "Email & password enabled",
+      "no_local_password": "No local password",
+      "google_linked": "Also linked with Google",
+      "google_note": "Account is linked through Google. Password is managed in Google; it cannot be changed here."
+    },
+    "username": {
+      "section_title": "Username",
+      "placeholder": "Stage name / venue name / name",
+      "save": "Save username",
+      "mapping_note": "Auto-maps: Artist → stageName, Location → locationName, User → name."
+    },
+    "password": {
+      "section_title": "Change password",
+      "current_placeholder": "Current password",
+      "new_placeholder": "New password (min 6 characters)",
+      "confirm_placeholder": "Confirm new password",
+      "save": "Save password"
+    }
+  },
+  "events": {
+    "title": "Events",
+    "event_not_found": "Event not found.",
+    "reserve_tickets": "Reserve / Tickets"
+  },
+  "home": {
+    "hero": {
+      "title": "BookMix — connecting artists with venues",
+      "subtitle": "Discover DJs, bands, and venues (bars, clubs, cafés) ready for your event.",
+      "discover": "Discover artists & venues",
+      "my_account": "My account",
+      "login": "Log in"
+    },
+    "features": {
+      "match_title": "Smart match",
+      "match_desc": "Filters and search by genres, rate, and availability.",
+      "clean_profiles_title": "Clean profiles",
+      "clean_profiles_desc": "Gallery, genres, equipment, verified reviews.",
+      "simple_booking_title": "Simple booking",
+      "simple_booking_desc": "Direct contact and calendar blocking in a few clicks."
+    },
+    "events": {
+      "title": "Upcoming events",
+      "subtitle": "See what’s next in the BookMix community.",
+      "see_all": "See all events"
+    }
+  },
+  "errors": {
+    "not_found_title": "404",
+    "not_found_message": "The page you were looking for was not found.",
+    "back_home": "Back to home page"
+  },
+  "auth": {
+    "login_title": "Sign in to BookBeat",
+    "email_placeholder": "Email",
+    "password_placeholder": "Password",
+    "login_with_email": "🔐 Log in with Email",
+    "login_with_google": "🔓 Log in with Google",
+    "webview_hint": "If login doesn’t start, tap ⋯ and open in your default browser (Safari/Chrome).",
+    "no_account": "Don’t have an account?",
+    "register": "Sign up",
+    "error_generic": "❌ Error: {{message}}",
+    "logout": "Log out"
+  },
+  "notifications_doc": {
+    "title": "Notifications",
+    "up_to_date": "Up to date ✅",
+    "unread_count": "{{count}} unread",
+    "not_authenticated_title": "You’re not logged in",
+    "not_authenticated_subtitle": "Log in to view your notifications.",
+    "add_demo": "Add demo",
+    "adding_demo": "Adding…",
+    "add_demo_title": "Add some test notifications",
+    "mark_all": "Mark all",
+    "mark_all_title": "Mark all as read",
+    "unread": "Unread",
+    "empty_title": "You have no notifications yet",
+    "empty_subtitle": "You’ll receive booking, confirmation, and message updates here.",
+    "fallback_title": "Notification",
+    "mark_read": "Mark as read",
+    "loading": "Loading notifications…",
+    "type": {
+      "booking": "Booking",
+      "message": "Message",
+      "system": "System",
+      "warning": "Warning",
+      "notification": "Notification"
+    },
+    "demo": {
+      "booking_created_title": "New booking request",
+      "booking_created_body": "Mechano Pub proposed Oct 12, 21:00–23:00.",
+      "booking_accepted_title": "Booking confirmed",
+      "booking_accepted_body": "Andrei (DJ) confirmed the gig on Oct 15.",
+      "message_new_title": "New message from Mechano Pub",
+      "message_new_body": "Hi! Can you also do Oct 20? Waiting for your reply.",
+      "warning_title": "Update your availability",
+      "warning_body": "Next week is empty. Add your busy days.",
+      "system_verified_title": "Profile verified 🎉",
+      "system_verified_body": "Your account has been verified. Happy bookings!"
+    }
+  },
+  "profile": {
+    "user": "User",
+    "badge_new_title": "Recently created profile",
+    "badge_new": "New",
+    "badge_promoted": "Promoted",
+    "badge_verified": "Verified",
+    "badge_pending": "Verification in progress",
+    "city_label": "City / Commune",
+    "city_placeholder": "e.g., Bucharest",
+    "capacity_label": "Capacity",
+    "capacity_placeholder": "e.g., 120",
+    "budget_label": "Budget (RON)",
+    "budget_placeholder": "e.g., 500",
+    "location_type_label": "Location type",
+    "location_type_placeholder": "Choose type",
+    "rate_label": "Rate (RON / set)",
+    "rate_placeholder": "e.g., 300",
+    "promoted_label": "Promoted",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "about": "About",
+    "collaborations": "Collaborations",
+    "demos": "Demos",
+    "address": "Address",
+    "media_gallery": "Media gallery",
+    "promoted": "PROMOTED",
+    "notAuthenticated": "You are not logged in.",
+    "invalidImage": "Selected file is not an image.",
+    "imageTooLarge": "Image exceeds 5MB.",
+    "notFound": "Profile not found.",
+    "confirmDelete": "Are you sure you want to delete the account? This action is permanent.",
+    "missing": {
+      "bio": "the description",
+      "genres": "the music genres",
+      "equipment": "the DJ equipment",
+      "rate": "the rate",
+      "photo": "the profile photo",
+      "demos": "the demos",
+      "city": "the city",
+      "locationName": "the venue name",
+      "capacity": "the capacity",
+      "locationPhoto": "the venue photo",
+      "address": "the address",
+      "budget": "the budget",
+      "locationType": "the location type"
+    }
+  },
+  "profiles": {
+    "sort": {
+      "aria": "Sort results",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "rating_desc": "Rating descending",
+      "price_asc": "Price ascending",
+      "price_desc": "Price descending"
+    },
+    "pagination": {
+      "prev": "Previous page",
+      "next": "Next page",
+      "page_of": "Page {{page}} / {{total}}"
+    }
+  },
+  "register_doc": {
+    "title": "Create account",
+    "subtitle": "Create your account and join the community. You can add the rest of the details anytime from your profile.",
+    "username": "Username",
+    "username_placeholder": "e.g., Alex Pop",
+    "email": "Email",
+    "email_placeholder": "you@example.com",
+    "password": "Password",
+    "password_placeholder": "••••••••",
+    "submit": "Create account",
+    "continue_google": "Continue with Google",
+    "have_account": "Already have an account?",
+    "login_link": "Log in",
+    "error_generic": "Registration error.",
+    "error_google": "Error signing in with Google."
   }
 }

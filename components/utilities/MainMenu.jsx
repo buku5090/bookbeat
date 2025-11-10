@@ -1,4 +1,3 @@
-// components/MainMenu.jsx
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -26,7 +25,6 @@ function useHideOnScroll({ threshold = 80, disabled = false } = {}) {
   return hidden;
 }
 
-// forțează rute ABSOLUTE, previne to="events" -> "/user/:id/events"
 const abs = (p = "/") => (String(p).startsWith("/") ? p : `/${p}`);
 
 export default function MainMenu() {
@@ -41,7 +39,6 @@ export default function MainMenu() {
 
   const hidden = useHideOnScroll({ threshold: 80, disabled: menuVisible });
 
-  // măsurăm înălțimea reală a header-ului pentru spacer
   const headerRef = useRef(null);
   const [headerH, setHeaderH] = useState(0);
   useLayoutEffect(() => {
@@ -51,7 +48,6 @@ export default function MainMenu() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // calculează originea cercului din poziția butonului ☰
   const toggleRef = useRef(null);
   const [origin, setOrigin] = useState({ x: "100%", y: "0px" });
   useLayoutEffect(() => {
@@ -64,7 +60,6 @@ export default function MainMenu() {
     return () => window.removeEventListener("resize", update);
   }, [menuVisible]);
 
-  // control mount/unmount pentru overlay cu animație de închidere
   useEffect(() => {
     if (mobileMenuOpen) {
       setMenuVisible(true);
@@ -74,24 +69,20 @@ export default function MainMenu() {
     }
   }, [mobileMenuOpen, menuVisible]);
 
-  // închide meniul mobil la schimbarea rutei (declanșează close anim)
   useEffect(() => setMobileMenuOpen(false), [location.pathname]);
 
   const menuItems = [
     { label: t("menu.home"), path: "/" },
     { label: t("menu.discover"), path: "/discover" },
     { label: t("menu.events"), path: "/events" },
-    { label: t("menu.search"), path: "/search" },
   ];
-  const lastItem = menuItems[menuItems.length - 1];
-  const leftItems = menuItems.slice(0, -1);
 
   return (
     <>
-      {/* header-ul FIXED */}
+      {/* HEADER */}
       <header
         ref={headerRef}
-        className={`fixed top-0 inset-x-0 z-50 transition-transform duration-300 will-change-transform bg-black text-white shadow-md ${
+        className={`fixed top-0 inset-x-0 z-50 transition-transform duration-300 will-change-transform !bg-black !text-white shadow-md ${
           hidden ? "-translate-y-full" : "translate-y-0"
         }`}
       >
@@ -110,30 +101,31 @@ export default function MainMenu() {
 
           {/* Desktop Menu */}
           <nav className="hidden md:flex items-center w-full ml-8" aria-label="Main">
-            <ul className="flex space-x-6 font-medium text-gray-600">
-              {leftItems.map(({ label, path }) => (
+            <ul className="flex space-x-6 font-medium">
+              {menuItems.map(({ label, path }) => (
                 <li key={label}>
                   <NavLink
                     to={abs(path)}
-                    end={path === "/"} // root se activează doar exact pe "/"
+                    end={path === "/"}
                     className={({ isActive }) =>
                       `uppercase !font-bold transition ${
-                        isActive ? "text-white" : "!text-white"
-                      } hover:text-violet-600`
+                        isActive ? "!text-[#8A2BE2]" : "!text-white"
+                      } hover:!text-[#8A2BE2]`
                     }
                   >
                     {label}
                   </NavLink>
                 </li>
               ))}
+
               {isAdmin && (
                 <li>
                   <NavLink
                     to="/admin"
                     className={({ isActive }) =>
-                      `uppercase font-bold transition ${
-                        isActive ? "text-red-500" : "text-red-400"
-                      } hover:text-red-600`
+                      `uppercase !font-bold transition ${
+                        isActive ? "!text-[#E50914]" : "!text-[#E50914]"
+                      } hover:!text-[#E50914]`
                     }
                   >
                     Admin
@@ -143,46 +135,40 @@ export default function MainMenu() {
             </ul>
 
             <div className="ml-auto flex items-center space-x-4">
-              <NavLink
-                to={abs(lastItem.path)}
-                className={({ isActive }) =>
-                  `uppercase !font-bold transition ${
-                    isActive ? "text-white" : "!text-white"
-                  } hover:text-violet-600`
-                }
-              >
-                {lastItem.label}
-              </NavLink>
               <UserMenu />
             </div>
           </nav>
 
-          {/* ☰ Mobile toggle */}
+          {/* Mobile: ☰ toggle + UserMenu (UserMenu DUPĂ iconiță) */}
           <div className="md:hidden flex items-center gap-3">
-            {/* Avatar / UserMenu pe mobil */}
-            <UserMenu />
-
-            <button ref={toggleRef} onClick={() => setMobileMenuOpen((v) => !v)}>
-              {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            <button
+              ref={toggleRef}
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="h-10 w-10 rounded-2xl flex items-center justify-center !bg-red !border-none"
+            >
+              {mobileMenuOpen
+                ? <X size={24} className="!fill-white" />
+                : <Menu size={24} className="!text-white" />
+              }
             </button>
+            <UserMenu />
           </div>
         </div>
       </header>
 
-      {/* spacer egal cu înălțimea header-ului, ca să nu sară layoutul */}
+      {/* Spacer */}
       <div aria-hidden style={{ height: headerH }} />
 
-      {/* =====================  📱 MOBILE MENU — cerc care se deschide/închide  ===================== */}
+      {/* ================= MOBILE MENU ================= */}
       {menuVisible && (
         <div
           className="md:hidden fixed inset-0 z-[60]"
           style={{ ["--cx"]: origin.x, ["--cy"]: origin.y }}
         >
-          {/* Overlay alb cu clip-path; animăm open/close */}
+          {/* Overlay — culoare din paletă */}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 !bg-black"
             style={{
-              background: "#fff",
               clipPath: closing
                 ? "circle(150vmax at var(--cx) var(--cy))"
                 : "circle(0 at var(--cx) var(--cy))",
@@ -198,21 +184,21 @@ export default function MainMenu() {
             }}
           />
 
-          {/* Conținutul meniului (fade la închidere) */}
+          {/* Conținut */}
           <div
             className={`absolute inset-0 overflow-auto ${
               closing ? "animate-[fadeOut_.18s_ease-out_forwards]" : ""
             }`}
             style={{ pointerEvents: closing ? "none" : "auto" }}
           >
-            {/* buton CLOSE în dreapta-sus */}
+            {/* Close */}
             <button
-              aria-label="Închide meniul"
+              aria-label={t("menu.close_menu")}
               onClick={() => setMobileMenuOpen(false)}
-              className="absolute !block right-4 top-4 z-10 h-10 w-10 flex items-center justify-center rounded-xl !bg-white !border-none"
+              className="absolute right-4 top-4 z-10 h-10 w-10 flex items-center justify-center rounded-xl !bg-black !text-white !border !border-white/10"
               style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
-              <X size={25} className="!fill-black" strokeWidth={5} />
+              <X size={25} />
             </button>
 
             <div
@@ -234,39 +220,34 @@ export default function MainMenu() {
                       end={path === "/"}
                       onClick={() => setMobileMenuOpen(false)}
                       className={({ isActive }) =>
-                        `block !font-bold w-full rounded-xl px-2 py-1 text-[25px] font-extrabold tracking-wide transition ${
-                          isActive ? "!text-violet-700" : "!text-black"
-                        }`
+                        `block !font-bold w-full rounded-xl px-2 py-1 text-[25px] tracking-wide transition ${
+                          isActive ? "!text-[#8A2BE2]" : "!text-white"
+                        } hover:!text-[#8A2BE2]`
                       }
                     >
                       {label.toUpperCase()}
                     </NavLink>
                   </li>
                 ))}
-                <button
-                  aria-label={t("menu.close_menu")}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="absolute right-4 top-4 z-10 h-10 w-10 flex items-center justify-center rounded-xl !bg-white"
-                >
-                  <X size={25} className="!fill-black" />
-                </button>
 
-                {/* ADMIN */}
                 {isAdmin && (
-                  <NavLink
-                    to="/admin"
-                    className="text-red-600 font-bold"
+                  <li
+                    className="opacity-0 will-change-transform"
+                    style={{ animation: `fadeUp 320ms ease-out forwards`, animationDelay: `900ms` }}
                   >
-                    {t("menu.admin")}
-                  </NavLink>
+                    <NavLink to="/admin" className="block !text-[#E50914] !font-bold">
+                      {t("menu.admin")}
+                    </NavLink>
+                  </li>
                 )}
               </ul>
+
               {/* safe-area bottom */}
               <div style={{ height: "env(safe-area-inset-bottom)" }} />
             </div>
           </div>
 
-          {/* keyframes locale */}
+          {/* keyframes */}
           <style>{`
             @keyframes circleOpen { to { clip-path: circle(150vmax at var(--cx) var(--cy)); } }
             @keyframes circleClose { from { clip-path: circle(150vmax at var(--cx) var(--cy)); } to { clip-path: circle(0 at var(--cx) var(--cy)); } }
@@ -278,7 +259,7 @@ export default function MainMenu() {
           `}</style>
         </div>
       )}
-      {/* ===================  /MOBILE MENU  =================== */}
+      {/* =============== /MOBILE MENU =============== */}
     </>
   );
 }

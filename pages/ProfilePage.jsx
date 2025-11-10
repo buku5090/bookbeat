@@ -36,8 +36,8 @@ export default function ProfilePage() {
   const isOwnProfile = useMemo(() => !id || (authUser && authUser.uid === id), [id, authUser]);
   const profileUid   = useMemo(() => id || authUser?.uid, [id, authUser]);
 
-  const isArtist  = userData?.type === "artist";
-  const isLocation= userData?.type === "location";
+  const isArtist   = userData?.type === "artist";
+  const isLocation = userData?.type === "location";
   const isTypeChosen = isArtist || isLocation;
 
   /* ---------------- Auth + live profile ---------------- */
@@ -247,7 +247,7 @@ export default function ProfilePage() {
 
   const imageSrc =
     userData?.photoURL ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=0D8ABC&color=fff`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=4C1D95&color=fff`; // mov din paletă
 
   const verificationStatus = userData?.verificationStatus || "unverified";
   const canRequestVerification = progress.percent === 100 && verificationStatus !== "verified";
@@ -257,7 +257,7 @@ export default function ProfilePage() {
 
   if (!userData) {
     return (
-      <div className="min-h-screen bg-black text-white md:p-6">
+      <div className="min-h-screen !bg-black !text-white md:p-6">
         <div className="max-w-3xl mx-auto text-center">
           <p>{t("profile.notFound")}</p>
         </div>
@@ -266,9 +266,18 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white md:p-6">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8 text-black">
-
+    <div className="min-h-screen !bg-black !text-white md:p-6">
+      {/* Card central – full dark */}
+      <div
+        className="
+          dark-scope
+          max-w-6xl mx-auto rounded-2xl p-6 sm:p-8
+          !bg-black !text-white
+          !border !border-white/10
+          shadow-[0_18px_40px_rgba(0,0,0,0.35)]
+          backdrop-blur
+        "
+      >
         {isOwnProfile && (
           <ProgressBanner
             isTypeChosen={isTypeChosen}
@@ -325,6 +334,48 @@ export default function ProfilePage() {
         userData={userData}
         setUserData={setUserData}
       />
+
+      {/* Override scoped pentru toate câmpurile de formular din panourile copil */}
+      <style>{`
+        .dark-scope :where(h1,h2,h3,h4,h5,h6,p,span,small,label,div,li,strong,em) {
+          color: #fff !important;
+        }
+        .dark-scope input,
+        .dark-scope textarea,
+        .dark-scope select {
+          background-color: #000 !important;
+          color: #fff !important;
+          border-color: rgba(255,255,255,0.16) !important;
+        }
+        .dark-scope input:focus,
+        .dark-scope textarea:focus,
+        .dark-scope select:focus {
+          outline: none !important;
+          box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.6) !important; /* mov */
+          border-color: rgba(124, 58, 237, 0.8) !important;
+        }
+        .dark-scope ::placeholder {
+          color: rgba(255,255,255,0.5) !important;
+        }
+        .dark-scope .btn,
+        .dark-scope button {
+          color: #fff !important;
+        }
+        .dark-scope .card,
+        .dark-scope .panel {
+          background-color: #000 !important;
+          border-color: rgba(255,255,255,0.12) !important;
+          color: #fff !important;
+        }
+        .dark-scope .chip,
+        .dark-scope .badge {
+          background: rgba(255,255,255,0.08) !important;
+          border: 1px solid rgba(255,255,255,0.16) !important;
+          color: #fff !important;
+        }
+        .dark-scope a { color: #A78BFA !important; } /* mov deschis */
+        .dark-scope a:hover { color: #C4B5FD !important; }
+      `}</style>
     </div>
   );
 }

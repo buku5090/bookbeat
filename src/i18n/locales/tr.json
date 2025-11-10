@@ -1,11 +1,11 @@
 {
-  "hello": "Merhaba",
-  "login": "Giriş Yap",
-  "register": "Kayıt Ol",
-  "logout": "Çıkış Yap",
+  "hello": "Selam",
+  "login": "Giriş",
+  "register": "Kayıt ol",
+  "logout": "Çıkış",
   "my_account": "Hesabım",
   "notifications": "Bildirimler",
-  "select_language": "Dili seçin",
+  "select_language": "Dil seç",
   "editable_bio": {
     "edit": "Düzenle",
     "placeholder": "Kendin hakkında birkaç satır yaz…",
@@ -14,6 +14,605 @@
   },
   "common": {
     "save": "Kaydet",
+    "cancel": "İptal",
+    "back": "Geri",
+    "next": "İleri",
+    "select": "Seç…",
+    "free": "Ücretsiz",
+    "clear": "Temizle",
+    "delete": "Sil",
+    "prev": "Önceki",
+    "loading": "Yükleniyor...",
+    "loading_short": "Yükleniyor",
+    "close": "Kapat",
+    "confirm": "Onayla",
+    "or": "veya",
+    "all": "Tümü",
+    "view": "Gör"
+  },
+  "editable_chips": {
+    "add": "Ekle",
+    "edit": "Düzenle",
+    "remove": "Kaldır",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "placeholder": "Ekle…",
+    "no_selection": "Henüz seçilmedi.",
+    "view_results_for": "“{{item}}” için sonuçları gör",
+    "limit_reached": "{{max}} sınırına ulaştın.",
+    "count": "{{count}}/{{max}}"
+  },
+  "editable_dj_equipment": {
+    "title": "DJ Ekipmanı",
+    "edit": "Düzenle",
+    "not_specified": "Henüz belirtilmedi.",
+    "options": {
+      "artist": {
+        "none": "Ekipmanım yok",
+        "controller_only": "Sadece konsol/kontrolcü var",
+        "mixer_players": "Mikser + oynatıcı(lar) var",
+        "full_mobile": "Tam ve mobil ekipman (PA dahil)",
+        "other": "Diğer kurulum"
+      },
+      "location": {
+        "full_ready": "Tam ekipman – sanatçı sadece gelip çalar",
+        "speakers_only": "Sadece hoparlör var – sanatçı mikser/konsol getirmeli",
+        "mixer_only": "Sadece mikser var – sanatçı oynatıcı(lar)/laptop getirir",
+        "space_only": "Sadece alan – her şeyi sanatçı getirir",
+        "other": "Diğer kurulum"
+      }
+    },
+    "details_label": "Ayrıntılar (isteğe bağlı)",
+    "placeholder_other": "Kurulumu açıkla: markalar, modeller, gereksinimler vb.",
+    "placeholder_default": "Örn: “XLR ile bağlanmayı tercih ederim”, “flight-case var”, “PA 2x1kW + sub”",
+    "save": "Kaydet",
     "cancel": "İptal"
+  },
+  "editable_field": {
+    "is_free": "Ücretsizdir",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "no_value": "Değer yok",
+    "edit": "Düzenle",
+    "currency_format": "{{price}} RON / set"
+  },
+  "editable_genres": {
+    "label": "MÜZİK TÜRLERİ",
+    "placeholder": "Tür seç",
+    "max_message": "Zaten 5 tür seçtin. Başka eklemek için birini sil."
+  },
+  "editable_specializations": {
+    "label": "TERCİHLER",
+    "placeholder": "Etkinlik türü ekle"
+  },
+  "event_card": {
+    "confirmed": "Onaylandı",
+    "tentative": "Geçici",
+    "details": "Ayrıntılar"
+  },
+  "account_type": {
+    "title": "Hesap tipi",
+    "artist": "Sanatçı",
+    "location": "Mekân",
+    "aria_artist": "Hesap tipini Sanatçı yap (kullanıcıya dönmek için tekrar bas)",
+    "aria_location": "Hesap tipini Mekân yap (kullanıcıya dönmek için tekrar bas)",
+    "title_artist": "Kullanıcıya dönmek için Sanatçı’ya tekrar tıkla",
+    "title_location": "Kullanıcıya dönmek için Mekân’a tekrar tıkla",
+    "current_user": "Mevcut tip: kullanıcı. Sanatçı veya Mekân’a geçebilirsin.",
+    "current_selected": "Mevcut tip: {{type}}. Kullanıcıya dönmek için aynı düğmeye tekrar bas."
+  },
+  "availability": {
+    "note_end": "Bitiş dahıl değildir (otomatik +1 gün kaydedilir).",
+    "title_label": "Başlık",
+    "notes_label": "Notlar",
+    "placeholder_title": "Örn: Özel etkinlik",
+    "placeholder_notes": "Ayrıntılar (isteğe bağlı)",
+    "cancel": "Vazgeç",
+    "save": "Kaydet",
+    "title": "Müsaitlik",
+    "choose_account_type": "Müsaitlik ayarlamak için hesap tipini seç."
+  },
+  "demos": {
+    "placeholder": "YouTube / SoundCloud / Spotify / Mixcloud bağlantısı",
+    "add": "Ekle",
+    "delete": "Sil",
+    "unsupported": "Sadece YouTube / SoundCloud / Spotify / Mixcloud bağlantıları kabul edilir.",
+    "duplicate": "Bu bağlantı zaten mevcut.",
+    "max_reached": "En fazla 3 demo bağlantısı ekleyebilirsin.",
+    "remaining": "{{count}} yer kaldı. Kabul: YouTube, SoundCloud, Spotify, Mixcloud.",
+    "empty": "En fazla 3 mix veya canlı bağlantısı ekle.",
+    "uploading": "Yükleniyor…",
+    "limit_reached": "Limit aşıldı (3)",
+    "note": "En fazla 3 ses dosyası. Yüklemeden sonra otomatik kaydedilir."
+  },
+  "availability_calendar": {
+    "busy": "Meşgul",
+    "free": "Müsait",
+    "reserved": "Rezerve",
+    "book_artist": "Sanatçı rezerv et",
+    "book_location": "Mekân rezerv et",
+    "book_generic": "Rezerve et",
+    "close": "Kapat",
+    "no_entries": "Bu gün için kayıt yok.",
+    "delete": "Bloklamayı sil",
+    "add_block": "Bloklama ekle"
+  },
+  "dialog": {
+    "confirm_title": "Değişikliği onayla",
+    "confirm_text": "Bu değişikliği kaydetmek istediğinden emin misin?",
+    "cancel": "İptal",
+    "save": "Kaydet"
+  },
+  "avatar_crop": {
+    "zoom": "Yakınlaştırma: {{value}}x",
+    "zoom_in": "Yakınlaştır",
+    "zoom_out": "Uzaklaştır",
+    "cancel": "İptal",
+    "save": "Kaydet"
+  },
+  "city_autocomplete": {
+    "placeholder": "Şehir ara..."
+  },
+  "collab": {
+    "no_reviews_yet": "Henüz yorum yok",
+    "unknown_location": "Mekân",
+    "no_collabs": "Henüz iş birliği yok — rezervasyonlardan sonra otomatik eklenecek.",
+    "back": "Geri",
+    "forward": "İleri",
+    "loading": "Yükleniyor…",
+    "none_available": "Uygun iş birliği yok.",
+    "all_loaded": "Tüm iş birlikleri yüklendi.",
+    "demo_data": "(Demo verisi)",
+    "nav_back": "Geri",
+    "nav_forward": "İleri"
+  },
+  "collab_review": {
+    "stars_aria": "{{count}} yıldız",
+    "comment_placeholder": "Yorum (isteğe bağlı)",
+    "submit": "Gönder"
+  },
+  "complete_profile": {
+    "title": "Profilini tamamla",
+    "account_type": "Hesap tipi:",
+    "progress": "İlerleme:",
+    "placeholder_fields": "Buraya ({{role}}) için ayrılmış alanlar gelecek.",
+    "required_fields": "Gerekli alanlar (örnek):",
+    "verifying": "Doğrulanıyor...",
+    "publish": "Profili yayımla",
+    "published_success": "✅ Profil yayımlandı!",
+    "missing_fields_info": "ℹ️ Tamamlanması gereken alanlar var.",
+    "publish_error": "Yayın hatası: {{message}}"
+  },
+  "demo": {
+    "collab_good": "Harika iş birliği, süper enerji.",
+    "collab_sound_ok": "Ses iyi, ekip çok sıcak.",
+    "collab_org_ok": "Organizasyon iyi, tekrar geliriz.",
+    "collab_delay": "Fena değildi, kurulumda küçük gecikmeler oldu.",
+    "collab_energy": "Harika kitle, yüksek enerji.",
+    "adding": "Demo iş birlikleri ekleniyor…",
+    "added_success": "✅ Demo iş birlikleri eklendi.",
+    "add_error": "❌ Ekleme hatası.",
+    "deleting": "Demo iş birlikleri siliniyor…",
+    "delete_success": "✅ Demolar silindi.",
+    "delete_error": "❌ Silme hatası.",
+    "button_add": "Demo iş birlikleri ekle",
+    "button_delete": "Demoları sil",
+    "artist_you": "Sanatçı (sen)",
+    "location_you": "Mekân (sen)"
+  },
+  "gallery": {
+    "open": "Galeriyi aç"
+  },
+  "settings": {
+    "advanced": "Gelişmiş ayarlar"
+  },
+  "account": {
+    "delete": "Hesabı sil",
+    "switch_title": "Hesap tipi değiştirilsin mi?",
+    "switch_desc": "Farklı bir hesap tipine geçmek, mevcut tipe özgü ayar ve verilerin çoğunu kalıcı olarak silecek (tarife/bütçe, kapasite, türler, ekipman, adresler, demolar, galeri, şehir, promosyon/doğrulama durumu vb.). Bu işlem geri alınamaz.",
+    "fields_reset_title": "Sıfırlanacak alanlar:",
+    "confirm_switch": "Evet, sil ve değiştir"
+  },
+  "kyc": {
+    "title": "Kimlik doğrulama",
+    "desc": "Kimliğinin ön ve arka yüzünü yükle. Veriler yalnızca doğrulama için kullanılır.",
+    "front_label": "Kimlik – Ön",
+    "back_label": "Kimlik – Arka",
+    "front_chip": "ÖN",
+    "back_chip": "ARKA",
+    "pick_front_title": "Görsel seçmek için tıkla (ön)",
+    "pick_back_title": "Görsel seçmek için tıkla (arka)",
+    "choose_file": "Dosya seç...",
+    "file_hint": "JPG, PNG veya HEIC • maks 10MB",
+    "front_preview_alt": "Ön izleme",
+    "back_preview_alt": "Arka önizleme",
+    "note_clear": "* Verilerin net ve tamamen görünür olduğundan emin ol.",
+    "submit": "Doğrulama için gönder",
+    "error_both_required": "Lütfen her iki görseli de yükle (ön ve arka).",
+    "error_submit": "Gönderimde hata oluştu. Tekrar dene.",
+    "verify_btn": "Kimliği doğrula",
+    "verified_btn": "Doğrulandı",
+    "status_verified": "Doğrulanmış hesap",
+    "status_pending": "Doğrulama sürüyor",
+    "status_locked": "Profil %100 tamamlandıktan sonra kullanılabilir"
+  },
+  "locationAddress": {
+    "empty": "Adres girilmemiş",
+    "open_in_maps": "Google Haritalar’da aç",
+    "label": "Mekân adresi",
+    "placeholder": "örn: Cad. X No. Y, Bükreş"
+  },
+  "mediaGallery": {
+    "reached_limit": "{{max}} görsel limitine ulaştın",
+    "add_images": "Görsel ekle",
+    "enlarge": "Büyüt",
+    "hint_multi": "{{max}} görsele kadar ekleyebilirsin. {{remaining}} yer kaldı.",
+    "hint_single": "Yalnızca bir görsel ekleyebilirsin.",
+    "some_ignored": "Bazı dosyalar yoksayıldı: {{bytes}} dosya > {{sizeMB}}MB; {{small}} {{minW}}×{{minH}}px altı; {{big}} {{maxW}}×{{maxH}}px üstü; {{other}} geçersiz."
+  },
+  "avatar": {
+    "alt": "profil fotoğrafı",
+    "change": "Profil fotoğrafını değiştir"
+  },
+  "progressBanner": {
+    "choose_type": "⚠️ Hesap tipini seç (Sanatçı veya Mekân). O zamana kadar genel alanları düzenleyebilirsin.",
+    "complete": "✅ Profil tamam!",
+    "progress": "⚠️ İlerleme: {{percent}}% — eksik: {{missing}}."
+  },
+  "reviews": {
+    "avg_out_of": "{{avg}} / 5",
+    "no_rating_yet": "Henüz puan yok",
+    "login_to_review": "Yorum bırakmak için giriş yap",
+    "submit_review": "Yorumu gönder",
+    "comment_placeholder": "İsteğe bağlı yorum",
+    "stars_aria": "{{count}} yıldız"
+  },
+  "badges.verified": "Doğrulanmış profil",
+  "badges.unverified": "Doğrulanmamış profil",
+  "badges.new": "Yeni oluşturulan profil",
+  "badges.label.verified": "Doğrulandı",
+  "badges.label.unverified": "Doğrulanmadı",
+  "badges.label.new": "Yeni",
+  "badges.type.artist": "SANATÇI",
+  "badges.type.location": "MEKÂN",
+  "badges.type.profile": "PROFİL",
+  "chiprow.ellipsis": "…",
+  "filters.title": "Filtreler",
+  "filters.reset": "Sıfırla",
+  "filters.profileType": "Profil tipi",
+  "filters.profileType.all": "Tümü",
+  "filters.profileType.artist": "Sanatçılar",
+  "filters.profileType.location": "Mekânlar",
+  "filters.position": "Konumum",
+  "filters.useLocation": "Konumu kullan",
+  "filters.usingLocation": "Konum belirleniyor…",
+  "filters.location.error": "Konum hatası.",
+  "filters.artist.distanceMax": "Maks mesafe (km)",
+  "filters.artist.minRating": "En az puan",
+  "filters.artist.budgetMax": "Maks bütçe (RON/set)",
+  "filters.artist.verifiedOnly": "Sadece doğrulanmış",
+  "filters.location.capacity": "Kapasite (min / maks)",
+  "filters.location.distanceMax": "Maks mesafe (km)",
+  "filters.location.budget": "Bütçe (min / maks)",
+  "filters.location.types": "Mekân türleri",
+  "filters.location.types.placeholder": "örn. Bar, Kafe, Kulüp (Enter)",
+  "filters.location.types.add": "Ekle",
+  "filters.location.verifiedOnly": "Sadece doğrulanmış",
+  "pricing": {
+    "currency": "RON",
+    "free": "Ücretsiz",
+    "perSet": "{{amount}} {{currency}} / set",
+    "range": "{{from}}–{{to}} {{currency}}",
+    "from": "{{amount}} {{currency}}'den",
+    "to": "{{amount}} {{currency}}'e kadar",
+    "amount": "{{amount}} {{currency}}"
+  },
+  "footer": {
+    "all_rights_reserved": "Tüm hakları saklıdır.",
+    "about": "Hakkında",
+    "contact": "İletişim",
+    "terms": "Şartlar"
+  },
+  "language": {
+    "select": "Dil seç",
+    "choose_description": "Uygulama için tercih ettiğin dili seç"
+  },
+  "languages": {
+    "ro": "Romence",
+    "en": "İngilizce",
+    "tr": "Türkçe",
+    "fr": "Fransızca",
+    "es": "İspanyolca"
+  },
+  "save": "Kaydet",
+  "menu": {
+    "home": "Ana sayfa",
+    "discover": "Keşfet",
+    "events": "Etkinlikler",
+    "search": "Ara",
+    "admin": "Yönetim",
+    "close_menu": "Menüyü kapat"
+  },
+  "current_language": "mevcut",
+  "user": {
+    "default_display_name": "Kullanıcı"
+  },
+  "error_boundary": {
+    "generic": "Bu bölüm görüntülenirken bir sorun oluştu."
+  },
+  "__meta": {
+    "files": [
+      "components/TopPopup.jsx",
+      "components/UserMenu.jsx",
+      "components/ErrorBoundary.jsx"
+    ],
+    "generated": "tr"
+  },
+  "admin": {
+    "title": "Yönetim Paneli — BookMix",
+    "search_placeholder": "İsim, email, bio ara...",
+    "filter_by": "Şuna göre filtrele",
+    "filters": {
+      "all": "Tümü",
+      "verified": "Doğrulanmış",
+      "unverified": "Doğrulanmamış",
+      "flagged": "İşaretli"
+    },
+    "count_accounts": "{{count}} hesap",
+    "bulk": {
+      "verify_selected": "Seçileni doğrula",
+      "promote_selected": "Seçileni öne çıkar",
+      "flag_selected": "Seçileni ‘flagged’ yap",
+      "delete_selected": "Seçileni sil"
+    },
+    "note": {
+      "auth_deletion": "⚠️ Auth içindeki silme sunucu tarafında yapılmalıdır (Cloud Functions/Admin SDK)."
+    },
+    "select_all": "Tümünü seç",
+    "select_account": "Hesabı seç",
+    "table": {
+      "user": "Kullanıcı",
+      "email": "Email",
+      "role": "Rol",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "no_accounts": "Hesap bulunamadı.",
+    "status": {
+      "verified": "Doğrulandı",
+      "unverified": "Doğrulanmadı",
+      "flagged": "Flagged",
+      "suspicious": "Şüpheli",
+      "suspicious_hint": "Şüpheli bio — flagged yap"
+    },
+    "actions": {
+      "details": "Detaylar",
+      "verify": "Doğrula",
+      "revoke": "Geri al",
+      "promote": "Öne çıkar",
+      "cancel_promo": "Promoyu iptal et",
+      "flag": "Flag",
+      "unflag": "Unflag",
+      "delete": "Sil",
+      "verify_account": "Hesabı doğrula",
+      "revoke_verify": "Doğrulamayı kaldır",
+      "mark_flagged": "Flagged olarak işaretle",
+      "delete_account": "Hesabı sil"
+    },
+    "details_audit": "Detaylar & Denetim",
+    "registered": "Kayıtlı",
+    "bio": "Bio",
+    "bio_suspicious": "Şüpheli bio (otomatik tespit)",
+    "id_photos": "Kimlik fotoğrafları",
+    "no_id_photos": "Henüz kimlik fotoğrafı yok.",
+    "audit": {
+      "latest_actions": "Son işlemler",
+      "none": "Yakın zamanda olay yok."
+    },
+    "select_an_account": "Detayları görmek için bir hesap seç. Bio’yu, kimlik fotoğraflarını ve işlem geçmişini görüntüleyebilirsin.",
+    "confirm": {
+      "title": "Onay",
+      "delete_one": "Bu hesabı kalıcı olarak silmek istediğini onaylıyor musun?",
+      "bulk_delete": "Seçili tüm hesapları silmeyi onaylıyor musun?",
+      "bulk_verify": "Seçili tüm hesapları doğrulamayı onaylıyor musun?",
+      "bulk_promote": "Seçili hesapları öne çıkarmayı onaylıyor musun?",
+      "bulk_flag": "Seçili hesapları ‘flagged’ olarak işaretlemeyi onaylıyor musun?"
+    }
+  },
+  "advancedSettings": {
+    "title": "Gelişmiş ayarlar",
+    "back_to_profile": "Profile geri dön",
+    "common": {
+      "saving": "Kaydediliyor..."
+    },
+    "messages": {
+      "username_updated": "Kullanıcı adı güncellendi.",
+      "username_update_error": "Kullanıcı adı güncellenirken hata oluştu.",
+      "google_linked_change_in_google": "Hesap Google ile bağlı. Şifre Google üzerinden değiştirilir, BookMix’te değil.",
+      "enter_current_password": "Yeniden kimlik doğrulama için mevcut şifreyi gir.",
+      "password_min_length": "Yeni şifre en az 6 karakter olmalı.",
+      "passwords_do_not_match": "Şifreler eşleşmiyor.",
+      "password_updated": "Şifre güncellendi.",
+      "password_update_error": "Şifre güncellenirken hata oluştu."
+    },
+    "auth_method": {
+      "title": "Kimlik doğrulama yöntemi",
+      "email_password_enabled": "Email & şifre aktif",
+      "no_local_password": "Yerel şifre yok",
+      "google_linked": "Google ile de bağlı",
+      "google_note": "Hesap Google ile bağlı. Şifre Google’da yönetilir; burada değiştirilemez."
+    },
+    "username": {
+      "section_title": "Kullanıcı adı",
+      "placeholder": "Sahne adı / mekân adı / isim",
+      "save": "Kullanıcı adını kaydet",
+      "mapping_note": "Otomatik eşleme: Sanatçı → stageName, Mekân → locationName, Kullanıcı → name."
+    },
+    "password": {
+      "section_title": "Şifre değiştir",
+      "current_placeholder": "Mevcut şifre",
+      "new_placeholder": "Yeni şifre (en az 6 karakter)",
+      "confirm_placeholder": "Yeni şifreyi doğrula",
+      "save": "Şifreyi kaydet"
+    }
+  },
+  "events": {
+    "title": "Etkinlikler",
+    "event_not_found": "Etkinlik bulunamadı.",
+    "reserve_tickets": "Rezerve / Biletler"
+  },
+  "home": {
+    "hero": {
+      "title": "BookMix — sanatçıları mekânlarla buluşturuyoruz",
+      "subtitle": "DJ’ler, gruplar ve etkinliğine hazır mekânları (barlar, kulüpler, kafeler) keşfet.",
+      "discover": "Sanatçı & mekân keşfet",
+      "my_account": "Hesabım",
+      "login": "Giriş yap"
+    },
+    "features": {
+      "match_title": "Akıllı eşleşme",
+      "match_desc": "Tür, ücret ve müsaitliğe göre filtre ve arama.",
+      "clean_profiles_title": "Düzenli profiller",
+      "clean_profiles_desc": "Galeri, türler, ekipmanlar, doğrulanmış yorumlar.",
+      "simple_booking_title": "Kolay rezervasyon",
+      "simple_booking_desc": "Doğrudan iletişim ve birkaç tıkla takvimde bloklama."
+    },
+    "events": {
+      "title": "Yaklaşan etkinlikler",
+      "subtitle": "BookMix topluluğunda neler var keşfet.",
+      "see_all": "Tüm etkinlikleri gör"
+    }
+  },
+  "errors": {
+    "not_found_title": "404",
+    "not_found_message": "Aradığın sayfa bulunamadı.",
+    "back_home": "Ana sayfaya dön"
+  },
+  "auth": {
+    "login_title": "BookBeat’e giriş",
+    "email_placeholder": "Email",
+    "password_placeholder": "Şifre",
+    "login_with_email": "🔐 E-postayla Giriş",
+    "login_with_google": "🔓 Google ile Giriş",
+    "webview_hint": "Giriş başlamazsa, ⋯ tuşuna bas ve varsayılan tarayıcıda aç (Safari/Chrome).",
+    "no_account": "Hesabın yok mu?",
+    "register": "Kayıt ol",
+    "error_generic": "❌ Hata: {{message}}",
+    "logout": "Çıkış"
+  },
+  "notifications_doc": {
+    "title": "Bildirimler",
+    "up_to_date": "Güncel ✅",
+    "unread_count": "{{count}} okunmamış",
+    "not_authenticated_title": "Giriş yapmadın",
+    "not_authenticated_subtitle": "Bildirimlerini görmek için giriş yap.",
+    "add_demo": "Demo ekle",
+    "adding_demo": "Ekleniyor…",
+    "add_demo_title": "Bazı test bildirimleri ekle",
+    "mark_all": "Tümünü işaretle",
+    "mark_all_title": "Tümünü okundu işaretle",
+    "unread": "Okunmamış",
+    "empty_title": "Şu anda bildirimin yok",
+    "empty_subtitle": "Rezervasyonlar, onaylar ve mesajlar burada görünecek.",
+    "fallback_title": "Bildirim",
+    "mark_read": "Okundu işaretle",
+    "loading": "Bildirimler yükleniyor…",
+    "type": {
+      "booking": "Rezervasyon",
+      "message": "Mesaj",
+      "system": "Sistem",
+      "warning": "Uyarı",
+      "notification": "Bildirim"
+    },
+    "demo": {
+      "booking_created_title": "Yeni rezervasyon talebi",
+      "booking_created_body": "Mechano Pub 12 Ekim, 21:00–23:00 önerdi.",
+      "booking_accepted_title": "Rezervasyon onaylandı",
+      "booking_accepted_body": "Andrei (DJ) 15 Ekim’deki işi onayladı.",
+      "message_new_title": "Mechano Pub’tan yeni mesaj",
+      "message_new_body": "Selam! 20 Ekim de olur mu? Cevabını bekliyoruz.",
+      "warning_title": "Müsaitliğini güncelle",
+      "warning_body": "Gelecek hafta boş. Meşgul günleri ekle.",
+      "system_verified_title": "Profil doğrulandı 🎉",
+      "system_verified_body": "Hesabın doğrulandı. Bol rezervasyonlar!"
+    }
+  },
+  "profile": {
+    "user": "Kullanıcı",
+    "badge_new_title": "Yeni oluşturulan profil",
+    "badge_new": "Yeni",
+    "badge_promoted": "Öne çıkarıldı",
+    "badge_verified": "Doğrulandı",
+    "badge_pending": "Doğrulama sürüyor",
+    "city_label": "Şehir / İlçe",
+    "city_placeholder": "örn: Bükreş",
+    "capacity_label": "Kapasite",
+    "capacity_placeholder": "örn: 120",
+    "budget_label": "Bütçe (RON)",
+    "budget_placeholder": "örn: 500",
+    "location_type_label": "Mekân türü",
+    "location_type_placeholder": "Tür seç",
+    "rate_label": "Ücret (RON / set)",
+    "rate_placeholder": "örn: 300",
+    "promoted_label": "Öne çıkarıldı",
+    "activate": "Aktifleştir",
+    "deactivate": "Devre dışı bırak",
+    "about": "Hakkında",
+    "collaborations": "İş birlikleri",
+    "demos": "Demolar",
+    "address": "Adres",
+    "media_gallery": "Medya galerisi",
+    "promoted": "ÖNE ÇIKARILDI",
+    "notAuthenticated": "Giriş yapmadın.",
+    "invalidImage": "Seçilen dosya bir görsel değil.",
+    "imageTooLarge": "Görsel 5MB’ı aşıyor.",
+    "notFound": "Profil bulunamadı.",
+    "confirmDelete": "Hesabı silmek istediğine emin misin? Bu işlem kalıcıdır.",
+    "missing": {
+      "bio": "açıklama",
+      "genres": "müzik türleri",
+      "equipment": "DJ ekipmanı",
+      "rate": "ücret",
+      "photo": "profil fotoğrafı",
+      "demos": "demolar",
+      "city": "şehir",
+      "locationName": "mekân adı",
+      "capacity": "kapasite",
+      "locationPhoto": "mekân fotoğrafı",
+      "address": "adres",
+      "budget": "bütçe",
+      "locationType": "mekân türü"
+    }
+  },
+  "profiles": {
+    "sort": {
+      "aria": "Sonuçları sırala",
+      "newest": "En yeniler",
+      "oldest": "En eskiler",
+      "rating_desc": "Puan azalan",
+      "price_asc": "Fiyat artan",
+      "price_desc": "Fiyat azalan"
+    },
+    "pagination": {
+      "prev": "Önceki sayfa",
+      "next": "Sonraki sayfa",
+      "page_of": "Sayfa {{page}} / {{total}}"
+    }
+  },
+  "register_doc": {
+    "title": "Hesap oluştur",
+    "subtitle": "Hesabını oluştur ve topluluğa katıl. Detayları daha sonra profilden ekleyebilirsin.",
+    "username": "Kullanıcı adı",
+    "username_placeholder": "Örn: Alex Pop",
+    "email": "Email",
+    "email_placeholder": "you@example.com",
+    "password": "Şifre",
+    "password_placeholder": "••••••••",
+    "submit": "Hesap oluştur",
+    "continue_google": "Google ile devam et",
+    "have_account": "Zaten hesabın var mı?",
+    "login_link": "Giriş",
+    "error_generic": "Kayıtta hata.",
+    "error_google": "Google ile girişte hata."
   }
 }

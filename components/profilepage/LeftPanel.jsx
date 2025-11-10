@@ -6,9 +6,6 @@ import { EditableField } from "../editablecontent/EditableField";
 import ReviewsSummaryFromCollabs from "./ReviewsSummaryFromCollabs";
 import AccountTypeSwitcher from "./AccountTypeSwitcher";
 import AvailabilityCalendar from "./AvailabilityCalendar";
-import EditableDJEquipment from "../editablecontent/EditableDJEquipment";
-import EditableSpecializations from "../editablecontent/EditableSpecializations";
-import EditableGenres from "../editablecontent/EditableGenres";
 import { LogOut } from "lucide-react";
 import SectionTitle from "../styling/SectionTitle";
 import CityAutocomplete from "./CityAutocomplete";
@@ -322,22 +319,6 @@ export default function LeftPanel({
           >
             {verificationStatus === "verified" ? t("kyc.verified_btn") : t("kyc.verify_btn")}
           </Button>
-        </div>
-
-        <div className="mt-6">
-          <SectionTitle>{t("availability.title")}</SectionTitle>
-          {!userData?.type ? (
-            <p className="text-xs text-gray-500">
-              {t("availability.choose_account_type")}
-            </p>
-          ) : (
-            <AvailabilityCalendar
-              userId={isOwnProfile ? authUser?.uid : undefined}
-              currentUser={authUser}
-              type={isArtist ? "artist" : "location"}
-              editable={!!isOwnProfile}
-            />
-          )}
         </div>
       </div>
 

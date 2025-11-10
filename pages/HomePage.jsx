@@ -18,26 +18,42 @@ export default function HomePage() {
     <div className="min-h-screen bg-black text-white">
       {/* HERO */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-12 sm:pt-20">
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10">
 
-          <div className="absolute inset-0 opacity-20">
-            <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
-                  <circle cx="1" cy="1" r="1" fill="white" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#dots)" />
-            </svg>
-          </div>
+          {/* DESKTOP: VIDEO / GIF */}
+          <video
+            className="hidden sm:block absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            loop
+            muted
+            playsInline
+            src="https://assets.mixkit.co/videos/25242/25242-720.mp4"  // 👉 aici pui gif/mp4-ul tău
+          />
 
+          {/* MOBILE: IMAGINE STATICĂ */}
+          <img
+            src="https://images.unsplash.com/photo-1625612446042-afd3fe024131?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1740" // 👉 imagine de club/noapte
+            alt="Party background"
+            className="block sm:hidden absolute inset-0 w-full h-full object-cover"
+          />
+
+          {/* OVERLAY */}
+          <div className="absolute inset-0 bg-black/60" />
+
+          {/* CONȚINUT */}
           <div className="relative z-10 px-6 py-16 text-center sm:px-12 sm:py-24">
 
-            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+            <h1
+              className="text-4xl font-bold tracking-tight sm:text-6xl"
+              style={{ textShadow: "0 0 12px rgba(0,0,0,0.9)" }}
+            >
               {t("home.hero.title")}
             </h1>
 
-            <p className="mx-auto mt-4 max-w-2xl text-white/90 sm:text-lg">
+            <p
+              className="mx-auto mt-4 max-w-2xl text-white/90 sm:text-lg"
+              style={{ textShadow: "0 0 10px rgba(0,0,0,0.7)" }}
+            >
               {t("home.hero.subtitle")}
             </p>
 
@@ -67,6 +83,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
 
       {/* FEATURES */}
       <section className="mx-auto mt-16 max-w-6xl px-4 sm:px-6">

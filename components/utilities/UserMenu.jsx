@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { auth, db } from "../../src/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { collection, onSnapshot, query, where, doc } from "firebase/firestore";
 import Button from "../uiux/button";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../context/LanguageContext";
-import LanguageSelectorJSX from "./LanguageSelectorJSX.jsx";
 
 const placeholderAvatar =
   "https://firebasestorage.googleapis.com/v0/b/bookbeat-7cd25.firebasestorage.app/o/avatar%2Fplaceholder-profile-icon-8qmjk1094ijhbem9.jpg.png?alt=media&token=a7ab835d-3e46-4b61-a074-f7a979d5448e";
@@ -103,7 +102,8 @@ export default function UserMenu() {
     navigate("/login");
   };
 
-  const displayName = profile?.displayName || user?.displayName || t("user.default_display_name");
+  const displayName =
+    profile?.displayName || user?.displayName || t("user.default_display_name");
   const email = user?.email || profile?.email || "";
   const avatarSrc = profile?.photoURL || user?.photoURL || placeholderAvatar;
 
@@ -114,17 +114,17 @@ export default function UserMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="group relative rounded-full outline-none !bg-transparent"
+        className="group relative rounded-full outline-none !bg-transparent !border-none"
       >
         <div className="relative">
           <img
             src={avatarSrc}
             alt="User avatar"
-            className="w-10 h-10 rounded-full border border-white/20 shadow-sm transition-transform group-active:scale-95 object-cover"
+            className="w-10 h-10 rounded-full shadow-sm transition-transform group-active:scale-95 object-cover"
             referrerPolicy="no-referrer"
           />
           {user && unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center border border-black/20">
+            <span className="absolute -top-1 -right-1 !bg-[#E50914] !text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center !border-none">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -134,92 +134,83 @@ export default function UserMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-72 rounded-2xl bg-white shadow-[0_18px_40px_rgba(0,0,0,0.15)] z-50 overflow-hidden border border-black/5"
+          className="absolute right-0 mt-2 w-72 rounded-2xl !bg-black shadow-[0_18px_40px_rgba(0,0,0,0.4)] z-50 overflow-hidden"
         >
+          {/* HEADER CU GRADIENT + NUME */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#111827] to-[#1f2937] !text-white">
+            <img
+              src={avatarSrc}
+              alt=""
+              className="w-10 h-10 rounded-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold leading-tight truncate">{displayName}</p>
+              {email && <p className="text-xs text-white/70 truncate">{email}</p>}
+            </div>
+            {Number(unreadCount) > 0 && (
+              <span className="!bg-[#E50914] !text-white text-[11px] font-semibold rounded-full px-2 py-0.5">
+                {Number(unreadCount) > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </div>
+
           {user ? (
             <>
-              <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#111827] to-[#1f2937] text-white">
-                <img
-                  src={avatarSrc}
-                  alt=""
-                  className="w-10 h-10 rounded-full border border-white/30 object-cover"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold leading-tight truncate">{displayName}</p>
-                  {email && <p className="text-xs text-white/70 truncate">{email}</p>}
-                </div>
-                {Number(unreadCount) > 0 && (
-                  <span className="bg-red-500 text-white text-[11px] font-semibold rounded-full px-2 py-0.5">
-                    {Number(unreadCount) > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </div>
-
               <button
                 onClick={() => {
                   navigate("/notificari");
                   setOpen(false);
                 }}
-                className="flex items-center gap-3 w-full px-4 py-3 bg-white hover:bg-slate-50 transition text-sm"
+                className="flex items-center gap-3 w-full px-4 py-3 !bg-black hover:!bg-[#111] transition text-sm !text-white"
               >
                 <div className="relative">
-                  <BellIcon className="text-slate-700" />
+                  <BellIcon className="!text-white" />
                   {Number(unreadCount) > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 !bg-[#E50914] !text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
                       !
                     </span>
                   )}
                 </div>
                 <span className="flex-1 text-left font-medium">{t("notifications")}</span>
                 {Number(unreadCount) > 0 && (
-                  <span className="text-[11px] bg-red-500 text-white rounded-full px-2 py-0.5">
+                  <span className="text-[11px] !bg-[#E50914] !text-white rounded-full px-2 py-0.5">
                     {Number(unreadCount) > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </button>
 
-              <div className="h-px bg-slate-100" />
+              <div className="h-px !bg-white/10" />
 
               <button
                 onClick={() => {
                   navigate("/profil");
                   setOpen(false);
                 }}
-                className="flex items-center gap-3 w-full px-4 py-3 bg-white hover:bg-slate-50 transition text-sm"
+                className="flex items-center gap-3 w-full px-4 py-3 !bg-black hover:!bg-[#111] transition text-sm !text-white"
               >
-                <UserIcon className="text-slate-700" />
+                <UserIcon className="!text-white" />
                 <span className="flex-1 text-left font-medium">{t("my_account")}</span>
               </button>
 
-              <div className="h-px bg-slate-100" />
+              <div className="h-px !bg-white/10" />
 
               <button
                 onClick={() => {
                   setOpen(false);
                   handleLogout();
                 }}
-                className="flex items-center gap-3 w-full px-4 py-3 bg-white hover:bg-red-50 transition text-sm text-red-600"
+                className="flex items-center gap-3 w-full px-4 py-3 !bg-black hover:!bg-[#2a0a0a] transition text-sm !text-[#E50914]"
               >
-                <LogoutIcon className="text-red-500" />
+                <LogoutIcon className="!text-[#E50914]" />
                 <span className="flex-1 text-left font-semibold">{t("logout")}</span>
               </button>
-
-              <LanguageSelectorJSX
-                onChange={(code) => {
-                  // hook-u tău de limbă deja actualizează contextul
-                  console.log("language:", code);
-                }}
-              />
-              <div className="text-xs opacity-60 px-3 pt-2">
-                {t("current_language")}: {language}
-              </div>
             </>
           ) : (
             <>
               <Button
                 variant="secondary"
-                className="w-full justify-start px-4 py-3 rounded-none hover:bg-black/[0.04]"
+                className="w-full justify-start px-4 py-3 rounded-none !bg-black hover:!bg-[#111] !text-white"
                 onClick={() => {
                   navigate("/login");
                   setOpen(false);
@@ -229,7 +220,7 @@ export default function UserMenu() {
               </Button>
               <Button
                 variant="secondary"
-                className="w-full justify-start px-4 py-3 rounded-none hover:bg-black/[0.04]"
+                className="w-full justify-start px-4 py-3 rounded-none !bg-black hover:!bg-[#111] !text-white"
                 onClick={() => {
                   navigate("/register");
                   setOpen(false);
@@ -239,6 +230,25 @@ export default function UserMenu() {
               </Button>
             </>
           )}
+
+          {/* LANGUAGE — mereu vizibil, full width */}
+          <div className="h-px !bg-white/10" />
+            <Link
+              to="/settings/language"
+              aria-label="Change language"
+              title="Change language"
+              onClick={() => setOpen(false)}     // <-- închide meniul aici
+              className="inline-flex items-center gap-3 px-4 py-3 w-full !text-white !bg-black hover:!bg-[#0b0b0b] transition"
+            >
+              <span className="text-[20px]">🌐</span>
+              <span className="text-[14px] font-medium">Language</span>
+
+              <span className="ml-auto text-xs px-2 py-0.5 rounded-full !bg-[#00CED1] !text-black">
+                {t("current_language")}: {language}
+              </span>
+            </Link>
+
+            <div className="h-2" />
         </div>
       )}
     </div>
