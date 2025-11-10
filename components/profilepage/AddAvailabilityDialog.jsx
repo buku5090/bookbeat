@@ -9,13 +9,8 @@ import { Button } from "../uiux/button";
 import { DayPicker } from "react-day-picker";
 import { ro } from "date-fns/locale";
 import { eachDayOfInterval } from "date-fns";
+import { useTranslation } from "react-i18next";
 
-/**
- * Props opționale în plus:
- * - busyDates?: Date[]             -> zile ocupate (vin din părinte)
- * - displayMonth?, onMonthChange?  -> control extern al lunii (opțional)
- * - onDayClick?                    -> callback extern (opțional)
- */
 export default function AddAvailabilityDialog({
   open,
   setOpen,
@@ -26,22 +21,16 @@ export default function AddAvailabilityDialog({
   todayStart,
   handleCreate,
   isOwner,
-
   busyDates = [],
   displayMonth,
   onMonthChange,
   onDayClick,
 }) {
+  const { t } = useTranslation();
   const noop = () => {};
 
-  // ————— helpers reset —————
-  const resetSelection = useCallback(() => {
-    // curăță selecția din calendar
-    setRange?.(undefined);
-  }, [setRange]);
-
+  const resetSelection = useCallback(() => setRange?.(undefined), [setRange]);
   const resetFormLight = useCallback(() => {
-    // păstrează alte câmpuri din form, curăță doar title/notes
     setForm?.((s) => ({ ...s, title: "", notes: "" }));
   }, [setForm]);
 
@@ -52,20 +41,12 @@ export default function AddAvailabilityDialog({
   }, [resetSelection, resetFormLight, setOpen]);
 
   const handleSave = useCallback(async () => {
-    // dacă ai nevoie să aștepți un API call, handleCreate poate fi async
     await Promise.resolve(handleCreate?.());
     handleClose();
   }, [handleCreate, handleClose]);
 
-  // ————— busy dates utils —————
-  const keyOf = (d) =>
-    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-
-  const busySet = useMemo(
-    () => new Set((busyDates || []).map(keyOf)),
-    [busyDates]
-  );
-
+  const keyOf = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const busySet = useMemo(() => new Set((busyDates || []).map(keyOf)), [busyDates]);
   const isFree = (date) => date >= todayStart && !busySet.has(keyOf(date));
 
   const handleRangeSelect = (next) => {
@@ -93,7 +74,6 @@ export default function AddAvailabilityDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        // când se închide din orice motiv, resetează selecția + formularul
         if (!next) {
           resetSelection();
           resetFormLight();
@@ -103,11 +83,11 @@ export default function AddAvailabilityDialog({
     >
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Adaugă blocare de disponibilitate</DialogTitle>
+          <DialogTitle>{t("availability.title")}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* STÂNGA: Calendar */}
+          {/* Calendar */}
           <div className="rounded-xl border p-3">
             <DayPicker
               locale={ro}
@@ -127,67 +107,32 @@ export default function AddAvailabilityDialog({
                 free: (d) => isFree(d),
               }}
               className="!bg-white !text-neutral-900 !p-0 !m-0"
-              classNames={{
-                caption: "relative flex items-center justify-center mb-1",
-                caption_label: "text-base font-bold tracking-tight",
-                month_caption: "text-center mb-2",
-                nav: "flex justify-between",
-                weekdays: "w-full",
-                weekday:
-                  "text-center py-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500",
-                month_grid: "w-full table-fixed",
-                day: "!text-center !p-0 !m-0",
-                day_button:
-                  "!m-0 !w-9 !h-9 !p-0 " +
-                  "flex items-center justify-center " +
-                  "!text-base !font-semibold " +
-                  "!bg-transparent !border-0 !appearance-none " +
-                  "hover:!bg-transparent focus:!outline-none !transition-none !shadow-none !cursor-pointer " +
-                  "!disabled:text-gray-300 !disabled:cursor-default !disabled:hover:!bg-transparent",
-                outside: "invisible",
-                disabled: "!text-gray-300",
-                button_next: "!bg-transparent",
-                button_previous: "!bg-transparent",
-              }}
-              modifiersClassNames={{
-                busy: "!text-red-500",
-                free: "!text-emerald-500",
-                selected: "!text-white !bg-indigo-600",
-                range_start: "!text-white !bg-indigo-600 rounded-l-full",
-                range_end: "!text-white !bg-indigo-600 rounded-r-full",
-                range_middle: "!bg-indigo-100 !text-indigo-700",
-              }}
             />
-
             <p className="mt-2 text-xs text-muted-foreground">
-              Sfârșitul este exclusiv (se salvează +1 zi automat).
+              {t("availability.note_end")}
             </p>
           </div>
 
-          {/* DREAPTA: Detalii */}
+          {/* Form */}
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-2">
-              <Label htmlFor="title">Titlu</Label>
+              <Label htmlFor="title">{t("availability.title_label")}</Label>
               <Input
                 id="title"
                 value={form.title}
-                onChange={(e) =>
-                  setForm((s) => ({ ...s, title: e.target.value }))
-                }
-                placeholder="Ex: Eveniment privat"
+                onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))}
+                placeholder={t("availability.placeholder_title")}
               />
             </div>
 
             <div className="grid grid-cols-1 gap-2">
-              <Label htmlFor="notes">Notițe</Label>
+              <Label htmlFor="notes">{t("availability.notes_label")}</Label>
               <Textarea
                 id="notes"
                 rows={8}
                 value={form.notes}
-                onChange={(e) =>
-                  setForm((s) => ({ ...s, notes: e.target.value }))
-                }
-                placeholder="Detalii (opțional)"
+                onChange={(e) => setForm((s) => ({ ...s, notes: e.target.value }))}
+                placeholder={t("availability.placeholder_notes")}
               />
             </div>
           </div>
@@ -195,15 +140,13 @@ export default function AddAvailabilityDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            Renunță
+            {t("availability.cancel")}
           </Button>
           <Button
             onClick={handleSave}
-            disabled={
-              !isOwner || !range?.from || !range?.to || range.from < todayStart
-            }
+            disabled={!isOwner || !range?.from || !range?.to || range.from < todayStart}
           >
-            Salvează
+            {t("availability.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

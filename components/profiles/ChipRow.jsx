@@ -1,6 +1,9 @@
+// components/profiles/ChipRow.jsx
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 export function ChipRow({ items = [], className = "" }) {
+  const { t } = useTranslation();
   const rowRef = React.useRef(null);
   const measureRef = React.useRef(null);
   const [visibleCount, setVisibleCount] = React.useState(items.length);
@@ -14,6 +17,7 @@ export function ChipRow({ items = [], className = "" }) {
     const available = row.clientWidth;
     const chips = Array.from(meas.querySelectorAll('[data-kind="chip"]'));
     const ell = meas.querySelector('[data-kind="ellipsis"]');
+
     if (!chips.length) {
       setVisibleCount(0);
       setOverflowing(false);
@@ -30,8 +34,8 @@ export function ChipRow({ items = [], className = "" }) {
     let sum = 0;
     let count = 0;
     for (let i = 0; i < chips.length; i++) {
-      const w = chips[i].offsetWidth;
       const extra = i === 0 ? 0 : gapPx;
+      const w = chips[i].offsetWidth;
       sum += w + extra;
       if (sum <= available) count = i + 1;
       else break;
@@ -43,12 +47,11 @@ export function ChipRow({ items = [], className = "" }) {
       return;
     }
 
-    // Recalcul cu spațiu pentru „…”
     sum = 0;
     count = 0;
     for (let i = 0; i < chips.length; i++) {
-      const w = chips[i].offsetWidth;
       const extra = i === 0 ? 0 : gapPx;
+      const w = chips[i].offsetWidth;
       const reserved = ellWidth + gapPx;
       if (sum + w + extra + reserved <= available) {
         sum += w + extra;
@@ -84,12 +87,11 @@ export function ChipRow({ items = [], className = "" }) {
         ))}
         {overflowing && (
           <span className="shrink-0 ml-0.5 px-2 py-0.5 rounded-md text-[11px] bg-white/8 border border-white/15 text-white/80 shadow-sm">
-            …
+            {t("chiprow.ellipsis")}
           </span>
         )}
       </div>
 
-      {/* invizibil pentru măsurare */}
       <div
         ref={measureRef}
         className="absolute -z-10 invisible pointer-events-none top-0 left-0 flex flex-nowrap items-center gap-1.5 whitespace-nowrap"
@@ -104,11 +106,8 @@ export function ChipRow({ items = [], className = "" }) {
             {text}
           </span>
         ))}
-        <span
-          data-kind="ellipsis"
-          className="px-2 py-0.5 rounded-md text-[11px] border"
-        >
-          …
+        <span data-kind="ellipsis" className="px-2 py-0.5 rounded-md text-[11px] border">
+          {t("chiprow.ellipsis")}
         </span>
       </div>
     </div>

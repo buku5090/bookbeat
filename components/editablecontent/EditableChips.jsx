@@ -1,8 +1,8 @@
-// components/EditableChips.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Pencil } from "lucide-react";
 import SectionTitle from "../styling/SectionTitle";
 import TopPopup from "../utilities/TopPopup";
+import { useTranslation } from "react-i18next";
 
 const THEMES = {
   genres: { bg: "#E7F0FF", text: "#1F2A44", border: "#E7F0FF", hint: "#4A4A4A" },
@@ -14,21 +14,21 @@ export default function EditableChips({
   value = [],
   canEdit = false,
   onSave,
-  onExceedMax,              // callback când se încearcă depășirea limitei
+  onExceedMax,
   suggestions = [],
-  placeholder = "Adaugă…",
+  placeholder,
   max = 12,
   allowCustom = true,
   variant = "genres",
   customTheme,
-  maxMessage,               // mesaj opțional pentru popup
-  onChipClick,              // ← NOU: click pe chip în modul VIEW
+  maxMessage,
+  onChipClick,
 }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [sel, setSel] = useState(Array.isArray(value) ? value : []);
   const [input, setInput] = useState("");
 
-  // popup state (top)
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
 
@@ -44,7 +44,7 @@ export default function EditableChips({
   const theme = { ...(THEMES[variant] || THEMES.genres), ...(customTheme || {}) };
 
   const showMaxPopup = (attempt) => {
-    setPopupMsg(maxMessage || `Ai atins limita de ${max}.`);
+    setPopupMsg(maxMessage || t("editable_chips.limit_reached", { max }));
     setPopupOpen(false);
     requestAnimationFrame(() => setPopupOpen(true));
     onExceedMax?.(max, attempt);
@@ -53,36 +53,30 @@ export default function EditableChips({
   const toggle = (item) => {
     const id = String(item).trim();
     if (!id) return;
-
     const exists = lowerSel.includes(id.toLowerCase());
     if (exists) {
       setSel((p) => p.filter((x) => x.toLowerCase() !== id.toLowerCase()));
       return;
     }
-
     if (sel.length >= max) {
       showMaxPopup(id);
       return;
     }
-
     setSel((p) => [...p, id]);
   };
 
   const addCustom = () => {
     const id = input.trim();
     if (!id) return;
-
     if (lowerSel.includes(id.toLowerCase())) {
       setInput("");
       return;
     }
-
     if (sel.length >= max) {
       showMaxPopup(id);
       setInput("");
       return;
     }
-
     setSel((p) => [...p, id]);
     setInput("");
   };
@@ -90,7 +84,9 @@ export default function EditableChips({
   const save = async () => {
     const cleaned = Array.from(
       new Map(sel.map((s) => [String(s).toLowerCase(), String(s).trim()]))
-    ).map(([, v]) => v).filter(Boolean);
+    )
+      .map(([, v]) => v)
+      .filter(Boolean);
 
     await onSave?.(cleaned);
     setEditing(false);
@@ -98,7 +94,6 @@ export default function EditableChips({
 
   return (
     <section className="relative">
-      {/* Popup top */}
       <TopPopup
         open={popupOpen}
         message={popupMsg}
@@ -116,7 +111,7 @@ export default function EditableChips({
                 type="button"
                 onClick={() => setEditing(true)}
                 className="absolute right-0 !top-2 !p-3 rounded !bg-white !px-3 !py-1 !text-gray-400 transition"
-                title="Editează"
+                title={t("editable_chips.edit")}
               >
                 <Pencil size={14} />
               </button>
@@ -142,13 +137,15 @@ export default function EditableChips({
                   color: theme.text,
                   borderColor: theme.border,
                 }}
-                title={`Vezi rezultate pentru „${g}”`}
+                title={t("editable_chips.view_results_for", { item: g })}
               >
                 {g}
               </button>
             ))
           ) : (
-            <span className="text-gray-500 text-sm">Nu a selectat încă.</span>
+            <span className="text-gray-500 text-sm">
+              {t("editable_chips.no_selection")}
+            </span>
           )}
         </div>
       )}
@@ -156,7 +153,7 @@ export default function EditableChips({
       {/* EDIT */}
       {editing && canEdit && (
         <div className="space-y-3">
-          {/* selectate (click = scoate) */}
+          {/* selectate */}
           <div className="flex flex-wrap gap-2">
             {sel.map((g) => (
               <button
@@ -164,7 +161,7 @@ export default function EditableChips({
                 type="button"
                 onClick={() => toggle(g)}
                 className="px-3 py-1 rounded-full border bg-black text-white text-sm hover:opacity-90"
-                title="Elimină"
+                title={t("editable_chips.remove")}
               >
                 {g} ×
               </button>
@@ -199,7 +196,7 @@ export default function EditableChips({
             <div className="flex gap-2">
               <input
                 className="border rounded px-3 py-2 w-full"
-                placeholder={placeholder}
+                placeholder={placeholder || t("editable_chips.placeholder")}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addCustom()}
@@ -212,7 +209,7 @@ export default function EditableChips({
                 }`}
                 aria-disabled={!input.trim()}
               >
-                Adaugă
+                {t("editable_chips.add")}
               </button>
             </div>
           )}
@@ -222,7 +219,7 @@ export default function EditableChips({
               onClick={save}
               className="px-4 py-2 text-sm rounded bg-black text-white hover:bg-gray-900"
             >
-              Salvează
+              {t("editable_chips.save")}
             </button>
             <button
               onClick={() => {
@@ -231,10 +228,10 @@ export default function EditableChips({
               }}
               className="px-4 py-2 text-sm rounded border"
             >
-              Anulează
+              {t("editable_chips.cancel")}
             </button>
             <span className="ml-auto text-xs text-gray-500">
-              {sel.length}/{max}
+              {t("editable_chips.count", { count: sel.length, max })}
             </span>
           </div>
         </div>

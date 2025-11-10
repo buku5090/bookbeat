@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { db } from "../../src/firebase";
 import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Summary bazat pe colaborări:
@@ -10,6 +11,7 @@ import { Star } from "lucide-react";
  * - pe profil LOCAȚIE → media din reviewByArtist.rating
  */
 export default function ReviewsSummaryFromCollabs({ profileUid, side = "artist" }) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState([]);
 
   useEffect(() => {
@@ -39,7 +41,9 @@ export default function ReviewsSummaryFromCollabs({ profileUid, side = "artist" 
           <Star key={i} className={`w-5 h-5 ${i <= Math.round(avg) ? "fill-yellow-400 stroke-yellow-400" : "stroke-gray-400"}`} />
         ))}
       </div>
-      <span className="text-sm text-gray-600">{avg ? `${avg} / 5` : "Fără rating încă"} ({count})</span>
+      <span className="text-sm text-gray-600">
+        {avg ? t("reviews.avg_out_of", { avg }) : t("reviews.no_rating_yet")} ({count})
+      </span>
     </div>
   );
 }

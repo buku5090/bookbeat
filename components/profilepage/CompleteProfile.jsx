@@ -1,7 +1,9 @@
+// components/CompleteProfile.jsx
 import { useEffect, useState } from "react";
 import { auth, db } from "../../src/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const REQUIRED = {
   artist: ["stageName", "genres", "price", "instagram"],       // exemplu
@@ -9,6 +11,7 @@ const REQUIRED = {
 };
 
 export default function CompleteProfile() {
+  const { t } = useTranslation();
   const user = auth.currentUser;
   const navigate = useNavigate();
   const [role, setRole] = useState(null);
@@ -20,10 +23,10 @@ export default function CompleteProfile() {
 
     const load = async () => {
       const userDoc = await getDoc(doc(db, "users", user.uid));
-      const t = (userDoc.data()?.type ?? "user").trim().toLowerCase();
-      setRole(t);
+      const tRole = (userDoc.data()?.type ?? "user").trim().toLowerCase();
+      setRole(tRole);
 
-      const profRef = t === "artist"
+      const profRef = tRole === "artist"
         ? doc(db, "artistProfiles", user.uid)
         : doc(db, "locationProfiles", user.uid);
 
@@ -35,12 +38,12 @@ export default function CompleteProfile() {
 
   const completion = (() => {
     if (!role) return 0;
-    const fields = REQUIRED[role];
+    const fields = REQUIRED[role] || [];
     const have = fields.filter(k => {
       const v = profile?.[k];
       return Array.isArray(v) ? v.length > 0 : !!v;
     }).length;
-    return Math.round((have / fields.length) * 100);
+    return fields.length ? Math.round((have / fields.length) * 100) : 0;
   })();
 
   const publish = async () => {
@@ -48,29 +51,37 @@ export default function CompleteProfile() {
     try {
       await updateDoc(doc(db, "users", user.uid), {
         completion,
-        isPublic: completion >= 80, // pragul tău
+        isPublic: completion >= 80, // prag
         updatedAt: serverTimestamp(),
       });
-      alert(completion >= 80 ? "✅ Profil publicat!" : "ℹ️ Mai ai câmpuri de completat.");
-      if (completion >= 80) navigate(`/user/${user.uid}`);
+      if (completion >= 80) {
+        alert(t("complete_profile.published_success"));
+        navigate(`/user/${user.uid}`);
+      } else {
+        alert(t("complete_profile.missing_fields_info"));
+      }
     } catch (e) {
-      alert("Eroare la publicare: " + e.message);
+      alert(t("complete_profile.publish_error", { message: e.message }));
     } finally {
       setSaving(false);
     }
   };
 
-  // Aici adaugi formularele tale detaliate pentru artist/location (EditableField etc.)
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold">Completează-ți profilul</h1>
-        <p className="opacity-80">Tip cont: <b>{role}</b> • Progres: <b>{completion}%</b></p>
+        <h1 className="text-3xl font-bold">{t("complete_profile.title")}</h1>
+        <p className="opacity-80">
+          {t("complete_profile.account_type")} <b>{role}</b> • {t("complete_profile.progress")} <b>{completion}%</b>
+        </p>
 
-        {/* TODO: înlocuiește cu componentele tale de editare */}
         <div className="p-4 rounded-xl border border-gray-700">
-          <div className="opacity-80">Aici vin câmpurile tale dedicate ({role}).</div>
-          <div className="text-sm mt-2">Câmpuri esențiale (exemplu): {REQUIRED[role]?.join(", ")}</div>
+          <div className="opacity-80">
+            {t("complete_profile.placeholder_fields", { role })}
+          </div>
+          <div className="text-sm mt-2">
+            {t("complete_profile.required_fields")} { (REQUIRED[role] || []).join(", ") }
+          </div>
         </div>
 
         <div className="flex gap-3">
@@ -79,13 +90,13 @@ export default function CompleteProfile() {
             disabled={saving}
             className="px-5 py-3 rounded-xl bg-white text-black font-semibold disabled:opacity-50"
           >
-            {saving ? "Se verifică..." : "Publică profilul"}
+            {saving ? t("complete_profile.verifying") : t("complete_profile.publish")}
           </button>
           <button
             onClick={() => navigate("/")}
             className="px-5 py-3 rounded-xl border border-gray-700"
           >
-            Înapoi
+            {t("common.back")}
           </button>
         </div>
       </div>

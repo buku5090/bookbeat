@@ -1,3 +1,4 @@
+// ================= SkeletonCard (fără texte user-facing) =================
 import React from "react";
 
 export default function SkeletonCard() {

@@ -13,6 +13,7 @@ import {
 
 import Button from "../Button";
 import CollaborationCard from "./CollaborationCard";
+import { useTranslation } from "react-i18next";
 
 /* ---------------- DEMO DATA (fallback când Firestore e gol) ---------------- */
 
@@ -32,7 +33,6 @@ const DEMO_EVENTS = [
   { loc: "loc_warehouse", iso: "2025-02-14T23:00:00Z", rl: { r: 3, c: "Nice vibe, dar începutul a fost cam liniștit." }, ra: { r: 4, c: "Sistem puternic, puțin ecou în spate." } },
   { loc: "loc_rooftop27", iso: "2025-02-01T19:00:00Z", rl: { r: 5, c: "Golden hour set 🔥" }, ra: { r: 5, c: "Priveliște super, logistică impecabilă." } },
   { loc: "loc_subground", iso: "2025-01-17T23:30:00Z", rl: { r: 4, c: "Public nișat, a livrat pe stilul lor." }, ra: { r: 4, c: "Booth ok, luminile cam puternice." } },
-  // repetăm Aurora ca să vezi duplicat în UI
   { loc: "loc_aurora",    iso: "2024-12-20T22:00:00Z", rl: { r: 5, c: "A doua colaborare, la fel de tare!" }, ra: { r: 5, c: "Back-to-back cu rezidentul, a mers brici." } },
   { loc: "loc_aurora",    iso: "2024-11-08T22:00:00Z", rl: null,                                         ra: { r: 4, c: "Prima dată aici, totul ok." } },
 ];
@@ -80,9 +80,11 @@ export default function CollaborationsWithReviews({
   profileUid,
   side = "artist",
   authUser,
-  pageSize = 20,   // câte încărcăm pe pagină din Firestore
-  buffer = 4,      // câte carduri extra randăm în stânga/dreapta (windowing)
+  pageSize = 20,
+  buffer = 4,
 }) {
+  const { t } = useTranslation();
+
   const containerRef = useRef(null);
   const [items, setItems] = useState([]);
   const [cursor, setCursor] = useState(null);
@@ -90,13 +92,11 @@ export default function CollaborationsWithReviews({
   const [hasMore, setHasMore] = useState(true);
   const [usedDemo, setUsedDemo] = useState(false);
 
-  // fallback local
   const demoFallback = useMemo(
     () => buildDemoCollabs(profileUid, side),
     [profileUid, side]
   );
 
-  // ====== FETCH FIRST PAGE ======
   useEffect(() => {
     let cancelled = false;
     setItems([]);
@@ -124,7 +124,6 @@ export default function CollaborationsWithReviews({
         if (cancelled) return;
 
         if (snap.empty) {
-          // fallback demo
           setItems(demoFallback);
           setHasMore(false);
           setUsedDemo(true);
@@ -137,7 +136,6 @@ export default function CollaborationsWithReviews({
         }
       } catch (e) {
         console.error("Collabs fetch error:", e);
-        // fallback demo în caz de eroare
         if (!cancelled) {
           setItems(demoFallback);
           setHasMore(false);
@@ -153,7 +151,6 @@ export default function CollaborationsWithReviews({
     return () => { cancelled = true; };
   }, [profileUid, side, pageSize, demoFallback]);
 
-  // ====== LOAD MORE (paginate) ======
   const loadMore = useCallback(async () => {
     if (!profileUid || !hasMore || loading || usedDemo || !cursor) return;
     setLoading(true);
@@ -179,12 +176,10 @@ export default function CollaborationsWithReviews({
     }
   }, [profileUid, side, pageSize, hasMore, loading, usedDemo, cursor]);
 
-  // ====== Slider / scroll + windowing ======
-  const ITEM_WIDTH = 176; // px: ~ card + gap (ajustează dacă schimbi stilul)
+  const ITEM_WIDTH = 176;
   const [scrollLeft, setScrollLeft] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  // onScroll + resize
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -195,7 +190,6 @@ export default function CollaborationsWithReviews({
       raf = requestAnimationFrame(() => {
         setScrollLeft(el.scrollLeft);
         setContainerWidth(el.clientWidth);
-        // dacă suntem aproape de capăt, încarcă încă o pagină
         const totalWidth = totalCount * ITEM_WIDTH;
         const nearEnd = el.scrollLeft + el.clientWidth > totalWidth - ITEM_WIDTH * 3;
         if (nearEnd) loadMore();
@@ -207,7 +201,6 @@ export default function CollaborationsWithReviews({
 
     el.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
-    // init
     setScrollLeft(el.scrollLeft);
     setContainerWidth(el.clientWidth);
 
@@ -218,29 +211,25 @@ export default function CollaborationsWithReviews({
     };
   }, [loadMore]); // eslint-disable-line
 
-  const data = items; // (dacă e fallback demo, items este deja demoFallback)
+  const data = items;
   const totalCount = data.length;
 
-  // windowing (determinăm intervalul vizibil)
   const visibleCount = Math.max(1, Math.ceil((containerWidth || 1) / ITEM_WIDTH) + buffer * 2);
   const startIndex = Math.max(0, Math.floor(scrollLeft / ITEM_WIDTH) - buffer);
   const endIndex = Math.min(totalCount, startIndex + visibleCount);
   const leftPad = startIndex * ITEM_WIDTH;
   const rightPad = Math.max(0, (totalCount - endIndex) * ITEM_WIDTH);
 
-  // ====== logică pentru afișarea butoanelor stânga/dreapta ======
   const totalWidth = totalCount * ITEM_WIDTH;
-  const canScroll = totalWidth > (containerWidth || 0) + 1; // există overflow?
-  const ATOL = 4; // toleranță px pentru calcule
+  const canScroll = totalWidth > (containerWidth || 0) + 1;
+  const ATOL = 4;
   const atStart = scrollLeft <= ATOL;
   const atEndNow = scrollLeft + (containerWidth || 0) >= totalWidth - ATOL;
-  // „final absolut”: nu mai avem pagini de încărcat și suntem la capătul pistei curente
   const atAbsoluteEnd = !hasMore && atEndNow;
 
   const showLeft = canScroll && !atStart;
   const showRight = canScroll && !atAbsoluteEnd;
 
-  // ====== butoane slider ======
   const scrollByPage = (dir = 1) => {
     const el = containerRef.current;
     if (!el) return;
@@ -255,40 +244,38 @@ export default function CollaborationsWithReviews({
       `}</style>
 
       <div className="relative">
-        {/* ===== ARROW LEFT ===== */}
-
-        {/* Desktop (>= md): păstrăm butonul actual */}
+        {/* LEFT */}
         {showLeft && (
           <div className="hidden md:block pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 z-10 px-1">
             <Button
               variant="secondary"
               className="pointer-events-auto shadow"
               onClick={() => scrollByPage(-1)}
+              aria-label={t("collab.nav_back")}
+              title={t("collab.nav_back")}
             >
               ←
             </Button>
           </div>
         )}
-
-        {/* Mobile/Tablet (< md): doar indicator vizual, fără click */}
         {showLeft && (
           <div className="md:hidden pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 z-10">
             <div
               aria-hidden
               className="h-6 w-6 rounded-full bg-black/20 text-white/70 ring-1 ring-white/30 shadow-sm flex items-center justify-center text-xs"
+              title={t("collab.nav_back")}
             >
               ‹
             </div>
           </div>
         )}
 
-        {/* Pista orizontală */}
+        {/* TRACK */}
         <div
           ref={containerRef}
           className="no-scrollbar overflow-x-auto overflow-y-hidden relative"
           style={{ paddingBottom: 8 }}
         >
-          {/* Edge fades (opționale, doar pe mobil) */}
           {canScroll && (
             <>
               {!atStart && (
@@ -314,27 +301,26 @@ export default function CollaborationsWithReviews({
           </div>
         </div>
 
-        {/* ===== ARROW RIGHT ===== */}
-
-        {/* Desktop (>= md): păstrăm butonul actual */}
+        {/* RIGHT */}
         {showRight && (
           <div className="hidden md:block pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 z-10 px-1">
             <Button
               variant="secondary"
               className="pointer-events-auto shadow"
               onClick={() => scrollByPage(1)}
+              aria-label={t("collab.nav_forward")}
+              title={t("collab.nav_forward")}
             >
               →
             </Button>
           </div>
         )}
-
-        {/* Mobile/Tablet (< md): doar indicator vizual, fără click */}
         {showRight && (
           <div className="md:hidden pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 z-10">
             <div
               aria-hidden
               className="h-6 w-6 rounded-full bg-black/20 text-white/70 ring-1 ring-white/30 shadow-sm flex items-center justify-center text-xs"
+              title={t("collab.nav_forward")}
             >
               ›
             </div>
@@ -344,10 +330,10 @@ export default function CollaborationsWithReviews({
 
       {/* status / loader */}
       <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
-        {loading && <span>Se încarcă…</span>}
-        {!loading && totalCount === 0 && <span>Nicio colaborare disponibilă.</span>}
-        {!usedDemo && !hasMore && totalCount > 0 && <span>Toate colaborările au fost încărcate.</span>}
-        {usedDemo && <span>(Demo data)</span>}
+        {loading && <span>{t("collab.loading")}</span>}
+        {!loading && totalCount === 0 && <span>{t("collab.none_available")}</span>}
+        {!usedDemo && !hasMore && totalCount > 0 && <span>{t("collab.all_loaded")}</span>}
+        {usedDemo && <span>{t("collab.demo_data")}</span>}
       </div>
     </div>
   );

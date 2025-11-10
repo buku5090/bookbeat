@@ -1,8 +1,10 @@
-import { useRef, useState, useMemo } from "react";
+// components/ProfilePhotoWithAvatar.jsx
+import React, { useRef, useState, useMemo } from "react";
 import { Pencil } from "lucide-react";
 import AvatarCropModal from "./AvatarCropModal";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../src/firebase";
+import { useTranslation } from "react-i18next";
 
 export default function ProfileAvatarWithProgress({
   imageSrc,
@@ -14,11 +16,11 @@ export default function ProfileAvatarWithProgress({
   handleAvatarChange,
   canEdit = false,
 }) {
+  const { t } = useTranslation();
   const fileInputRef = useRef();
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // —— unificare progress: number sau { percent, missing }
   const percent = useMemo(() => {
     const p =
       typeof progress === "number"
@@ -58,9 +60,7 @@ export default function ProfileAvatarWithProgress({
       }
     } catch (err) {
       console.error("Avatar upload error:", err);
-      // opțional: poți adăuga un toast/alert aici
     } finally {
-      // reset input ca să poți reselecta același fișier ulterior
       e.target.value = "";
     }
   };
@@ -91,14 +91,7 @@ export default function ProfileAvatarWithProgress({
             style={{ transform: "rotate(-90deg)" }}
             aria-hidden="true"
           >
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="transparent"
-              stroke="#eee"
-              strokeWidth={strokeWidth}
-            />
+            <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="#eee" strokeWidth={strokeWidth} />
             <circle
               cx={size / 2}
               cy={size / 2}
@@ -128,7 +121,7 @@ export default function ProfileAvatarWithProgress({
         >
           <img
             src={imageSrc}
-            alt="avatar"
+            alt={t("avatar.alt")}
             className="rounded-full object-cover w-full h-full block"
             style={{ width: imageSize, height: imageSize }}
             draggable={false}
@@ -142,8 +135,8 @@ export default function ProfileAvatarWithProgress({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="w-10 h-10 absolute bottom-0 right-0 z-10 bg-white rounded-full border border-gray-300 grid place-items-center p-0"
-              aria-label="Schimbă fotografia de profil"
-              title="Schimbă fotografia de profil"
+              aria-label={t("avatar.change")}
+              title={t("avatar.change")}
             >
               <Pencil size={14} className="text-gray-400" />
             </button>

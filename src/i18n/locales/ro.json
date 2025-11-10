@@ -14,7 +14,21 @@
   },
   "common": {
     "save": "Salvează",
-    "cancel": "Anulează"
+    "cancel": "Anulează",
+    "back": "Înapoi",
+    "next": "Înainte",
+    "select": "Selectează…",
+    "free": "Gratis",
+    "clear": "Șterge",
+    "delete": "Șterge",
+    "prev": "Anterior",
+    "loading": "Se încarcă...",
+    "loading_short": "Se încarcă",
+    "close": "Închide",
+    "confirm": "Confirmă",
+    "or": "sau",
+    "all": "Toate",
+    "view": "Vezi"
   },
   "editable_chips": {
     "add": "Adaugă",
@@ -63,6 +77,577 @@
     "no_value": "Fără valoare",
     "edit": "Editează",
     "currency_format": "{{price}} RON / set"
+  },
+  "editable_genres": {
+    "label": "GENURI MUZICALE",
+    "placeholder": "Alege genuri",
+    "max_message": "Ai deja 5 genuri selectate. Șterge unul ca să poți adăuga altul."
+  },
+  "editable_specializations": {
+    "label": "PREFERINȚE",
+    "placeholder": "Adaugă tip de eveniment"
+  },
+  "event_card": {
+    "confirmed": "Confirmat",
+    "tentative": "Tentativ",
+    "details": "Detalii"
+  },
+  "account_type": {
+    "title": "Tip cont",
+    "artist": "Artist",
+    "location": "Locație",
+    "aria_artist": "Setează tipul de cont Artist (apasă din nou pentru a reveni la cont user)",
+    "aria_location": "Setează tipul de cont Locație (apasă din nou pentru a reveni la cont user)",
+    "title_artist": "Click din nou pe Artist ca să revii la cont user",
+    "title_location": "Click din nou pe Locație ca să revii la cont user",
+    "current_user": "Tip curent: user. Poți comuta la Artist sau Locație.",
+    "current_selected": "Tip curent: {{type}}. Apasă din nou pe același buton pentru a reveni la user."
+  },
+
+  "availability": {
+    "note_end": "Sfârșitul este exclusiv (se salvează +1 zi automat).",
+    "title_label": "Titlu",
+    "notes_label": "Notițe",
+    "placeholder_title": "Ex: Eveniment privat",
+    "placeholder_notes": "Detalii (opțional)",
+    "cancel": "Renunță",
+    "save": "Salvează",
+    "title": "Disponibilitate",
+    "choose_account_type": "Alege tipul de cont pentru a seta disponibilitatea."
+  },
+
+  "demos": {
+    "placeholder": "Link YouTube / SoundCloud / Spotify / Mixcloud",
+    "add": "Adaugă",
+    "delete": "Șterge",
+    "unsupported": "Accept doar linkuri de pe YouTube / SoundCloud / Spotify / Mixcloud.",
+    "duplicate": "Acest link există deja.",
+    "max_reached": "Poți adăuga maximum 3 link-uri de demo.",
+    "remaining": "{{count}} loc(uri) rămase. Accept: YouTube, SoundCloud, Spotify, Mixcloud.",
+    "empty": "Adaugă până la 3 link-uri către mixuri sau live-uri.",
+    "uploading": "Se încarcă…",
+    "limit_reached": "Limită atinsă (3)",
+    "note": "Max 3 fișiere audio. Se salvează automat după upload."
+  },
+  "availability_calendar": {
+    "busy": "Ocupat",
+    "free": "Liber",
+    "reserved": "Rezervat",
+    "book_artist": "Rezervă artist",
+    "book_location": "Rezervă locație",
+    "book_generic": "Rezervă",
+    "close": "Închide",
+    "no_entries": "Nicio înregistrare în această zi.",
+    "delete": "Șterge blocarea",
+    "add_block": "Adaugă blocare"
+  },
+    "dialog": {
+    "confirm_title": "Confirmă modificarea",
+    "confirm_text": "Ești sigur că vrei să salvezi această modificare?",
+    "cancel": "Anulează",
+    "save": "Salvează"
+  },
+  "avatar_crop": {
+    "zoom": "Zoom: {{value}}x",
+    "zoom_in": "Mărește",
+    "zoom_out": "Micșorează",
+    "cancel": "Anulează",
+    "save": "Salvează"
+  },
+  "city_autocomplete": {
+    "placeholder": "Caută oraș..."
+  },
+  "collab": {
+    "no_reviews_yet": "Nicio recenzie încă",
+    "unknown_location": "Locație",
+    "no_collabs": "Nu există colaborări încă — se vor adăuga automat după booking-uri.",
+    "back": "Înapoi",
+    "forward": "Înainte",
+    "loading": "Se încarcă…",
+    "none_available": "Nicio colaborare disponibilă.",
+    "all_loaded": "Toate colaborările au fost încărcate.",
+    "demo_data": "(Demo data)",
+    "nav_back": "Înapoi",
+    "nav_forward": "Înainte"
+  },
+  "collab_review": {
+    "stars_aria": "{{count}} stele",
+    "comment_placeholder": "Comentariu (opțional)",
+    "submit": "Trimite"
+  },
+  "complete_profile": {
+    "title": "Completează-ți profilul",
+    "account_type": "Tip cont:",
+    "progress": "Progres:",
+    "placeholder_fields": "Aici vin câmpurile tale dedicate ({{role}}).",
+    "required_fields": "Câmpuri esențiale (exemplu):",
+    "verifying": "Se verifică...",
+    "publish": "Publică profilul",
+    "published_success": "✅ Profil publicat!",
+    "missing_fields_info": "ℹ️ Mai ai câmpuri de completat.",
+    "publish_error": "Eroare la publicare: {{message}}"
+  },
+  "demo": {
+    "collab_good": "Super colaborare, vibe excelent.",
+    "collab_sound_ok": "Sunet ok, staff foarte prietenos.",
+    "collab_org_ok": "Organizare bună, revenim cu drag.",
+    "collab_delay": "A fost ok, mici întârzieri la setup.",
+    "collab_energy": "Public fain, energie mare.",
+
+    "adding": "Se adaugă colaborările demo…",
+    "added_success": "✅ Colaborări demo adăugate.",
+    "add_error": "❌ Eroare la inserare.",
+    "deleting": "Se șterg colaborările demo…",
+    "delete_success": "✅ Demo-urile au fost șterse.",
+    "delete_error": "❌ Eroare la ștergere.",
+
+    "button_add": "Adaugă colaborări demo",
+    "button_delete": "Șterge demo-urile",
+
+    "artist_you": "Artist (tu)",
+    "location_you": "Locația (tu)"
+  },
+
+  "gallery": {
+    "open": "Deschide galeria"
+  },
+  "settings": {
+    "advanced": "Setări avansate"
+  },
+
+  "account": {
+    "delete": "Șterge contul",
+    "switch_title": "Schimbi tipul de cont?",
+    "switch_desc": "Trecerea la alt tip de cont va șterge definitiv majoritatea setărilor și datelor tale specifice tipului curent (tarif/buget, capacitate, genuri, echipament, adrese, demo-uri, galerie, oraș, statut promovat/verificare etc.). Acțiunea nu poate fi anulată.",
+    "fields_reset_title": "Câmpuri ce vor fi resetate:",
+    "confirm_switch": "Da, șterge și schimbă tipul"
+  },
+  "kyc": {
+    "title": "Verificare identitate",
+    "desc": "Încarcă fața și verso-ul buletinului. Datele sunt folosite doar pentru verificare.",
+    "front_label": "Buletin – Față",
+    "back_label": "Buletin – Verso",
+    "front_chip": "FAȚĂ",
+    "back_chip": "VERSO",
+    "pick_front_title": "Click pentru a selecta imaginea (față)",
+    "pick_back_title": "Click pentru a selecta imaginea (verso)",
+    "choose_file": "Alege fișierul...",
+    "file_hint": "JPG, PNG sau HEIC • max 10MB",
+    "front_preview_alt": "Preview față",
+    "back_preview_alt": "Preview verso",
+    "note_clear": "* Asigură-te că datele sunt clare și complet vizibile.",
+    "submit": "Trimite pentru verificare",
+    "error_both_required": "Te rog încarcă ambele imagini (față și verso).",
+    "error_submit": "A apărut o eroare la trimitere. Încearcă din nou.",
+    "verify_btn": "Verifică identitatea",
+    "verified_btn": "Verificat",
+    "status_verified": "Cont verificat",
+    "status_pending": "În curs de verificare",
+    "status_locked": "Disponibil după ce profilul este complet 100%"
+  },
+
+  "locationAddress": {
+    "empty": "Adresă necompletată",
+    "open_in_maps": "Deschide în Google Maps",
+    "label": "Adresă locație",
+    "placeholder": "ex: Str. X nr. Y, București"
+  },
+
+  "mediaGallery": {
+    "reached_limit": "Ai atins limita de {{max}} imagini",
+    "add_images": "Adaugă imagini",
+    "enlarge": "Mărește",
+    "hint_multi": "Poți adăuga până la {{max}} imagini. {{remaining}} loc(uri) rămase.",
+    "hint_single": "Poți adăuga o singură imagine.",
+    "some_ignored": "Unele fișiere au fost ignorate: {{bytes}} fișier(e) > {{sizeMB}}MB; {{small}} sub {{minW}}×{{minH}}px; {{big}} peste {{maxW}}×{{maxH}}px; {{other}} invalide."
+  },
+
+  "avatar": {
+    "alt": "fotografie de profil",
+    "change": "Schimbă fotografia de profil"
+  },
+
+  "progressBanner": {
+    "choose_type": "⚠️ Selectează tipul de cont (Artist sau Locație). Până atunci poți edita câmpurile generale.",
+    "complete": "✅ Profil complet!",
+    "progress": "⚠️ Progres: {{percent}}% — mai completează {{missing}}."
+  },
+  "reviews": {
+    "avg_out_of": "{{avg}} / 5",
+    "no_rating_yet": "Fără rating încă",
+    "login_to_review": "Loghează-te pentru a lăsa un review",
+    "submit_review": "Trimite review",
+    "comment_placeholder": "Lasă un comentariu (opțional)",
+    "stars_aria": "{{count}} stele"
+  },
+  "badges.verified": "Profil verificat",
+  "badges.unverified": "Profil neverificat",
+  "badges.new": "Profil creat recent",
+  "badges.label.verified": "Verificat",
+  "badges.label.unverified": "Neverificat",
+  "badges.label.new": "Nou",
+  "badges.type.artist": "ARTIST",
+  "badges.type.location": "LOCAȚIE",
+  "badges.type.profile": "PROFIL",
+
+  "chiprow.ellipsis": "…",
+
+  "filters.title": "Filtre",
+  "filters.reset": "Resetează",
+  "filters.profileType": "Tip profil",
+  "filters.profileType.all": "Toate",
+  "filters.profileType.artist": "Artiști",
+  "filters.profileType.location": "Locații",
+
+  "filters.position": "Poziția mea",
+  "filters.useLocation": "Folosește locația",
+  "filters.usingLocation": "Se determină locația…",
+  "filters.location.error": "Eroare la geolocație.",
+
+  "filters.artist.distanceMax": "Distanță max (km)",
+  "filters.artist.minRating": "Rating minim",
+  "filters.artist.budgetMax": "Buget maxim (RON/set)",
+  "filters.artist.verifiedOnly": "Doar verificate",
+
+  "filters.location.capacity": "Capacitate (min / max)",
+  "filters.location.distanceMax": "Distanță max (km)",
+  "filters.location.budget": "Buget (min / max)",
+  "filters.location.types": "Tipuri locație",
+  "filters.location.types.placeholder": "ex. Bar, Cafenea, Club (Enter)",
+  "filters.location.types.add": "Adaugă",
+  "filters.location.verifiedOnly": "Doar verificate",
+  "pricing": {
+    "currency": "RON",
+    "free": "Gratis",
+    "perSet": "{{amount}} {{currency}} / set",
+    "range": "{{from}}–{{to}} {{currency}}",
+    "from": "de la {{amount}} {{currency}}",
+    "to": "până la {{amount}} {{currency}}",
+    "amount": "{{amount}} {{currency}}"
+  },
+  "footer": {
+    "all_rights_reserved": "Toate drepturile rezervate.",
+    "about": "Despre",
+    "contact": "Contact",
+    "terms": "Termeni"
+  },
+
+  "language": {
+    "select": "Selectează limba",
+    "choose_description": "Alege limba preferată pentru utilizarea aplicației"
+  },
+  "languages": {
+    "ro": "Română",
+    "en": "Engleză",
+    "tr": "Turcă",
+    "fr": "Franceză",
+    "es": "Spaniolă"
+  },
+
+  "save": "Salvează",
+
+  "menu": {
+    "home": "Acasă",
+    "discover": "Descoperă",
+    "events": "Evenimente",
+    "search": "Caută",
+    "admin": "Admin",
+    "close_menu": "Închide meniul"
+  },
+  "current_language": "curent",
+  "user": {
+    "default_display_name": "Utilizator"
+  },
+  "error_boundary": {
+    "generic": "A apărut o problemă la afișarea acestei secțiuni."
+  },
+
+  "__meta": {
+    "files": [
+      "components/TopPopup.jsx",
+      "components/UserMenu.jsx",
+      "components/ErrorBoundary.jsx"
+    ],
+    "generated": "ro"
+  },
+  "admin": {
+    "title": "Admin Dashboard — BookMix",
+    "search_placeholder": "Caută nume, email, bio...",
+    "filter_by": "Filtrează după",
+    "filters": {
+      "all": "Toți",
+      "verified": "Verificați",
+      "unverified": "Neverificați",
+      "flagged": "Semnalați"
+    },
+    "count_accounts": "{{count}} conturi",
+    "bulk": {
+      "verify_selected": "Verifică selectate",
+      "promote_selected": "Promovează selectate",
+      "flag_selected": "Marchează „flagged”",
+      "delete_selected": "Șterge selectate"
+    },
+    "note": {
+      "auth_deletion": "⚠️ Ștergerea din Auth trebuie făcută server-side (Cloud Functions/Admin SDK)."
+    },
+    "select_all": "Selectează toate",
+    "select_account": "Selectează contul",
+    "table": {
+      "user": "User",
+      "email": "Email",
+      "role": "Rol",
+      "status": "Status",
+      "actions": "Acțiuni"
+    },
+    "no_accounts": "Nu s-au găsit conturi.",
+    "status": {
+      "verified": "Verificat",
+      "unverified": "Neverificat",
+      "flagged": "Flagged",
+      "suspicious": "Suspicios",
+      "suspicious_hint": "Bio suspectă — marchează flagged"
+    },
+    "actions": {
+      "details": "Detalii",
+      "verify": "Verifică",
+      "revoke": "Revocă",
+      "promote": "Promovează",
+      "cancel_promo": "Anulează promo",
+      "flag": "Flag",
+      "unflag": "Unflag",
+      "delete": "Șterge",
+      "verify_account": "Verifică cont",
+      "revoke_verify": "Revocă verificare",
+      "mark_flagged": "Marchează flagged",
+      "delete_account": "Șterge cont"
+    },
+    "details_audit": "Detalii & Audit",
+    "registered": "Înregistrat",
+    "bio": "Bio",
+    "bio_suspicious": "Bio suspectă (detecție automată)",
+    "id_photos": "Poze ID",
+    "no_id_photos": "Nu există poze de ID încă.",
+    "audit": {
+      "latest_actions": "Ultimele acțiuni",
+      "none": "Niciun eveniment recent."
+    },
+    "select_an_account": "Selectează un cont pentru a vedea detaliile. Poți vizualiza bio, poze de ID, și istoricul de acțiuni.",
+    "confirm": {
+      "title": "Confirmare",
+      "delete_one": "Confirmi ștergerea permanentă a acestui cont?",
+      "bulk_delete": "Confirmi ștergerea tuturor conturilor selectate?",
+      "bulk_verify": "Confirmi verificarea tuturor conturilor selectate?",
+      "bulk_promote": "Confirmi promovarea conturilor selectate?",
+      "bulk_flag": "Confirmi marcarea ca „flagged” pentru conturile selectate?"
+    }
+  },
+  "advancedSettings": {
+    "title": "Setări avansate",
+    "back_to_profile": "Înapoi la profil",
+    "common": {
+      "saving": "Se salvează..."
+    },
+    "messages": {
+      "username_updated": "Username actualizat.",
+      "username_update_error": "Eroare la actualizarea username-ului.",
+      "google_linked_change_in_google": "Contul este conectat prin Google. Parola se schimbă din Google, nu din BookMix.",
+      "enter_current_password": "Introdu parola curentă pentru reautentificare.",
+      "password_min_length": "Parola nouă trebuie să aibă minim 6 caractere.",
+      "passwords_do_not_match": "Parolele nu coincid.",
+      "password_updated": "Parola a fost actualizată.",
+      "password_update_error": "Eroare la actualizarea parolei."
+    },
+    "auth_method": {
+      "title": "Metoda de autentificare",
+      "email_password_enabled": "Email & parolă activ",
+      "no_local_password": "Fără parolă locală",
+      "google_linked": "Conectat și cu Google",
+      "google_note": "Contul este conectat prin Google. Parola se gestionează în Google; aici nu poate fi schimbată."
+    },
+    "username": {
+      "section_title": "Username",
+      "placeholder": "Nume de scenă / nume locație / nume",
+      "save": "Salvează username",
+      "mapping_note": "Mapează automat: Artist → stageName, Locație → locationName, User → name."
+    },
+    "password": {
+      "section_title": "Schimbă parola",
+      "current_placeholder": "Parola curentă",
+      "new_placeholder": "Parola nouă (minim 6 caractere)",
+      "confirm_placeholder": "Confirmă parola nouă",
+      "save": "Salvează parola"
+    }
+  },
+  "events": {
+    "title": "Evenimente",
+    "event_not_found": "Evenimentul nu a fost găsit.",
+    "reserve_tickets": "Rezervă / Bilete"
+  },
+
+  "home": {
+    "hero": {
+      "title": "BookMix — conectăm artiștii cu locațiile",
+      "subtitle": "Descoperă DJ-i, trupe și locații (baruri, cluburi, cafenele) pregătite pentru evenimentul tău.",
+      "discover": "Descoperă artiști & locații",
+      "my_account": "Contul meu",
+      "login": "Intră în cont"
+    },
+
+    "features": {
+      "match_title": "Match inteligent",
+      "match_desc": "Filtre și căutare pentru genuri, tarif și disponibilitate.",
+      "clean_profiles_title": "Profiluri curate",
+      "clean_profiles_desc": "Galerie, genuri, echipamente, recenzii verificate.",
+      "simple_booking_title": "Booking simplu",
+      "simple_booking_desc": "Contact direct și blocare în calendar în câteva clickuri."
+    },
+
+    "events": {
+      "title": "Evenimente următoare",
+      "subtitle": "Descoperă ce urmează în comunitatea BookMix.",
+      "see_all": "Vezi toate evenimentele"
+    }
+  },
+  "errors": {
+    "not_found_title": "404",
+    "not_found_message": "Pagina căutată nu a fost găsită.",
+    "back_home": "Înapoi la pagină principală"
+  },
+  "auth": {
+    "login_title": "Autentificare în BookBeat",
+    "email_placeholder": "Email",
+    "password_placeholder": "Parolă",
+    "login_with_email": "🔐 Login cu Email",
+    "login_with_google": "🔓 Login cu Google",
+    "webview_hint": "Dacă loginul nu pornește, apasă ⋯ și deschide în browserul implicit (Safari/Chrome).",
+    "no_account": "Nu ai cont?",
+    "register": "Înregistrează-te",
+    "error_generic": "❌ Eroare: {{message}}",
+    "logout": "Deconectare"
+  },
+  "notifications_doc": {
+    "title": "Notificări",
+    "up_to_date": "La zi ✅",
+    "unread_count": "{{count}} necitite",
+    "not_authenticated_title": "Nu ești autentificat",
+    "not_authenticated_subtitle": "Autentifică-te pentru a-ți vedea notificările.",
+    "add_demo": "Adaugă demo",
+    "adding_demo": "Se adaugă…",
+    "add_demo_title": "Adaugă câteva notificări de test",
+    "mark_all": "Marchează toate",
+    "mark_all_title": "Marchează toate ca citite",
+    "unread": "Necitite",
+    "empty_title": "Nu ai notificări momentan",
+    "empty_subtitle": "Vei primi aici anunțuri despre bookinguri, confirmări și mesaje.",
+    "fallback_title": "Notificare",
+    "mark_read": "Marchează citită",
+    "loading": "Se încarcă notificările…",
+    "type": {
+      "booking": "Booking",
+      "message": "Mesaj",
+      "system": "Sistem",
+      "warning": "Atenție",
+      "notification": "Notificare"
+    },
+    "demo": {
+      "booking_created_title": "Cerere de booking nouă",
+      "booking_created_body": "Mechano Pub a propus 12 Oct, 21:00–23:00.",
+      "booking_accepted_title": "Booking confirmat",
+      "booking_accepted_body": "Andrei (DJ) a confirmat gig-ul pe 15 Oct.",
+      "message_new_title": "Mesaj nou de la Mechano Pub",
+      "message_new_body": "Salut! Poți și pe 20 Oct? Așteptăm răspuns.",
+      "warning_title": "Actualizează disponibilitatea",
+      "warning_body": "Săptămâna viitoare este necompletată. Adaugă zilele ocupate.",
+      "system_verified_title": "Profil verificat 🎉",
+      "system_verified_body": "Contul tău a fost verificat. Spor la bookinguri!"
+    }
+  },
+  "profile": {
+    "user": "Utilizator",
+    "badge_new_title": "Profil creat recent",
+    "badge_new": "Nou",
+    "badge_promoted": "Promovat",
+    "badge_verified": "Verificat",
+    "badge_pending": "Verificare în curs",
+
+    "city_label": "Oraș / Comună",
+    "city_placeholder": "ex: București",
+
+    "capacity_label": "Capacitate",
+    "capacity_placeholder": "ex: 120",
+
+    "budget_label": "Buget (RON)",
+    "budget_placeholder": "ex: 500",
+
+    "location_type_label": "Tip locație",
+    "location_type_placeholder": "Alege tipul",
+
+    "rate_label": "Tarif (RON / set)",
+    "rate_placeholder": "ex: 300",
+
+    "promoted_label": "Promovat",
+    "activate": "Activează",
+    "deactivate": "Dezactivează",
+
+    "about": "Despre",
+    "collaborations": "Colaborări",
+    "demos": "Demo-uri",
+    "address": "Adresă",
+    "media_gallery": "Galerie media",
+    "promoted": "PROMOVAT",
+
+    "notAuthenticated": "Nu ești autentificat.",
+    "invalidImage": "Fișierul selectat nu este o imagine.",
+    "imageTooLarge": "Imaginea depășește 5MB.",
+    "notFound": "Profilul nu a fost găsit.",
+    "confirmDelete": "Ești sigur că vrei să ștergi contul? Acțiunea este definitivă.",
+
+    "missing": {
+      "bio": "descrierea",
+      "genres": "genurile muzicale",
+      "equipment": "echipamentul DJ",
+      "rate": "tariful",
+      "photo": "fotografia de profil",
+      "demos": "demo-urile",
+      "city": "orașul",
+
+      "locationName": "numele locației",
+      "capacity": "capacitatea",
+      "locationPhoto": "fotografia locației",
+      "address": "adresa",
+      "budget": "bugetul",
+      "locationType": "tipul locației"
+    }
+  },
+  "profiles": {
+    "sort": {
+      "aria": "Sortează rezultatele",
+      "newest": "Cele mai noi",
+      "oldest": "Cele mai vechi",
+      "rating_desc": "Rating descrescător",
+      "price_asc": "Preț crescător",
+      "price_desc": "Preț descrescător"
+    },
+    "pagination": {
+      "prev": "Pagina anterioară",
+      "next": "Pagina următoare",
+      "page_of": "Pagina {{page}} / {{total}}"
+    }
+  },
+  "register_doc": {
+    "title": "Creează cont",
+    "subtitle": "Creează-ți contul și intră în comunitate. Restul detaliilor le poți adăuga oricând din profil.",
+    "username": "Username",
+    "username_placeholder": "Ex: Alex Pop",
+    "email": "Email",
+    "email_placeholder": "you@example.com",
+    "password": "Parolă",
+    "password_placeholder": "••••••••",
+    "submit": "Creează cont",
+    "continue_google": "Continuă cu Google",
+    "have_account": "Ai deja cont?",
+    "login_link": "Autentificare",
+    "error_generic": "Eroare la înregistrare.",
+    "error_google": "Eroare la autentificarea cu Google."
   }
 }
-

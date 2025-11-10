@@ -1,26 +1,19 @@
+// components/MediaGallery.jsx
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Trash2, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
-
-import {
-  Button, Input, Textarea, Label, Badge,
-  Dialog, DialogContent
-} from "../uiux";
-
+import { Button, Dialog, DialogContent } from "../uiux";
 import { storage } from "../../src/firebase";
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { useTranslation } from "react-i18next";
 
 /* ---------------- helpers ---------------- */
-
-const isValidUrlish = (s = "") =>
-  /^(https?:\/\/|blob:|data:image\/)/i.test(String(s).trim());
+const isValidUrlish = (s = "") => /^(https?:\/\/|blob:|data:image\/)/i.test(String(s).trim());
 
 function normalizeItems(arr = []) {
   const out = [];
   const seen = new Set();
-
   for (const raw of Array.isArray(arr) ? arr : []) {
     if (!raw) continue;
-
     if (typeof raw === "string") {
       const url = raw.trim();
       if (!isValidUrlish(url)) continue;
@@ -29,7 +22,7 @@ function normalizeItems(arr = []) {
       seen.add(url);
     } else if (typeof raw === "object") {
       const url = String(raw.url ?? raw.src ?? raw.imgUrl ?? "").trim();
-      const id  = String(raw.id ?? raw.path ?? url ?? "").trim();
+      const id = String(raw.id ?? raw.path ?? url ?? "").trim();
       if (!isValidUrlish(url)) continue;
       const key = id || url;
       if (seen.has(key)) continue;
@@ -40,8 +33,7 @@ function normalizeItems(arr = []) {
   return out;
 }
 
-const sig = (list = []) =>
-  normalizeItems(list).map(it => `${it.id}|${it.url}`).join(";");
+const sig = (list = []) => normalizeItems(list).map((it) => `${it.id}|${it.url}`).join(";");
 
 async function getImageDimensions(file) {
   return new Promise((resolve, reject) => {
@@ -62,7 +54,6 @@ async function getImageDimensions(file) {
 }
 
 /* ---------------- component ---------------- */
-
 export default function MediaGallery({
   canEdit,
   authUser,
@@ -78,6 +69,8 @@ export default function MediaGallery({
   maxHeight = 6000,
   onValidationError,
 }) {
+  const { t } = useTranslation();
+
   const [list, setList] = useState(() => normalizeItems(items));
   const [uploadError, setUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -117,8 +110,11 @@ export default function MediaGallery({
       return;
     }
 
-    const imageFiles = files.filter(f => f.type.startsWith("image/")).slice(0, remaining);
-    if (imageFiles.length === 0) { e.target.value = ""; return; }
+    const imageFiles = files.filter((f) => f.type.startsWith("image/")).slice(0, remaining);
+    if (imageFiles.length === 0) {
+      e.target.value = "";
+      return;
+    }
 
     setUploadError("");
     setUploading(true);
@@ -128,14 +124,24 @@ export default function MediaGallery({
     try {
       for (const f of imageFiles) {
         const maxBytes = maxFileSizeMB * 1024 * 1024;
-        if (f.size > maxBytes) { skipped.tooLargeBytes++; continue; }
+        if (f.size > maxBytes) {
+          skipped.tooLargeBytes++;
+          continue;
+        }
 
         try {
           const { width, height } = await getImageDimensions(f);
-          if (width < minWidth || height < minHeight) { skipped.tooSmallRes++; continue; }
-          if (width > maxWidth || height > maxHeight) { skipped.tooBigRes++; continue; }
+          if (width < minWidth || height < minHeight) {
+            skipped.tooSmallRes++;
+            continue;
+          }
+          if (width > maxWidth || height > maxHeight) {
+            skipped.tooBigRes++;
+            continue;
+          }
         } catch {
-          skipped.other++; continue;
+          skipped.other++;
+          continue;
         }
 
         const safeName = f.name.replace(/\s+/g, "-");
@@ -149,12 +155,17 @@ export default function MediaGallery({
       if (results.length) emit([...list, ...results]);
 
       if (skipped.tooLargeBytes || skipped.tooSmallRes || skipped.tooBigRes || skipped.other) {
-        const parts = [];
-        if (skipped.tooLargeBytes) parts.push(`${skipped.tooLargeBytes} fișier(e) > ${maxFileSizeMB}MB`);
-        if (skipped.tooSmallRes)  parts.push(`${skipped.tooSmallRes} sub ${minWidth}×${minHeight}px`);
-        if (skipped.tooBigRes)    parts.push(`${skipped.tooBigRes} peste ${maxWidth}×${maxHeight}px`);
-        if (skipped.other)        parts.push(`${skipped.other} invalide`);
-        const msg = `Unele fișiere au fost ignorate: ${parts.join("; ")}.`;
+        const msg = t("mediaGallery.some_ignored", {
+          bytes: skipped.tooLargeBytes,
+          small: skipped.tooSmallRes,
+          big: skipped.tooBigRes,
+          other: skipped.other,
+          sizeMB: maxFileSizeMB,
+          minW: minWidth,
+          minH: minHeight,
+          maxW: maxWidth,
+          maxH: maxHeight
+        });
         setUploadError(msg);
         onValidationError?.(msg, { ...skipped, maxFileSizeMB, minWidth, minHeight, maxWidth, maxHeight });
       }
@@ -171,38 +182,45 @@ export default function MediaGallery({
       if (canDeleteFromStorage) {
         await deleteObject(storageRef(storage, it.id));
       }
-    } catch { /* ignore */ }
-    finally {
-      emit(list.filter(x => (x.id || x.url) !== (it.id || it.url)));
+    } catch {
+      /* ignore */
+    } finally {
+      emit(list.filter((x) => (x.id || x.url) !== (it.id || it.url)));
     }
   };
 
   const handleImgError = (it) => {
-    emit(list.filter(x => (x.id || x.url) !== (it.id || it.url)));
+    emit(list.filter((x) => (x.id || x.url) !== (it.id || it.url)));
   };
 
-  const openLightbox = (idx) => { setLightboxIndex(idx); setLbLoading(true); setLightboxOpen(true); };
+  const openLightbox = (idx) => {
+    setLightboxIndex(idx);
+    setLbLoading(true);
+    setLightboxOpen(true);
+  };
 
   const next = useCallback(() => {
     if (!list.length) return;
     setLbLoading(true);
-    setLightboxIndex(i => (i + 1) % list.length);
+    setLightboxIndex((i) => (i + 1) % list.length);
   }, [list.length]);
 
   const prev = useCallback(() => {
     if (!list.length) return;
     setLbLoading(true);
-    setLightboxIndex(i => (i - 1 + list.length) % list.length);
+    setLightboxIndex((i) => (i - 1 + list.length) % list.length);
   }, [list.length]);
 
   useEffect(() => {
     if (!lightboxOpen || !list.length) return;
-    const cur = new Image(); cur.src = list[lightboxIndex]?.url || "";
-    const n = new Image();   n.src = list[(lightboxIndex + 1) % list.length]?.url || "";
-    const p = new Image();   p.src = list[(lightboxIndex - 1 + list.length) % list.length]?.url || "";
+    const cur = new Image();
+    cur.src = list[lightboxIndex]?.url || "";
+    const n = new Image();
+    n.src = list[(lightboxIndex + 1) % list.length]?.url || "";
+    const p = new Image();
+    p.src = list[(lightboxIndex - 1 + list.length) % list.length]?.url || "";
   }, [lightboxOpen, lightboxIndex, list.length]);
 
-  // 🩹 Fix: protejăm accesul la `window`
   useEffect(() => {
     if (!lightboxOpen || typeof window === "undefined") return;
     const onKey = (e) => {
@@ -227,17 +245,17 @@ export default function MediaGallery({
   }, [lightboxIndex, lightboxOpen]);
 
   const onAddClick = () => {
-    if (atLimit) { onExceedMax?.(max); return; }
+    if (atLimit) {
+      onExceedMax?.(max);
+      return;
+    }
     inputRef.current?.click();
   };
 
   const showAddButton = canEdit && (addButtonMode === "disable" || !atLimit);
   const addDisabled = addButtonMode === "disable" && atLimit;
 
-  const renderList = useMemo(
-    () => list.filter(it => it && isValidUrlish(it.url)),
-    [list]
-  );
+  const renderList = useMemo(() => list.filter((it) => it && isValidUrlish(it.url)), [list]);
 
   return (
     <section className="relative">
@@ -259,7 +277,8 @@ export default function MediaGallery({
                 variant="outline"
                 onClick={() => deleteOne(img)}
                 className="!bg-white hover:!bg-gray-200 !border-gray-200 absolute top-2 right-2 transition !px-3"
-                title="Șterge"
+                title={t("common.delete")}
+                aria-label={t("common.delete")}
               >
                 <Trash2 className="w-4 h-4 text-black" />
               </Button>
@@ -269,7 +288,8 @@ export default function MediaGallery({
               variant="outline"
               onClick={() => openLightbox(idx)}
               className="absolute bottom-2 right-2 !bg-white hover:!bg-gray-200 !border-gray-200 hidden md:flex transition !px-3"
-              title="Mărește"
+              title={t("mediaGallery.enlarge")}
+              aria-label={t("mediaGallery.enlarge")}
             >
               <Maximize2 className="w-4 h-4 text-black" />
             </Button>
@@ -286,7 +306,16 @@ export default function MediaGallery({
               "text-3xl text-gray-400 hover:text-white hover:!border-white",
               addDisabled || uploading ? "opacity-50 cursor-not-allowed" : "",
             ].join(" ")}
-            title={atLimit ? `Ai atins limita de ${max} imagini` : "Adaugă imagini"}
+            title={
+              atLimit
+                ? t("mediaGallery.reached_limit", { max })
+                : t("mediaGallery.add_images")
+            }
+            aria-label={
+              atLimit
+                ? t("mediaGallery.reached_limit", { max })
+                : t("mediaGallery.add_images")
+            }
           >
             {uploading ? "…" : "+"}
           </button>
@@ -306,8 +335,11 @@ export default function MediaGallery({
           />
           <p className="text-xs text-gray-500 mt-1">
             {max > 1
-              ? `Poți adăuga până la ${max} imagini. ${Math.max(0, max - renderList.length)} loc${Math.max(0, max - renderList.length) === 1 ? "" : "uri"} rămase.`
-              : `Poți adăuga o singură imagine.`}
+              ? t("mediaGallery.hint_multi", {
+                  max,
+                  remaining: Math.max(0, max - renderList.length),
+                })
+              : t("mediaGallery.hint_single")}
           </p>
           {uploadError && <p className="text-xs text-red-600 mt-1">{uploadError}</p>}
         </>
@@ -319,15 +351,17 @@ export default function MediaGallery({
           <div
             className="relative w-full h-[80vh] sm:h-[82vh] flex items-center justify-center"
             onTouchStart={(e) => {
-              const t = e.touches?.[0];
-              e.currentTarget.dataset.tsx = String(t?.clientX ?? 0);
-              e.currentTarget.dataset.tsy = String(t?.clientY ?? 0);
+              const t0 = e.touches?.[0];
+              e.currentTarget.dataset.tsx = String(t0?.clientX ?? 0);
+              e.currentTarget.dataset.tsy = String(t0?.clientY ?? 0);
             }}
             onTouchEnd={(e) => {
               const sx = Number(e.currentTarget.dataset.tsx || 0);
               const sy = Number(e.currentTarget.dataset.tsy || 0);
-              const t = e.changedTouches?.[0]; if (!t) return;
-              const dx = t.clientX - sx, dy = t.clientY - sy;
+              const t1 = e.changedTouches?.[0];
+              if (!t1) return;
+              const dx = t1.clientX - sx,
+                dy = t1.clientY - sy;
               if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
                 dx < 0 ? next() : prev();
               }
@@ -358,25 +392,19 @@ export default function MediaGallery({
                     <button
                       type="button"
                       onClick={prev}
-                      aria-label="Anterior"
+                      aria-label={t("common.prev")}
                       className="absolute left-0 !bg-white"
                     >
-                      <ChevronLeft
-                        className="w-15 h-15 sm:w-10 sm:h-10 !text-gray-800"
-                        strokeWidth={2.5}
-                      />
+                      <ChevronLeft className="w-15 h-15 sm:w-10 sm:h-10 !text-gray-800" strokeWidth={2.5} />
                     </button>
 
                     <button
                       type="button"
                       onClick={next}
-                      aria-label="Următor"
+                      aria-label={t("common.next")}
                       className="absolute right-0 !bg-white"
                     >
-                      <ChevronRight 
-                        className="w-15 h-15 sm:w-10 sm:h-10 !text-gray-800" 
-                        strokeWidth={2.5}
-                        />
+                      <ChevronRight className="w-15 h-15 sm:w-10 sm:h-10 !text-gray-800" strokeWidth={2.5} />
                     </button>
                   </>
                 )}

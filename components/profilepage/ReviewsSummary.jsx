@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { db } from "../src/firebase";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Hook privat – nu mai e în pagină
 function useReviews(profileUid) {
@@ -31,6 +32,7 @@ function useReviews(profileUid) {
 }
 
 export default function ReviewsSummary({ profileUid }) {
+  const { t } = useTranslation();
   const { reviews, avg } = useReviews(profileUid);
 
   return (
@@ -49,7 +51,7 @@ export default function ReviewsSummary({ profileUid }) {
           ))}
         </div>
         <span className="text-sm text-gray-600">
-          {avg ? `${avg} / 5` : "Fără rating încă"} ({reviews.length})
+          {avg ? t("reviews.avg_out_of", { avg }) : t("reviews.no_rating_yet")} ({reviews.length})
         </span>
       </div>
     </div>

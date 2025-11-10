@@ -8,8 +8,7 @@ import CollaborationsWithReviews from "./CollaborationsWithReviews";
 import ArtistDemos from "./ArtistDemos";
 import LocationAddressSimple from "./LocationAddressSimple";
 import MediaGallery from "./MediaGallery";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../src/firebase";
+import { useTranslation } from "react-i18next";
 
 export default function RightPanel({
   isOwnProfile,
@@ -23,12 +22,14 @@ export default function RightPanel({
   deleteDemo,
   onGalleryChange,
 }) {
+  const { t } = useTranslation();
+
   const goToGenre = (term) => (window.location.href = `/search?q=${encodeURIComponent(term)}&type=genre`);
   const goToPref  = (term) => (window.location.href = `/search?q=${encodeURIComponent(term)}&type=pref`);
 
   return (
     <div className="w-full md:w-2/3 space-y-8">
-      <SectionTitle>Despre</SectionTitle>
+      <SectionTitle>{t("profile.about")}</SectionTitle>
       {(isOwnProfile || (userData.bio && userData.bio.trim().length > 0)) && (
         <section>
           <EditableBio
@@ -67,7 +68,7 @@ export default function RightPanel({
           />
 
           <section>
-            <SectionTitle>Colaborări</SectionTitle>
+            <SectionTitle>{t("profile.collaborations")}</SectionTitle>
             <CollaborationsWithReviews
               profileUid={profileUid}
               side="artist"
@@ -77,7 +78,7 @@ export default function RightPanel({
           </section>
 
           <section>
-            <SectionTitle>Demo-uri</SectionTitle>
+            <SectionTitle>{t("profile.demos")}</SectionTitle>
             <ArtistDemos
               canEdit={isOwnProfile}
               current={
@@ -105,10 +106,10 @@ export default function RightPanel({
           )}
 
           <section>
-            <SectionTitle>Adresă</SectionTitle>
+            <SectionTitle>{t("profile.address")}</SectionTitle>
             <LocationAddressSimple
               address={userData.address}
-              mapsLink={userData.googleMapsLink}
+              googleMapsLink={userData.googleMapsLink}
               canEdit={isOwnProfile}
               onChange={({ address, googleMapsLink }) => {
                 applyUpdate({ field: "address", value: address });
@@ -118,7 +119,7 @@ export default function RightPanel({
           </section>
 
           <section>
-            <SectionTitle>Colaborări</SectionTitle>
+            <SectionTitle>{t("profile.collaborations")}</SectionTitle>
             <CollaborationsWithReviews
               profileUid={profileUid}
               side="location"
@@ -131,12 +132,12 @@ export default function RightPanel({
 
       {/* GALERIE */}
       <section>
-        <SectionTitle>Galerie media</SectionTitle>
+        <SectionTitle>{t("profile.media_gallery")}</SectionTitle>
         <MediaGallery
           canEdit={isOwnProfile}
           authUser={authUser}
           items={userData.gallery}
-          title="Galerie media"
+          title={t("profile.media_gallery")}
           max={5}
           addButtonMode="hide"
           onChange={onGalleryChange}

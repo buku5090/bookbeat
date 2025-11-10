@@ -14,7 +14,6 @@ import SectionTitle from "../styling/SectionTitle";
 import CityAutocomplete from "./CityAutocomplete";
 import InlineSelect from "./InlineSelect";
 
-// Dialog minimalist (același sistem ca în pagini)
 import {
   Dialog,
   DialogContent,
@@ -23,6 +22,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "../uiux/dialog";
+import { useTranslation } from "react-i18next";
 
 export default function LeftPanel({
   isOwnProfile,
@@ -44,11 +44,12 @@ export default function LeftPanel({
   cities,
   locationTypes,
 }) {
+  const { t } = useTranslation();
+
   /* ---------------- Confirmare schimbare tip cont + reset ---------------- */
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [nextType, setNextType] = useState(null); // "artist" | "location" | "user"
 
-  // câmpuri ce vor fi resetate (map general)
   const baseResets = useMemo(
     () => ({
       bio: "",
@@ -83,33 +84,26 @@ export default function LeftPanel({
     []
   );
 
-  // Interceptează cererea din AccountTypeSwitcher
   const requestTypeChange = ({ field, value }) => {
     if (field === "type") {
-      setNextType(value);      // noul tip cerut
-      setConfirmOpen(true);    // deschide dialogul
+      setNextType(value);
+      setConfirmOpen(true);
     } else {
       applyUpdate({ field, value });
     }
   };
 
-  // Construiește lista de câmpuri de șters în funcție de tranziție
   const buildResetMap = (fromType, toType) => {
-    // Resetăm mereu baza
     let wipe = { ...baseResets };
 
-    // Dacă merg la "user" => șterg TOT ce e specific ambelor
     if (toType === "user") {
       wipe = { ...wipe, ...artistOnlyResets, ...locationOnlyResets };
     } else if (toType === "artist") {
-      // merg spre artist -> curăț doar câmpurile de locație
       wipe = { ...wipe, ...locationOnlyResets };
     } else if (toType === "location") {
-      // merg spre locație -> curăț doar câmpurile de artist
       wipe = { ...wipe, ...artistOnlyResets };
     }
 
-    // În plus, dacă schimb între artist <-> location, e tot un reset bidirecțional
     if ((fromType === "artist" && toType === "location") || (fromType === "location" && toType === "artist")) {
       wipe = { ...wipe, ...artistOnlyResets, ...locationOnlyResets };
     }
@@ -124,11 +118,9 @@ export default function LeftPanel({
 
       const resetMap = buildResetMap(currentType, toType);
 
-      // aplică resetările (secvențial e ok aici)
       for (const [field, value] of Object.entries(resetMap)) {
         await applyUpdate({ field, value });
       }
-      // setează tipul la final
       await applyUpdate({ field: "type", value: toType });
     } finally {
       setConfirmOpen(false);
@@ -148,25 +140,25 @@ export default function LeftPanel({
     <div className="flex flex-wrap items-center gap-2 mt-2">
       {isNewAccount && (
         <span
-          title="Profil creat recent"
+          title={t("profile.badge_new_title")}
           className="text-xs font-semibold uppercase bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1"
         >
-          <span>✨</span> Nou
+          <span>✨</span> {t("profile.badge_new")}
         </span>
       )}
       {userData?.promoted && (
         <span className="text-xs font-semibold uppercase bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-          Promovat
+          {t("profile.badge_promoted")}
         </span>
       )}
       {verificationStatus === "verified" && (
         <span className="text-xs font-semibold uppercase bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
-          Verificat
+          {t("profile.badge_verified")}
         </span>
       )}
       {verificationStatus === "pending" && (
         <span className="text-xs font-semibold uppercase bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-          Verificare în curs
+          {t("profile.badge_pending")}
         </span>
       )}
     </div>
@@ -191,16 +183,20 @@ export default function LeftPanel({
 
       {/* Oraș */}
       <div className="mt-3 w-full">
-        <label className="block text-xs font-semibold text-gray-500 mb-1">Oraș / Comună</label>
+        <label className="block text-xs font-semibold text-gray-500 mb-1">
+          {t("profile.city_label")}
+        </label>
         {isOwnProfile ? (
           <CityAutocomplete
             value={userData.city || ""}
             onChange={(val) => applyUpdate({ field: "city", value: String(val).trim() })}
             options={cities}
-            placeholder="ex: București"
+            placeholder={t("profile.city_placeholder")}
           />
         ) : (
-          <div className="border rounded-lg px-3 py-2 bg-gray-100 text-gray-800">{userData.city || "—"}</div>
+          <div className="border rounded-lg px-3 py-2 bg-gray-100 text-gray-800">
+            {userData.city || "—"}
+          </div>
         )}
       </div>
 
@@ -208,38 +204,40 @@ export default function LeftPanel({
       {isLocation && (
         <div className="mt-2 w-full space-y-2">
           <EditableField
-            label="Capacitate"
+            label={t("profile.capacity_label")}
             value={Number.isFinite(userData.capacity) ? String(userData.capacity) : ""}
-            placeholder="ex: 120"
+            placeholder={t("profile.capacity_placeholder")}
             canEdit={isOwnProfile}
             type="number"
             onSave={(val) => applyUpdate({ field: "capacity", value: Number(val || 0) })}
           />
           <EditableField
-            label="Buget (RON)"
+            label={t("profile.budget_label")}
             value={
               userData.budget === 0
-                ? "Gratis"
+                ? t("common.free")
                 : typeof userData.budget === "number"
                 ? String(userData.budget)
                 : ""
             }
-            placeholder="ex: 500"
+            placeholder={t("profile.budget_placeholder")}
             canEdit={isOwnProfile}
             type="number"
             onSave={(val) => {
               const num = Number(val || 0);
-              applyUpdate({ field: "budget", value: num === 0 ? "Gratis" : num });
+              applyUpdate({ field: "budget", value: num === 0 ? t("common.free") : num });
             }}
           />
           <div className="w-full">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Tip locație</label>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">
+              {t("profile.location_type_label")}
+            </label>
             {isOwnProfile ? (
               <InlineSelect
                 value={userData.locationType || ""}
                 onChange={(val) => applyUpdate({ field: "locationType", value: val })}
                 options={locationTypes}
-                placeholder="Alege tipul"
+                placeholder={t("profile.location_type_placeholder")}
               />
             ) : (
               <div className="border rounded-lg px-3 py-2 bg-gray-100 text-gray-800">
@@ -252,11 +250,11 @@ export default function LeftPanel({
 
       {badge}
 
-      {/* Switch tip cont — acum cu confirmare + reset */}
+      {/* Switch tip cont */}
       {isOwnProfile && (
         <AccountTypeSwitcher
           value={userData?.type}
-          onConfirm={requestTypeChange}   // <-- interceptăm aici
+          onConfirm={requestTypeChange}
           disabled={!isOwnProfile}
           className="w-full"
         />
@@ -274,19 +272,19 @@ export default function LeftPanel({
         {/* Tarif artist */}
         {isArtist && (
           <EditableField
-            label="Tarif (RON / set)"
+            label={t("profile.rate_label")}
             value={
               userData.rate === 0 || /^gratis$/i.test(String(userData.rate))
-                ? "Gratis"
+                ? t("common.free")
                 : String(userData.rate || "")
             }
-            placeholder="ex: 300"
+            placeholder={t("profile.rate_placeholder")}
             canEdit={isOwnProfile}
             isPrice
             type="number"
             onSave={(val) => {
               const num = Number(String(val).replace(/[^\d]/g, "")) || 0;
-              const finalValue = num === 0 ? "Gratis" : `${num} RON / set`;
+              const finalValue = num === 0 ? t("common.free") : `${num} RON / set`;
               applyUpdate({ field: "rate", value: finalValue });
             }}
           />
@@ -295,12 +293,12 @@ export default function LeftPanel({
         {/* Toggle promovat */}
         {isOwnProfile && (
           <div className="flex items-center justify-between border rounded-lg px-3 py-2">
-            <span className="text-sm font-medium">Promovat</span>
+            <span className="text-sm font-medium">{t("profile.promoted_label")}</span>
             <Button
               variant={userData?.promoted ? "secondary" : "primary"}
               onClick={() => applyUpdate({ field: "promoted", value: !userData?.promoted })}
             >
-              {userData?.promoted ? "Dezactivează" : "Activează"}
+              {userData?.promoted ? t("profile.deactivate") : t("profile.activate")}
             </Button>
           </div>
         )}
@@ -308,13 +306,13 @@ export default function LeftPanel({
         {/* Verificare identitate */}
         <div className="flex items-center justify-between border rounded-lg px-3 py-2">
           <div className="flex flex-col">
-            <span className="text-sm font-medium">Verificare identitate</span>
+            <span className="text-sm font-medium">{t("kyc.title")}</span>
             <span className="text-xs text-gray-500">
               {verificationStatus === "verified"
-                ? "Cont verificat"
+                ? t("kyc.status_verified")
                 : verificationStatus === "pending"
-                ? "În curs de verificare"
-                : "Disponibil după ce profilul este complet 100%"}
+                ? t("kyc.status_pending")
+                : t("kyc.status_locked")}
             </span>
           </div>
           <Button
@@ -322,14 +320,16 @@ export default function LeftPanel({
             onClick={onOpenKYC}
             disabled={!canRequestVerification || !isOwnProfile}
           >
-            {verificationStatus === "verified" ? "Verificat" : "Verifică identitatea"}
+            {verificationStatus === "verified" ? t("kyc.verified_btn") : t("kyc.verify_btn")}
           </Button>
         </div>
 
         <div className="mt-6">
-          <SectionTitle>Disponibilitate</SectionTitle>
+          <SectionTitle>{t("availability.title")}</SectionTitle>
           {!userData?.type ? (
-            <p className="text-xs text-gray-500">Alege tipul de cont pentru a seta disponibilitatea.</p>
+            <p className="text-xs text-gray-500">
+              {t("availability.choose_account_type")}
+            </p>
           ) : (
             <AvailabilityCalendar
               userId={isOwnProfile ? authUser?.uid : undefined}
@@ -343,37 +343,46 @@ export default function LeftPanel({
 
       {isOwnProfile && (
         <div className="flex flex-col gap-3 w-full mt-6">
-          <Button variant="primary" onClick={() => window.location.assign("/settings")} className="w-full">
-            Setări avansate
+          <Button
+            variant="primary"
+            onClick={() => window.location.assign("/settings")}
+            className="w-full"
+          >
+            {t("settings.advanced")}
           </Button>
-          <Button variant="secondary" onClick={onLogout} className="w-full" leftIcon={<LogOut className="w-4 h-4" />}>
-            Deconectare
+          <Button
+            variant="secondary"
+            onClick={onLogout}
+            className="w-full"
+            leftIcon={<LogOut className="w-4 h-4" />}
+          >
+            {t("auth.logout")}
           </Button>
           <Button
             variant="destructive"
             onClick={() => applyUpdate({ field: "deleteAccount", value: true })}
             className="w-full"
           >
-            Șterge contul
+            {t("account.delete")}
           </Button>
         </div>
       )}
 
-      {/* ----- Dialog de confirmare reset la schimbarea tipului de cont ----- */}
+      {/* Dialog confirmare schimbare tip cont */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="w-[96%] max-w-md bg-[#0a0a0a] text-white border border-white/10">
           <DialogHeader>
-            <DialogTitle>Schimbi tipul de cont?</DialogTitle>
+            <DialogTitle>{t("account.switch_title")}</DialogTitle>
             <DialogDescription className="text-white/70">
-              Trecerea la alt tip de cont va <b>șterge definitiv</b> majoritatea setărilor și datelor tale
-              specifice tipului curent (tarif/buget, capacitate, genuri, echipament, adrese, demo-uri, galerie,
-              oraș, statut promovat/verificare etc.). Acțiunea nu poate fi anulată.
+              {t("account.switch_desc")}
             </DialogDescription>
           </DialogHeader>
 
           {fieldsWipedPreview.length > 0 && (
             <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2 text-xs text-white/70">
-              <div className="mb-1 font-semibold text-white/80">Câmpuri ce vor fi resetate:</div>
+              <div className="mb-1 font-semibold text-white/80">
+                {t("account.fields_reset_title")}
+              </div>
               <ul className="list-disc ml-5 space-y-0.5">
                 {fieldsWipedPreview.map((k) => (
                   <li key={k}>{k}</li>
@@ -384,10 +393,10 @@ export default function LeftPanel({
 
           <DialogFooter className="mt-4">
             <Button variant="secondary" onClick={() => { setConfirmOpen(false); setNextType(null); }}>
-              Anulează
+              {t("common.cancel")}
             </Button>
             <Button variant="destructive" onClick={handleConfirmTypeChange}>
-              Da, șterge și schimbă tipul
+              {t("account.confirm_switch")}
             </Button>
           </DialogFooter>
         </DialogContent>

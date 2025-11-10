@@ -4,8 +4,11 @@ import { doc, updateDoc } from "firebase/firestore";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Button } from "../uiux";
 import { db, storage } from "../../src/firebase";
+import { useTranslation } from "react-i18next";
 
 export default function KYCDialog({ open, onOpenChange, authUser, userData, setUserData }) {
+  const { t } = useTranslation();
+
   const [kycFront, setKycFront] = useState(null);
   const [kycBack, setKycBack] = useState(null);
   const [kycLoading, setKycLoading] = useState(false);
@@ -22,10 +25,10 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
       >
         <DialogHeader>
           <DialogTitle className="!text-2xl !font-extrabold !tracking-tight">
-            Verificare identitate
+            {t("kyc.title")}
           </DialogTitle>
           <DialogDescription className="!mt-1 !text-base !text-gray-600">
-            Încarcă fața și verso-ul buletinului. Datele sunt folosite doar pentru verificare.
+            {t("kyc.desc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -39,12 +42,12 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
           {/* Față */}
           <div>
             <label className="text-sm font-semibold !text-gray-900 uppercase tracking-wide">
-              Buletin – Față
+              {t("kyc.front_label")}
             </label>
 
             <label
               className="mt-2 block w-full cursor-pointer rounded-xl border-2 border-dashed !border-violet-300 bg-violet-50/40 hover:bg-violet-50 transition p-4"
-              title="Click pentru a selecta imaginea (față)"
+              title={t("kyc.pick_front_title")}
             >
               <input
                 type="file"
@@ -55,13 +58,13 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
               />
               <div className="flex items-center gap-3">
                 <div className="shrink-0 w-12 h-12 rounded-lg bg-white border !border-violet-200 grid place-items-center">
-                  <span className="text-violet-600 text-xs font-bold">FAȚĂ</span>
+                  <span className="text-violet-600 text-xs font-bold">{t("kyc.front_chip")}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    {kycFront?.name || "Alege fișierul..."}
+                    {kycFront?.name || t("kyc.choose_file")}
                   </p>
-                  <p className="text-xs text-gray-500">JPG, PNG sau HEIC • max 10MB</p>
+                  <p className="text-xs text-gray-500">{t("kyc.file_hint")}</p>
                 </div>
               </div>
             </label>
@@ -70,7 +73,7 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
               <div className="mt-2">
                 <img
                   src={URL.createObjectURL(kycFront)}
-                  alt="Preview față"
+                  alt={t("kyc.front_preview_alt")}
                   className="w-full max-h-40 object-contain rounded-lg border !border-gray-200 bg-gray-50"
                 />
               </div>
@@ -80,12 +83,12 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
           {/* Verso */}
           <div>
             <label className="text-sm font-semibold !text-gray-900 uppercase tracking-wide">
-              Buletin – Verso
+              {t("kyc.back_label")}
             </label>
 
             <label
               className="mt-2 block w-full cursor-pointer rounded-xl border-2 border-dashed !border-violet-300 bg-violet-50/40 hover:bg-violet-50 transition p-4"
-              title="Click pentru a selecta imaginea (verso)"
+              title={t("kyc.pick_back_title")}
             >
               <input
                 type="file"
@@ -96,13 +99,13 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
               />
               <div className="flex items-center gap-3">
                 <div className="shrink-0 w-12 h-12 rounded-lg bg-white border !border-violet-200 grid place-items-center">
-                  <span className="text-violet-600 text-xs font-bold">VERSO</span>
+                  <span className="text-violet-600 text-xs font-bold">{t("kyc.back_chip")}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    {kycBack?.name || "Alege fișierul..."}
+                    {kycBack?.name || t("kyc.choose_file")}
                   </p>
-                  <p className="text-xs text-gray-500">JPG, PNG sau HEIC • max 10MB</p>
+                  <p className="text-xs text-gray-500">{t("kyc.file_hint")}</p>
                 </div>
               </div>
             </label>
@@ -111,7 +114,7 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
               <div className="mt-2">
                 <img
                   src={URL.createObjectURL(kycBack)}
-                  alt="Preview verso"
+                  alt={t("kyc.back_preview_alt")}
                   className="w-full max-h-40 object-contain rounded-lg border !border-gray-200 bg-gray-50"
                 />
               </div>
@@ -120,7 +123,7 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
         </div>
 
         <div className="mt-6 flex items-center justify-between">
-          <p className="text-xs text-gray-500">* Asigură-te că datele sunt clare și complet vizibile.</p>
+          <p className="text-xs text-gray-500">{t("kyc.note_clear")}</p>
           <div className="flex justify-end gap-2">
             <Button
               variant="secondary"
@@ -128,14 +131,14 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
               disabled={kycLoading}
               className="!border !border-gray-300 !text-gray-800 hover:!bg-gray-100"
             >
-              Renunță
+              {t("common.cancel")}
             </Button>
             <Button
               variant="primary"
               onClick={async () => {
                 if (!authUser) return;
                 if (!kycFront || !kycBack) {
-                  setKycError("Te rog încarcă ambele imagini (față și verso).");
+                  setKycError(t("kyc.error_both_required"));
                   return;
                 }
                 setKycLoading(true);
@@ -167,7 +170,7 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
                   onOpenChange(false);
                 } catch (e) {
                   console.error(e);
-                  setKycError("A apărut o eroare la trimitere. Încearcă din nou.");
+                  setKycError(t("kyc.error_submit"));
                 } finally {
                   setKycLoading(false);
                 }
@@ -176,7 +179,7 @@ export default function KYCDialog({ open, onOpenChange, authUser, userData, setU
               disabled={kycLoading}
               className="!bg-black !text-white hover:!bg-neutral-900"
             >
-              Trimite pentru verificare
+              {t("kyc.submit")}
             </Button>
           </div>
         </div>

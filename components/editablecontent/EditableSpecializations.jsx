@@ -1,5 +1,5 @@
-// components/EditableSpecializations.jsx
 import EditableChips from "./EditableChips";
+import { useTranslation } from "react-i18next";
 
 const SPECIALIZATION_OPTIONS = [
   "Nuntă", "Club", "Bar", "Cafenea", "Corporate", "Festival",
@@ -11,19 +11,21 @@ export default function EditableSpecializations({
   canEdit,
   onSave,
   max = 8,
-  onChipClick, // ← NOU
+  onChipClick,
 }) {
+  const { t } = useTranslation();
+
   return (
     <EditableChips
-      label="PREFERINȚE"
+      label={t("editable_specializations.label")}
       value={Array.isArray(value) ? value : []}
       canEdit={!!canEdit}
       onSave={onSave}
       suggestions={SPECIALIZATION_OPTIONS}
-      placeholder="Adaugă tip de eveniment"
+      placeholder={t("editable_specializations.placeholder")}
       max={max}
       allowCustom={false}
-      onChipClick={onChipClick} // ← forward
+      onChipClick={onChipClick}
       customTheme={{
         bg: "#FFE9F1",
         border: "#E7F0FF",

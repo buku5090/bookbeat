@@ -1,5 +1,6 @@
 // pages/ProfilePage.jsx
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { auth, db, storage } from "../src/firebase";
 import { doc, deleteDoc, updateDoc, onSnapshot as onDocSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, signOut, deleteUser } from "firebase/auth";
@@ -10,7 +11,7 @@ import LoadingPage from "./LoadingPage";
 import KYCDialog from "../components/profilepage/KYCDialog";
 import cities from "../src/data/cities";
 
-/* —— componente noi (page split) —— */
+/* —— componente noi —— */
 import ProgressBanner from "../components/profilepage/ProgressBanner";
 import LeftPanel from "../components/profilepage/LeftPanel";
 import RightPanel from "../components/profilepage/RightPanel";
@@ -21,6 +22,7 @@ const LOCATION_TYPES = [
 ];
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const routerLocation = useLocation();
@@ -34,17 +36,18 @@ export default function ProfilePage() {
   const isOwnProfile = useMemo(() => !id || (authUser && authUser.uid === id), [id, authUser]);
   const profileUid   = useMemo(() => id || authUser?.uid, [id, authUser]);
 
-  const isTypeChosen = userData?.type === "artist" || userData?.type === "location";
   const isArtist  = userData?.type === "artist";
   const isLocation= userData?.type === "location";
+  const isTypeChosen = isArtist || isLocation;
 
   /* ---------------- Auth + live profile ---------------- */
   useEffect(() => {
     let alive = true;
-    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
       if (!alive) return;
-      setAuthUser(firebaseUser);
-      const uidToLoad = id || firebaseUser?.uid;
+      setAuthUser(fbUser);
+
+      const uidToLoad = id || fbUser?.uid;
       if (!uidToLoad) {
         navigate("/login");
         if (alive) setLoading(false);
@@ -61,17 +64,17 @@ export default function ProfilePage() {
     return () => { alive = false; unsub(); };
   }, [id, navigate]);
 
-  useEffect(() => {}, [routerLocation.pathname]);
-
   /* ---------------- save/update helpers ---------------- */
   const applyUpdate = useCallback(
     async ({ field, value }) => {
       if (!authUser) return;
       const userRef = doc(db, "users", authUser.uid);
 
+      // delete
       if (field === "deleteAccount") {
-        const ok = window.confirm("Ești sigur că vrei să ștergi contul? Acțiunea e definitivă.");
+        const ok = window.confirm(t("profile.confirmDelete"));
         if (!ok) return;
+
         try { await deleteDoc(userRef); } catch {}
         try { await deleteUser(authUser); }
         catch (e) {
@@ -83,10 +86,11 @@ export default function ProfilePage() {
         }
         await signOut(auth);
         setUserData(null);
-        navigate("/", { replace: true });
+        navigate("/");
         return;
       }
 
+      // toggle type
       if (field === "type") {
         const currentType = userData?.type ?? "user";
         const clickedType = value;
@@ -95,28 +99,35 @@ export default function ProfilePage() {
 
       try {
         await updateDoc(userRef, { [field]: value });
-        setUserData((prev) => ({ ...prev, [field]: value }));
+        setUserData((p) => ({ ...p, [field]: value }));
       } catch (err) {
-        console.error("Eroare la salvare:", err);
+        console.error("save error:", err);
       }
     },
-    [authUser, navigate, userData]
+    [authUser, navigate, userData, t]
   );
 
+  /* ---------------- Avatar upload ---------------- */
   const uploadAvatarAndGetUrl = useCallback(
     async (file) => {
-      if (!authUser || !file) throw new Error("Nu ești autentificat sau nu există fișier.");
-      const isImage = file.type?.startsWith("image/");
-      if (!isImage) throw new Error("Fișierul selectat nu este imagine.");
+      if (!authUser || !file)
+        throw new Error(t("profile.notAuthenticated"));
+
+      if (!file.type.startsWith("image/"))
+        throw new Error(t("profile.invalidImage"));
+
       const sizeMB = file.size / (1024 * 1024);
-      if (sizeMB > 5) throw new Error("Imaginea depășește 5MB.");
-      const ext = file.name?.split(".").pop() || "jpg";
+      if (sizeMB > 5)
+        throw new Error(t("profile.imageTooLarge"));
+
+      const ext = file.name.split(".").pop() || "jpg";
       const path = `users/${authUser.uid}/avatar.${ext}`;
+
       const ref = storageRef(storage, path);
       await uploadBytes(ref, file);
-      return await getDownloadURL(ref);
+      return getDownloadURL(ref);
     },
-    [authUser]
+    [authUser, t]
   );
 
   const handleAvatarChange = useCallback(
@@ -126,22 +137,30 @@ export default function ProfilePage() {
         if (typeof payload === "string" && payload.startsWith("http")) url = payload;
         else if (payload?.target?.files?.[0]) url = await uploadAvatarAndGetUrl(payload.target.files[0]);
         else if (payload instanceof File) url = await uploadAvatarAndGetUrl(payload);
+
         if (url) await applyUpdate({ field: "photoURL", value: url });
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error(err);
+      }
     },
     [uploadAvatarAndGetUrl, applyUpdate]
   );
 
+  /* ---------------- Demos ---------------- */
   const addDemos = useCallback(
-    async (newItems) => {
-      if (!profileUid || !newItems?.length) return;
+    async (items) => {
+      if (!profileUid || !items?.length) return;
+
       const ref = doc(db, "users", profileUid);
       const prev = Array.isArray(userData?.demos) ? userData.demos : [];
-      const incoming = newItems
+
+      const incoming = items
         .map((x) => (typeof x === "string" ? { url: x } : x))
-        .map((x) => ({ url: String(x.url || "").trim() }))
+        .map((x) => ({ url: String(x.url).trim() }))
         .filter((x) => x.url && !prev.some((p) => (p.url || p) === x.url));
+
       const demos = [...prev, ...incoming].slice(0, 3);
+
       await updateDoc(ref, { demos });
       setUserData((p) => ({ ...p, demos }));
     },
@@ -152,8 +171,10 @@ export default function ProfilePage() {
     async (url) => {
       if (!profileUid) return;
       const ref = doc(db, "users", profileUid);
+
       const prev = Array.isArray(userData?.demos) ? userData.demos : [];
       const demos = prev.filter((x) => (x.url || x) !== url);
+
       await updateDoc(ref, { demos });
       setUserData((p) => ({ ...p, demos }));
     },
@@ -165,25 +186,28 @@ export default function ProfilePage() {
     navigate("/login");
   }, [navigate]);
 
-  /* ---------------- derived UI stuff ---------------- */
+  /* ---------------- Derived UI ---------------- */
   const username = useMemo(() => {
-    if (isArtist) return userData?.stageName || userData?.name || "Utilizator";
-    if (isLocation) return userData?.locationName || userData?.name || "Utilizator";
-    return userData?.name || "Utilizator";
-  }, [isArtist, isLocation, userData]);
+    if (isArtist) return userData?.stageName || userData?.name || t("profile.user");
+    if (isLocation) return userData?.locationName || userData?.name || t("profile.user");
+    return userData?.name || t("profile.user");
+  }, [isArtist, isLocation, userData, t]);
 
   const isNewAccount = useMemo(() => {
     try {
-      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+      const THREE_DAYS = 3 * 24 * 3600 * 1000;
+
       let createdAtMs = null;
       if (userData?.createdAt?.toMillis) createdAtMs = userData.createdAt.toMillis();
-      if (!createdAtMs && authUser?.metadata?.creationTime) {
+      if (!createdAtMs && authUser?.metadata?.creationTime)
         createdAtMs = Date.parse(authUser.metadata.creationTime);
-      }
-      if (!createdAtMs || Number.isNaN(createdAtMs)) return false;
-      return Date.now() - createdAtMs <= THREE_DAYS_MS;
-    } catch { return false; }
-  }, [userData?.createdAt, authUser?.metadata?.creationTime]);
+
+      if (!createdAtMs) return false;
+      return Date.now() - createdAtMs <= THREE_DAYS;
+    } catch {
+      return false;
+    }
+  }, [userData?.createdAt, authUser]);
 
   const progress = useMemo(() => {
     if (!userData) return { percent: 0, missing: [] };
@@ -191,23 +215,23 @@ export default function ProfilePage() {
 
     const fields = isArtist
       ? [
-          { key: "bio", label: "descrierea" },
-          { key: "genres", label: "genurile muzicale" },
-          { key: "djEquipment", label: "echipamentul DJ" },
-          { key: "rate", label: "tariful" },
-          { key: "photoURL", label: "fotografia de profil" },
-          { key: "demos", label: "demo-urile" },
-          { key: "city", label: "orașul" },
+          { key: "bio", label: t("profile.missing.bio") },
+          { key: "genres", label: t("profile.missing.genres") },
+          { key: "djEquipment", label: t("profile.missing.equipment") },
+          { key: "rate", label: t("profile.missing.rate") },
+          { key: "photoURL", label: t("profile.missing.photo") },
+          { key: "demos", label: t("profile.missing.demos") },
+          { key: "city", label: t("profile.missing.city") },
         ]
       : [
-          { key: "locationName", label: "numele locației" },
-          { key: "capacity", label: "capacitatea" },
-          { key: "djEquipment", label: "echipamentul" },
-          { key: "photoURL", label: "fotografia locației" },
-          { key: "address", label: "adresa" },
-          { key: "budget", label: "bugetul" },
-          { key: "city", label: "orașul" },
-          { key: "locationType", label: "tipul locației" },
+          { key: "locationName", label: t("profile.missing.locationName") },
+          { key: "capacity", label: t("profile.missing.capacity") },
+          { key: "djEquipment", label: t("profile.missing.equipment") },
+          { key: "photoURL", label: t("profile.missing.locationPhoto") },
+          { key: "address", label: t("profile.missing.address") },
+          { key: "budget", label: t("profile.missing.budget") },
+          { key: "city", label: t("profile.missing.city") },
+          { key: "locationType", label: t("profile.missing.locationType") },
         ];
 
     const filled = fields.filter((f) => {
@@ -215,13 +239,11 @@ export default function ProfilePage() {
       return Array.isArray(val) ? val.length > 0 : !!val;
     });
 
-    const missing = fields
-      .filter((f) => !filled.some((x) => x.key === f.key))
-      .map((f) => f.label);
-
+    const missing = fields.filter((f) => !filled.some((x) => x.key === f.key)).map((f) => f.label);
     const percent = Math.round((filled.length / fields.length) * 100);
+
     return { percent, missing };
-  }, [userData, isTypeChosen, isArtist]);
+  }, [userData, isTypeChosen, isArtist, t]);
 
   const imageSrc =
     userData?.photoURL ||
@@ -230,13 +252,14 @@ export default function ProfilePage() {
   const verificationStatus = userData?.verificationStatus || "unverified";
   const canRequestVerification = progress.percent === 100 && verificationStatus !== "verified";
 
+  /* ---------------- Render ---------------- */
   if (loading) return <LoadingPage />;
 
   if (!userData) {
     return (
       <div className="min-h-screen bg-black text-white md:p-6">
         <div className="max-w-3xl mx-auto text-center">
-          <p>Profilul nu a fost găsit.</p>
+          <p>{t("profile.notFound")}</p>
         </div>
       </div>
     );
@@ -245,7 +268,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-black text-white md:p-6">
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8 text-black">
-        {/* Banner progres */}
+
         {isOwnProfile && (
           <ProgressBanner
             isTypeChosen={isTypeChosen}
@@ -255,7 +278,6 @@ export default function ProfilePage() {
         )}
 
         <div className="md:flex gap-10">
-          {/* STÂNGA */}
           <LeftPanel
             isOwnProfile={isOwnProfile}
             isArtist={isArtist}
@@ -277,7 +299,6 @@ export default function ProfilePage() {
             locationTypes={LOCATION_TYPES}
           />
 
-          {/* DREAPTA */}
           <RightPanel
             isOwnProfile={isOwnProfile}
             isArtist={isArtist}

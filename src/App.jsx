@@ -23,8 +23,7 @@ import RequireAuth from "../components/utilities/RequireAuth";
 import NotFoundPage from "../pages/NotFoundPage";
 import LoadingPage from "../pages/LoadingPage";
 import AdminPage from "../pages/AdminPage";
-import Footer from "../components/utilities/Footer";  
-import Onboarding from "../components/Onboarding";
+import Footer from "../components/utilities/Footer";
 import CompleteProfile from "../components/profilepage/CompleteProfile";
 import ScrollToTop from "../components/utilities/ScrollToTop";
 import NotificationsPage from "../pages/NotificationsPage";
@@ -59,7 +58,6 @@ function AppShell() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/notificari" element={<NotificationsPage />} />
 

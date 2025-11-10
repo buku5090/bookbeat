@@ -1,4 +1,3 @@
-// pages/NotificationsPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { auth, db } from "../src/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -12,21 +11,23 @@ import {
   MessageSquare, Info, AlertCircle, ChevronRight, Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 /* -------- tipuri + culori + icon -------- */
 const TYPE_META = {
-  "booking.created":   { label: "Booking",  cls: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CalendarClock },
-  "booking.accepted":  { label: "Booking",  cls: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CalendarCheck },
-  "booking.rejected":  { label: "Booking",  cls: "bg-rose-100 text-rose-700 border-rose-200",         icon: CalendarCheck },
-  "booking.canceled":  { label: "Booking",  cls: "bg-rose-100 text-rose-700 border-rose-200",         icon: CalendarCheck },
-  "booking.status":    { label: "Booking",  cls: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CalendarCheck },
-  "message.new":       { label: "Mesaj",    cls: "bg-amber-100  text-amber-800  border-amber-200",    icon: MessageSquare },
-  "system":            { label: "Sistem",   cls: "bg-slate-100  text-slate-700  border-slate-200",    icon: Info },
-  "warning":           { label: "Atenție",  cls: "bg-purple-100 text-purple-700 border-purple-200",   icon: AlertCircle },
+  "booking.created":   { labelKey: "notifications_doc.type.booking",  cls: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CalendarClock },
+  "booking.accepted":  { labelKey: "notifications_doc.type.booking",  cls: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CalendarCheck },
+  "booking.rejected":  { labelKey: "notifications_doc.type.booking",  cls: "bg-rose-100 text-rose-700 border-rose-200",         icon: CalendarCheck },
+  "booking.canceled":  { labelKey: "notifications_doc.type.booking",  cls: "bg-rose-100 text-rose-700 border-rose-200",         icon: CalendarCheck },
+  "booking.status":    { labelKey: "notifications_doc.type.booking",  cls: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CalendarCheck },
+  "message.new":       { labelKey: "notifications_doc.type.message",  cls: "bg-amber-100  text-amber-800  border-amber-200",    icon: MessageSquare },
+  "system":            { labelKey: "notifications_doc.type.system",   cls: "bg-slate-100  text-slate-700  border-slate-200",    icon: Info },
+  "warning":           { labelKey: "notifications.type.warning",  cls: "bg-purple-100 text-purple-700 border-purple-200",   icon: AlertCircle },
 };
-const fallbackMeta = { label: "Notificare", cls: "bg-slate-100 text-slate-700 border-slate-200", icon: Info };
+const fallbackMeta = { labelKey: "notifications_doc.type.notification", cls: "bg-slate-100 text-slate-700 border-slate-200", icon: Info };
 
 export default function NotificationsPage() {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,13 +35,11 @@ export default function NotificationsPage() {
   const [seeding, setSeeding] = useState(false);
   const navigate = useNavigate();
 
-  /* auth */
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsubAuth();
   }, []);
 
-  /* live notifications */
   useEffect(() => {
     if (!user?.uid) {
       setItems([]);
@@ -84,7 +83,6 @@ export default function NotificationsPage() {
     await batch.commit();
   };
 
-  // ➕ Seed demo notifications
   const seedDemo = async () => {
     if (!user?.uid || seeding) return;
     setSeeding(true);
@@ -94,32 +92,32 @@ export default function NotificationsPage() {
     const demo = [
       {
         type: "booking.created",
-        title: "Cerere de booking nouă",
-        body: "Mechano Pub a propus 12 Oct, 21:00–23:00.",
+        title: t("notifications_doc.demo.booking_created_title"),
+        body: t("notifications_doc.demo.booking_created_body"),
         actionUrl: "/bookings/demo-1",
       },
       {
         type: "booking.accepted",
-        title: "Booking confirmat",
-        body: "Andrei (DJ) a confirmat gig-ul pe 15 Oct.",
+        title: t("notifications_doc.demo.booking_accepted_title"),
+        body: t("notifications_doc.demo.booking_accepted_body"),
         actionUrl: "/bookings/demo-2",
       },
       {
         type: "message.new",
-        title: "Mesaj nou de la Mechano Pub",
-        body: "Salut! Poți și pe 20 Oct? Așteptăm răspuns.",
+        title: t("notifications_doc.demo.message_new_title"),
+        body: t("notifications_doc.demo.message_new_body"),
         actionUrl: "/messages/demo-3",
       },
       {
         type: "warning",
-        title: "Actualizează disponibilitatea",
-        body: "Săptămâna viitoare este necompletată. Adaugă zilele ocupate.",
+        title: t("notifications_doc.demo.warning_title"),
+        body: t("notifications_doc.demo.warning_body"),
         actionUrl: "/profil#availability",
       },
       {
         type: "system",
-        title: "Profil verificat 🎉",
-        body: "Contul tău a fost verificat. Spor la bookinguri!",
+        title: t("notifications_doc.demo.system_verified_title"),
+        body: t("notifications_doc.demo.system_verified_body"),
         actionUrl: "/profil",
       },
     ];
@@ -131,13 +129,16 @@ export default function NotificationsPage() {
     setSeeding(false);
   };
 
-  /* --------- UI --------- */
   if (!user) {
     return (
-      <Shell unreadCount={0}>
+      <Shell
+        unreadCount={0}
+        headerTitle={t("notifications_doc.title")}
+        headerSubtitle={t("notifications_doc.up_to_date")}
+      >
         <EmptyState
-          title="Nu ești autentificat"
-          subtitle="Autentifică-te pentru a-ți vedea notificările."
+          title={t("notifications_doc.not_authenticated_title")}
+          subtitle={t("notifications_doc.not_authenticated_subtitle")}
         />
       </Shell>
     );
@@ -146,25 +147,27 @@ export default function NotificationsPage() {
   return (
     <Shell
       unreadCount={unreadCount}
+      headerTitle={t("notifications_doc.title")}
+      headerSubtitle={unreadCount > 0 ? t("notifications_doc.unread_count", { count: unreadCount }) : t("notifications_doc.up_to_date")}
       right={
         <div className="flex items-center gap-2">
           <button
             onClick={seedDemo}
             className="flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-white transition disabled:opacity-50"
             disabled={seeding}
-            title="Adaugă câteva notificări de test"
+            title={t("notifications_doc.add_demo_title")}
           >
             <Sparkles className="w-4 h-4" />
-            {seeding ? "Se adaugă…" : "Adaugă demo"}
+            {seeding ? t("notifications_doc.adding_demo") : t("notifications_doc.add_demo")}
           </button>
           <button
             onClick={markAllAsRead}
             className="flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-white transition disabled:opacity-50"
             disabled={unreadCount === 0}
-            title="Marchează toate ca citite"
+            title={t("notifications_doc.mark_all_title")}
           >
             <CheckCheck className="w-4 h-4" />
-            Marchează toate
+            {t("notifications_doc.mark_all")}
           </button>
         </div>
       }
@@ -180,7 +183,7 @@ export default function NotificationsPage() {
             }`}
             onClick={() => setFilter("all")}
           >
-            Toate
+            {t("common.all")}
           </button>
           <button
             className={`px-4 py-2 text-sm border-l border-black/10 dark:border-white/10 transition ${
@@ -190,7 +193,7 @@ export default function NotificationsPage() {
             }`}
             onClick={() => setFilter("unread")}
           >
-            Necitite
+            {t("notifications_doc.unread")}
             {unreadCount > 0 && (
               <span className="ml-2 inline-flex items-center justify-center text-[10px] bg-red-500 text-white rounded-full min-w-[18px] h-[18px] px-1">
                 {unreadCount > 99 ? "99+" : unreadCount}
@@ -205,8 +208,8 @@ export default function NotificationsPage() {
         <SkeletonList />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Nu ai notificări momentan"
-          subtitle="Vei primi aici anunțuri despre bookinguri, confirmări și mesaje."
+          title={t("notifications_doc.empty_title")}
+          subtitle={t("notifications_doc.empty_subtitle")}
         />
       ) : (
         <ul className="divide-y divide-gray-100 dark:divide-white/10 rounded-2xl overflow-hidden bg-white/60 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10">
@@ -224,14 +227,14 @@ export default function NotificationsPage() {
                 <div className="flex-shrink-0">
                   <div className={`px-2.5 py-1.5 rounded-full text-[11px] font-semibold inline-flex items-center gap-1.5 border ${meta.cls}`}>
                     <Icon className="w-3.5 h-3.5" />
-                    {meta.label}
+                    {t(meta.labelKey)}
                   </div>
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-semibold text-[15px] leading-snug text-gray-900 dark:text-white truncate">
-                      {n.title || "Notificare"}
+                      {n.title || t("notifications_doc.fallback_title")}
                     </h3>
                     <div className="text-[12px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {formatDistanceToNow(n._created, { addSuffix: true, locale: ro })}
@@ -250,7 +253,7 @@ export default function NotificationsPage() {
                         onClick={() => markAsRead(n.id)}
                         className="text-xs px-2.5 py-1 rounded-full border border-gray-200 hover:bg-gray-50 dark:border-white/20 dark:hover:bg-white/10"
                       >
-                        Marchează citită
+                        {t("notifications_doc.mark_read")}
                       </button>
                     )}
                     {n.actionUrl && (
@@ -258,7 +261,7 @@ export default function NotificationsPage() {
                         onClick={() => { markAsRead(n.id); navigate(n.actionUrl); }}
                         className="text-xs px-2.5 py-1 rounded-full border border-gray-200 hover:bg-gray-50 dark:border-white/20 dark:hover:bg-white/10 inline-flex items-center gap-1"
                       >
-                        Vezi <ChevronRight className="w-3.5 h-3.5" />
+                        {t("common.view")} <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -273,7 +276,7 @@ export default function NotificationsPage() {
 }
 
 /* ===== Layout cu header stilizat ===== */
-function Shell({ unreadCount, right, children }) {
+function Shell({ unreadCount, right, headerTitle, headerSubtitle, children }) {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-12">
       <div className="relative overflow-hidden rounded-3xl mb-6">
@@ -285,8 +288,8 @@ function Shell({ unreadCount, right, children }) {
               <Bell className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-none">Notificări</h1>
-              <p className="text-sm text-white/80 mt-1">{unreadCount > 0 ? `${unreadCount} necitite` : "La zi ✅"}</p>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-none">{headerTitle}</h1>
+              <p className="text-sm text-white/80 mt-1">{headerSubtitle}</p>
             </div>
           </div>
           {right}
@@ -298,7 +301,6 @@ function Shell({ unreadCount, right, children }) {
   );
 }
 
-/* ===== Empty & Skeleton ===== */
 function EmptyState({ title, subtitle }) {
   return (
     <div className="rounded-3xl border border-black/5 dark:border-white/10 bg-white dark:bg-white/5 p-10 text-center">
@@ -312,6 +314,7 @@ function EmptyState({ title, subtitle }) {
 }
 
 function SkeletonList() {
+  const { t } = useTranslation();
   return (
     <ul className="rounded-2xl overflow-hidden bg-white/60 dark:bg-white/5 ring-1 ring-black/5 dark:ring-white/10" aria-hidden="true">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -323,8 +326,10 @@ function SkeletonList() {
       ))}
       <div className="py-4 flex items-center justify-center text-gray-500 text-sm">
         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        Se încarcă notificările…
+        {t("notifications_doc.loading")}
       </div>
     </ul>
   );
 }
+
+export { EmptyState, SkeletonList };

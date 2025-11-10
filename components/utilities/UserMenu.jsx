@@ -1,15 +1,11 @@
-// components/UserMenu.jsx
 import { useState, useEffect, useRef } from "react";
-import { auth, db } from "../../src/firebase"; // ✅ ajustează calea dacă e altă structură
+import { auth, db } from "../../src/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { collection, onSnapshot, query, where, doc } from "firebase/firestore";
 import Button from "../uiux/button";
 import { useTranslation } from "react-i18next";
-
-// ✅ doar hook-ul din context
 import { useLanguage } from "../../context/LanguageContext";
-// ✅ importă selectorul JSX (ajustează calea dacă l-ai pus în alt folder)
 import LanguageSelectorJSX from "./LanguageSelectorJSX.jsx";
 
 const placeholderAvatar =
@@ -66,14 +62,10 @@ export default function UserMenu() {
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-
-  // 🌍 limba din containerul global
   const { language } = useLanguage();
 
-  // auth state
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
-  // profile load
   useEffect(() => {
     if (!user?.uid) return setProfile(null);
     const unsub = onSnapshot(doc(db, "users", user.uid), (s) =>
@@ -82,7 +74,6 @@ export default function UserMenu() {
     return () => unsub();
   }, [user?.uid]);
 
-  // unread notifications
   useEffect(() => {
     if (!user?.uid) return setUnreadCount(0);
     const q = query(
@@ -93,10 +84,8 @@ export default function UserMenu() {
     return () => unsub();
   }, [user?.uid]);
 
-  // close on click outside + ESC
   useEffect(() => {
     const outside = (e) => {
-      // nu închide dacă click-ul e în portalul de limbă
       if (e.target.closest('[data-modal-root="language"]')) return;
       if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
     };
@@ -114,13 +103,12 @@ export default function UserMenu() {
     navigate("/login");
   };
 
-  const displayName = profile?.displayName || user?.displayName || "Utilizator";
+  const displayName = profile?.displayName || user?.displayName || t("user.default_display_name");
   const email = user?.email || profile?.email || "";
   const avatarSrc = profile?.photoURL || user?.photoURL || placeholderAvatar;
 
   return (
     <div className="relative ml-2" ref={menuRef}>
-      {/* trigger avatar */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -143,7 +131,6 @@ export default function UserMenu() {
         </div>
       </button>
 
-      {/* dropdown */}
       {open && (
         <div
           role="menu"
@@ -151,7 +138,6 @@ export default function UserMenu() {
         >
           {user ? (
             <>
-              {/* header */}
               <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#111827] to-[#1f2937] text-white">
                 <img
                   src={avatarSrc}
@@ -170,7 +156,6 @@ export default function UserMenu() {
                 )}
               </div>
 
-              {/* notificări */}
               <button
                 onClick={() => {
                   navigate("/notificari");
@@ -196,7 +181,6 @@ export default function UserMenu() {
 
               <div className="h-px bg-slate-100" />
 
-              {/* contul meu */}
               <button
                 onClick={() => {
                   navigate("/profil");
@@ -205,12 +189,11 @@ export default function UserMenu() {
                 className="flex items-center gap-3 w-full px-4 py-3 bg-white hover:bg-slate-50 transition text-sm"
               >
                 <UserIcon className="text-slate-700" />
-                <span className="flex-1 text-left font-medium">Contul meu</span>
+                <span className="flex-1 text-left font-medium">{t("my_account")}</span>
               </button>
 
               <div className="h-px bg-slate-100" />
 
-              {/* logout */}
               <button
                 onClick={() => {
                   setOpen(false);
@@ -219,17 +202,18 @@ export default function UserMenu() {
                 className="flex items-center gap-3 w-full px-4 py-3 bg-white hover:bg-red-50 transition text-sm text-red-600"
               >
                 <LogoutIcon className="text-red-500" />
-                <span className="flex-1 text-left font-semibold">Deconectare</span>
+                <span className="flex-1 text-left font-semibold">{t("logout")}</span>
               </button>
 
-              {/* limbă + status curent */}
               <LanguageSelectorJSX
                 onChange={(code) => {
-                  // i18n?.changeLanguage?.(code); // dacă folosești i18next
+                  // hook-u tău de limbă deja actualizează contextul
                   console.log("language:", code);
                 }}
               />
-              <div className="text-xs opacity-60 px-3 pt-2">curent: {language}</div>
+              <div className="text-xs opacity-60 px-3 pt-2">
+                {t("current_language")}: {language}
+              </div>
             </>
           ) : (
             <>
@@ -241,7 +225,7 @@ export default function UserMenu() {
                   setOpen(false);
                 }}
               >
-                Autentificare
+                {t("login")}
               </Button>
               <Button
                 variant="secondary"
@@ -251,7 +235,7 @@ export default function UserMenu() {
                   setOpen(false);
                 }}
               >
-                Înregistrare
+                {t("register")}
               </Button>
             </>
           )}

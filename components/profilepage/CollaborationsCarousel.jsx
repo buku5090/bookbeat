@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "../Button";
+import { useTranslation } from "react-i18next";
 
-// --- demo locations (folosite când items e gol) ---
 const DEMO_ITEMS = [
   { id: "loc-a", name: "Club Aurora" },
   { id: "loc-b", name: "Bar Selene" },
@@ -11,7 +11,7 @@ const DEMO_ITEMS = [
   { id: "loc-e", name: "Rooftop 27" },
   { id: "loc-f", name: "Subground" },
   { id: "loc-g", name: "Luna Lounge" },
-  { id: "loc-h", name: "MUSE" },
+  { id: "loc-h", name: "MUSE" }
 ];
 
 const fallbackAvatar = (name) =>
@@ -22,17 +22,19 @@ const fallbackAvatar = (name) =>
 export default function CollaborationsCarousel({
   title = null,
   items = [],
-  useDemoWhenEmpty = true, // afișează DEMO_ITEMS când lista e goală
+  useDemoWhenEmpty = true,
 }) {
+  const { t } = useTranslation();
+
   const data = useMemo(() => {
     const src = items?.length ? items : (useDemoWhenEmpty ? DEMO_ITEMS : []);
     return src.map((it, i) => ({
       id: it.id ?? `tmp-${i}`,
-      name: String(it.name || "Locație"),
+      name: String(it.name || t("collab.unknown_location")),
       photo: it.photo || fallbackAvatar(it.name),
-      href: it.href, // dacă vrei link, treci href în item
+      href: it.href,
     }));
-  }, [items, useDemoWhenEmpty]);
+  }, [items, useDemoWhenEmpty, t]);
 
   const scrollerRef = useRef(null);
   const [canScroll, setCanScroll] = useState(false);
@@ -52,11 +54,15 @@ export default function CollaborationsCarousel({
     measure();
     const el = scrollerRef.current;
     if (!el) return;
+
     const onScroll = () => measure();
     el.addEventListener("scroll", onScroll, { passive: true });
+
     const ro = new ResizeObserver(() => measure());
     ro.observe(el);
+
     window.addEventListener("resize", measure);
+
     return () => {
       el.removeEventListener("scroll", onScroll);
       ro.disconnect();
@@ -76,7 +82,7 @@ export default function CollaborationsCarousel({
   if (!data.length) {
     return (
       <p className="text-sm text-gray-500">
-        Nu există colaborări încă — se vor adăuga automat după booking-uri.
+        {t("collab.no_collabs")}
       </p>
     );
   }
@@ -85,7 +91,6 @@ export default function CollaborationsCarousel({
     <section className="relative">
       {title && <h4 className="text-lg font-semibold mb-2">{title}</h4>}
 
-      {/* fade edges */}
       {canScroll && (
         <>
           <div className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-white to-transparent rounded-l-lg" />
@@ -124,7 +129,6 @@ export default function CollaborationsCarousel({
         })}
       </div>
 
-      {/* arrows */}
       {canScroll && (
         <>
           <Button
@@ -132,17 +136,18 @@ export default function CollaborationsCarousel({
             size="icon"
             className="absolute -left-1 top-1/2 -translate-y-1/2 bg-white/90"
             onClick={() => scrollByDir(-1)}
-            aria-label="Înapoi"
+            aria-label={t("collab.back")}
             disabled={atStart}
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
+
           <Button
             variant="ghost"
             size="icon"
             className="absolute -right-1 top-1/2 -translate-y-1/2 bg-white/90"
             onClick={() => scrollByDir(1)}
-            aria-label="Înainte"
+            aria-label={t("collab.forward")}
             disabled={atEnd}
           >
             <ChevronRight className="w-5 h-5" />

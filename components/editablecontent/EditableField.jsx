@@ -1,24 +1,23 @@
-// PENTRU EDITUL TEXTULUI DIN PROFIL
-
 import { useState, useEffect, useRef } from "react";
 import { Pencil } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function EditableField({
   label,
   value,
   onSave,
-  type = "text",           // "text" | "number"
-  isPrice = false,         // dacă e tarif (RON / set) + "Este gratis"
+  type = "text",
+  isPrice = false,
   canEdit = true,
   inputClassName = "",
   placeholder = "",
 }) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value?.toString() || "");
   const [isFree, setIsFree] = useState(isPrice && /^gratis$/i.test(String(value || "")));
   const inputRef = useRef(null);
 
-  // numericOnly dacă e preț sau type === "number"
   const numericOnly = isPrice || type === "number";
 
   useEffect(() => {
@@ -27,67 +26,17 @@ export function EditableField({
     setLocalValue(isPrice && /^gratis$/i.test(v) ? "" : v.replace(/[^\d]/g, ""));
   }, [value, isPrice]);
 
-  // ——— filtre complete pentru doar cifre ———
   const cleanDigits = (s) => (s == null ? "" : String(s).replace(/[^\d]/g, ""));
-
-  const onBeforeInput = (e) => {
-    if (!numericOnly || isFree) return;
-    if (e.data && !/^\d+$/.test(e.data)) e.preventDefault();
-  };
-
-  const onKeyDown = (e) => {
-    if (!numericOnly || isFree) return;
-    const ctrl = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab", "Home", "End"];
-    if (e.ctrlKey || e.metaKey) return;  // permitem Cmd/Ctrl+A/C/V/X/Z/Y
-    if (ctrl.includes(e.key)) return;
-    if (!/^\d$/.test(e.key)) e.preventDefault();
-  };
-
-  const onPaste = (e) => {
-    if (!numericOnly || isFree) return;
-    const text = (e.clipboardData || window.clipboardData).getData("text") || "";
-    if (/^\d+$/.test(text)) return; // ok
-    e.preventDefault();
-    const digits = (text.match(/\d+/g) || []).join("");
-    if (!digits) return;
-    // inserăm manual în valoarea locală
-    const el = inputRef.current;
-    const { selectionStart = 0, selectionEnd = 0 } = el || {};
-    const current = localValue || "";
-    const next = current.slice(0, selectionStart) + digits + current.slice(selectionEnd);
-    setLocalValue(next);
-    // repoziționăm caret-ul după render
-    requestAnimationFrame(() => {
-      if (el) el.setSelectionRange(selectionStart + digits.length, selectionStart + digits.length);
-    });
-  };
-
-  const onDrop = (e) => {
-    if (numericOnly && !isFree) e.preventDefault();
-  };
-
-  const onInput = (e) => {
-    if (!numericOnly || isFree) return;
-    const cleaned = cleanDigits(e.target.value);
-    if (cleaned !== e.target.value) {
-      e.target.value = cleaned;
-    }
-  };
-
-  const handleChange = (e) => {
-    const v = numericOnly ? cleanDigits(e.target.value) : e.target.value;
-    setLocalValue(v);
-  };
 
   const handleSave = () => {
     let finalValue = localValue;
-
     if (isPrice) {
-      finalValue = isFree ? "Gratis" : `${Number(localValue || 0)} RON / set`;
+      finalValue = isFree
+        ? t("editable_field.is_free")
+        : t("editable_field.currency_format", { price: Number(localValue || 0) });
     } else if (type === "number") {
       finalValue = localValue === "" ? "" : String(Number(localValue || 0));
     }
-
     onSave(finalValue);
     setIsEditing(false);
   };
@@ -95,7 +44,7 @@ export function EditableField({
   const handleCancel = () => {
     const v = value?.toString() || "";
     setIsFree(isPrice && /^gratis$/i.test(v));
-    setLocalValue(isPrice && /^gratis$/i.test(v) ? "" : (numericOnly ? cleanDigits(v) : v));
+    setLocalValue(isPrice && /^gratis$/i.test(v) ? "" : numericOnly ? cleanDigits(v) : v);
     setIsEditing(false);
   };
 
@@ -116,7 +65,7 @@ export function EditableField({
                   if (checked) setLocalValue("");
                 }}
               />
-              Este gratis
+              {t("editable_field.is_free")}
             </label>
           )}
 
@@ -125,30 +74,23 @@ export function EditableField({
               ref={inputRef}
               className={`border p-2 w-full rounded text-sm ${isFree ? "bg-gray-100" : ""}`}
               value={localValue}
-              onChange={handleChange}
-              onBeforeInput={onBeforeInput}
-              onKeyDown={onKeyDown}
-              onPaste={onPaste}
-              onDrop={onDrop}
-              onInput={onInput}
-              inputMode={numericOnly ? "numeric" : undefined}
-              pattern={numericOnly ? "[0-9]*" : undefined}
+              onChange={(e) => setLocalValue(numericOnly ? cleanDigits(e.target.value) : e.target.value)}
               placeholder={placeholder}
-              type="text"                 // ținem text ca să controlăm filtrarea; numeric doar la format
+              type="text"
               disabled={isFree}
             />
 
             <button
               onClick={handleSave}
               className="!bg-green-500 text-white px-3 py-1 rounded text-sm"
-              aria-label="Salvează"
+              aria-label={t("editable_field.save")}
             >
               ✔
             </button>
             <button
               onClick={handleCancel}
               className="!bg-gray-300 text-black px-3 py-1 rounded text-sm"
-              aria-label="Anulează"
+              aria-label={t("editable_field.cancel")}
             >
               ✖
             </button>
@@ -160,14 +102,14 @@ export function EditableField({
             {value && String(value).length > 0 ? (
               value
             ) : (
-              <span className="italic text-gray-400">Fără valoare</span>
+              <span className="italic text-gray-400">{t("editable_field.no_value")}</span>
             )}
           </p>
           {canEdit && (
             <button
               onClick={() => setIsEditing(true)}
               className="!bg-white !px-3 !py-1 !text-gray-400 hover:text-gray-700 transition"
-              aria-label="Edit"
+              aria-label={t("editable_field.edit")}
               type="button"
             >
               <Pencil size={14} />

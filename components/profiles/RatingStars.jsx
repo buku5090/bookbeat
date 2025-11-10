@@ -1,3 +1,5 @@
+
+// ================= RatingStars (fără texte) =================
 import React from "react";
 
 export function RatingStars({ value = 0, outOf = 5 }) {

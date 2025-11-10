@@ -1,6 +1,6 @@
+// pages/AdvancedSettingsPage.jsx
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable no-undef */
-// pages/AdvancedSettingsPage.jsx
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { auth, db } from "../src/firebase";
@@ -14,8 +14,10 @@ import {
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/uiux";
+import { useTranslation } from "react-i18next";
 
 export default function AdvancedSettingsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [authUser, setAuthUser] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -93,31 +95,34 @@ export default function AdvancedSettingsPage() {
       try {
         await updateProfile(auth.currentUser, { displayName: username });
       } catch {}
-      showMsg("Username actualizat.");
+      showMsg(t("advancedSettings.messages.username_updated"));
       setUserData((p) => ({ ...p, [field]: username }));
     } catch (e) {
-      showMsg(e?.message || "Eroare la actualizarea username-ului.", "error");
+      showMsg(
+        e?.message || t("advancedSettings.messages.username_update_error"),
+        "error"
+      );
     } finally {
       setSavingUsername(false);
     }
-  }, [authUser, isTypeChosen, userData?.type, username, showMsg]);
+  }, [authUser, isTypeChosen, userData?.type, username, showMsg, t]);
 
   const handleSavePassword = useCallback(async () => {
     if (!auth.currentUser) return;
     if (!canChangePassword) {
-      showMsg("Contul este conectat prin Google. Parola se schimbă din Google, nu din BookMix.", "error");
+      showMsg(t("advancedSettings.messages.google_linked_change_in_google"), "error");
       return;
     }
     if (!currentPassword) {
-      showMsg("Introdu parola curentă pentru reautentificare.", "error");
+      showMsg(t("advancedSettings.messages.enter_current_password"), "error");
       return;
     }
     if (!newPassword || newPassword.length < 6) {
-      showMsg("Parola nouă trebuie să aibă minim 6 caractere.", "error");
+      showMsg(t("advancedSettings.messages.password_min_length"), "error");
       return;
     }
     if (newPassword !== confirmPassword) {
-      showMsg("Parolele nu coincid.", "error");
+      showMsg(t("advancedSettings.messages.passwords_do_not_match"), "error");
       return;
     }
 
@@ -132,18 +137,21 @@ export default function AdvancedSettingsPage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      showMsg("Parola a fost actualizată.");
+      showMsg(t("advancedSettings.messages.password_updated"));
     } catch (e) {
-      showMsg(e?.message || "Eroare la actualizarea parolei.", "error");
+      showMsg(
+        e?.message || t("advancedSettings.messages.password_update_error"),
+        "error"
+      );
     } finally {
       setSavingPassword(false);
     }
-  }, [canChangePassword, currentPassword, newPassword, confirmPassword, showMsg]);
+  }, [canChangePassword, currentPassword, newPassword, confirmPassword, showMsg, t]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div>Se încarcă...</div>
+        <div>{t("common.loading")}</div>
       </div>
     );
   }
@@ -152,16 +160,21 @@ export default function AdvancedSettingsPage() {
     <div className="min-h-screen bg-black text-white md:p-6">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8 text-black">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Setări avansate</h1>
-          <Button variant="secondary" onClick={() => navigate(`/profile/${authUser?.uid || ""}`)}>
-            Înapoi la profil
+          <h1 className="text-2xl font-bold">{t("advancedSettings.title")}</h1>
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/profile/${authUser?.uid || ""}`)}
+          >
+            {t("advancedSettings.back_to_profile")}
           </Button>
         </div>
 
         {msg && (
           <div
             className={`mb-4 rounded-lg px-4 py-2 text-sm ${
-              msg.kind === "error" ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"
+              msg.kind === "error"
+                ? "bg-red-100 text-red-700"
+                : "bg-emerald-100 text-emerald-700"
             }`}
           >
             {msg.text}
@@ -170,34 +183,45 @@ export default function AdvancedSettingsPage() {
 
         {/* Banner provider */}
         <div className="mb-6 rounded-lg px-4 py-3 text-sm bg-gray-100 text-gray-800">
-          <div className="font-semibold mb-1">Metoda de autentificare</div>
+          <div className="font-semibold mb-1">
+            {t("advancedSettings.auth_method.title")}
+          </div>
           <div>
-            {hasPasswordProvider ? "Email & parolă activ" : "Fără parolă locală"}
-            {isGoogleLinked ? " • Conectat și cu Google" : ""}
+            {hasPasswordProvider
+              ? t("advancedSettings.auth_method.email_password_enabled")
+              : t("advancedSettings.auth_method.no_local_password")}
+            {isGoogleLinked ? " • " + t("advancedSettings.auth_method.google_linked") : ""}
           </div>
           {isGoogleLinked && (
             <div className="text-xs text-gray-600 mt-1">
-              Contul este conectat prin Google. Parola se gestionează în Google; aici nu poate fi schimbată.
+              {t("advancedSettings.auth_method.google_note")}
             </div>
           )}
         </div>
 
         {/* Username — permis pentru toți */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-3">Username</h2>
+          <h2 className="text-lg font-semibold mb-3">
+            {t("advancedSettings.username.section_title")}
+          </h2>
           <div className="space-y-2">
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-              placeholder="Nume de scenă / nume locație / nume"
+              placeholder={t("advancedSettings.username.placeholder")}
             />
-            <Button variant="primary" onClick={handleSaveUsername} disabled={savingUsername}>
-              {savingUsername ? "Se salvează..." : "Salvează username"}
+            <Button
+              variant="primary"
+              onClick={handleSaveUsername}
+              disabled={savingUsername}
+            >
+              {savingUsername
+                ? t("advancedSettings.common.saving")
+                : t("advancedSettings.username.save")}
             </Button>
             <p className="text-xs text-gray-500">
-              Mapează automat: Artist → <code>stageName</code>, Locație → <code>locationName</code>, User →{" "}
-              <code>name</code>.
+              {t("advancedSettings.username.mapping_note")}
             </p>
           </div>
         </section>
@@ -205,31 +229,39 @@ export default function AdvancedSettingsPage() {
         {/* Parolă — vizibilă doar dacă NU e legat Google */}
         {canChangePassword ? (
           <section className="mb-4">
-            <h2 className="text-lg font-semibold mb-3">Schimbă parola</h2>
+            <h2 className="text-lg font-semibold mb-3">
+              {t("advancedSettings.password.section_title")}
+            </h2>
             <div className="space-y-3">
               <input
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                placeholder="Parola curentă"
+                placeholder={t("advancedSettings.password.current_placeholder")}
               />
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                placeholder="Parola nouă (minim 6 caractere)"
+                placeholder={t("advancedSettings.password.new_placeholder")}
               />
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                placeholder="Confirmă parola nouă"
+                placeholder={t("advancedSettings.password.confirm_placeholder")}
               />
-              <Button variant="primary" onClick={handleSavePassword} disabled={savingPassword}>
-                {savingPassword ? "Se salvează..." : "Salvează parola"}
+              <Button
+                variant="primary"
+                onClick={handleSavePassword}
+                disabled={savingPassword}
+              >
+                {savingPassword
+                  ? t("advancedSettings.common.saving")
+                  : t("advancedSettings.password.save")}
               </Button>
             </div>
           </section>

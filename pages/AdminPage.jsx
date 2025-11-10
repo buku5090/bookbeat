@@ -3,8 +3,9 @@ import { Dialog } from "@headlessui/react";
 import { Trash, CheckCircle, Star, Eye, ShieldAlert, Flag, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
-// Firebase (păstrez calea TA curentă)
+// Firebase (păstrez calea ta curentă)
 import { db, storage } from "../src/firebase";
 import {
   collection,
@@ -20,7 +21,7 @@ import { ref, getDownloadURL, deleteObject } from "firebase/storage";
 
 /** ——— Heuristici simple pt. conținut obscen (RO + EN) ——— */
 const OBSCENE_WORDS = [
-  // Română (adauga ce vrei tu)
+  // Română
   "pula", "pizda", "muie", "fut", "curve", "idiot", "handicapat", "prost",
   // Engleză
   "fuck", "shit", "bitch", "asshole", "cunt", "dick", "pussy", "faggot",
@@ -28,13 +29,13 @@ const OBSCENE_WORDS = [
 
 function hasObsceneContent(text = "") {
   const t = (text || "").toLowerCase();
-  // Reguli simple: cuvinte interzise + lungime anormală de repetare a caracterelor etc.
   const bad = OBSCENE_WORDS.some((w) => t.includes(w));
   const repeatedChars = /(.)\1{6,}/.test(t); // ex: aaaaaaa
   return bad || repeatedChars;
 }
 
 export default function AdminPage() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -46,7 +47,7 @@ export default function AdminPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  /** ——— Protecție admin minimală (păstrată ca la tine) ——— */
+  /** ——— Protecție admin minimală ——— */
   useEffect(() => {
     if (!user || user.email !== "adminbookmix@gmail.com") {
       navigate("/"); // 🔒 doar admin
@@ -173,31 +174,35 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-black text-white p-6 pt-24">
       <header className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Admin Dashboard — BookMix</h1>
+        <h1 className="text-3xl font-bold">{t("admin.title")}</h1>
 
         <div className="flex gap-3 items-center">
           <div className="relative">
             <input
               value={queryText}
               onChange={(e) => setQueryText(e.target.value)}
-              placeholder="Caută nume, email, bio..."
+              placeholder={t("admin.search_placeholder")}
               className="pl-9 pr-3 py-2 bg-gray-900/60 border border-gray-800 rounded-md w-72 placeholder-gray-400"
+              aria-label={t("admin.search_placeholder")}
             />
-            <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden />
           </div>
 
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="px-3 py-2 bg-gray-900/60 border border-gray-800 rounded-md"
+            aria-label={t("admin.filter_by")}
           >
-            <option value="all">Toți</option>
-            <option value="verified">Verificați</option>
-            <option value="unverified">Neverificați</option>
-            <option value="flagged">Semnalați</option>
+            <option value="all">{t("admin.filters.all")}</option>
+            <option value="verified">{t("admin.filters.verified")}</option>
+            <option value="unverified">{t("admin.filters.unverified")}</option>
+            <option value="flagged">{t("admin.filters.flagged")}</option>
           </select>
 
-          <div className="text-sm text-gray-400">{visible.length} conturi</div>
+          <div className="text-sm text-gray-400">
+            {t("admin.count_accounts", { count: visible.length })}
+          </div>
         </div>
       </header>
 
@@ -211,29 +216,29 @@ export default function AdminPage() {
                 onClick={() => setConfirmAction({ type: "bulkVerify" })}
                 className="px-3 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900 flex items-center gap-2"
               >
-                <CheckCircle size={16} /> Verifică selectate
+                <CheckCircle size={16} /> {t("admin.bulk.verify_selected")}
               </button>
               <button
                 onClick={() => setConfirmAction({ type: "bulkPromote" })}
                 className="px-3 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900 flex items-center gap-2"
               >
-                <Star size={16} /> Promovează selectate
+                <Star size={16} /> {t("admin.bulk.promote_selected")}
               </button>
               <button
                 onClick={() => setConfirmAction({ type: "bulkFlag" })}
                 className="px-3 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900 flex items-center gap-2"
               >
-                <Flag size={16} /> Marchează „flagged”
+                <Flag size={16} /> {t("admin.bulk.flag_selected")}
               </button>
               <button
                 onClick={() => setConfirmAction({ type: "bulkDelete" })}
                 className="px-3 py-1 rounded-md border border-red-900/60 bg-red-900/20 hover:bg-red-900/30 text-red-300 flex items-center gap-2"
               >
-                <Trash size={16} /> Șterge selectate
+                <Trash size={16} /> {t("admin.bulk.delete_selected")}
               </button>
             </div>
             <div className="text-xs text-gray-500">
-              ⚠️ Ștergerea din Auth trebuie făcută server-side (Cloud Functions/Admin SDK).
+              {t("admin.note.auth_deletion")}
             </div>
           </div>
 
@@ -245,6 +250,7 @@ export default function AdminPage() {
                   <th className="p-2">
                     <input
                       type="checkbox"
+                      aria-label={t("admin.select_all")}
                       onChange={(e) => {
                         if (e.target.checked) setBulkSelection(new Set(visible.map((u) => u.id)));
                         else setBulkSelection(new Set());
@@ -252,24 +258,24 @@ export default function AdminPage() {
                       checked={bulkSelection.size > 0 && bulkSelection.size === visible.length}
                     />
                   </th>
-                  <th className="p-2">User</th>
-                  <th className="p-2">Email</th>
-                  <th className="p-2">Rol</th>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">Acțiuni</th>
+                  <th className="p-2">{t("admin.table.user")}</th>
+                  <th className="p-2">{t("admin.table.email")}</th>
+                  <th className="p-2">{t("admin.table.role")}</th>
+                  <th className="p-2">{t("admin.table.status")}</th>
+                  <th className="p-2">{t("admin.table.actions")}</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-gray-400">
-                      Se încarcă...
+                      {t("common.loading")}
                     </td>
                   </tr>
                 ) : visible.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-gray-400">
-                      Nu s-au găsit conturi.
+                      {t("admin.no_accounts")}
                     </td>
                   </tr>
                 ) : (
@@ -280,6 +286,7 @@ export default function AdminPage() {
                         <td className="p-2 align-top">
                           <input
                             type="checkbox"
+                            aria-label={t("admin.select_account")}
                             checked={bulkSelection.has(u.id)}
                             onChange={(e) => {
                               const s = new Set(bulkSelection);
@@ -309,22 +316,22 @@ export default function AdminPage() {
                         <td className="p-2 text-sm">
                           <div className="flex items-center gap-2">
                             {u.verified ? (
-                              <span className="text-green-400">Verificat</span>
+                              <span className="text-green-400">{t("admin.status.verified")}</span>
                             ) : (
-                              <span className="text-amber-400">Neverificat</span>
+                              <span className="text-amber-400">{t("admin.status.unverified")}</span>
                             )}
                             {u.flagged && (
                               <span className="inline-flex items-center gap-1 text-red-300">
-                                <ShieldAlert size={14} /> Flagged
+                                <ShieldAlert size={14} /> {t("admin.status.flagged")}
                               </span>
                             )}
                             {obscene && !u.flagged && (
                               <button
                                 onClick={() => flagUser(u.id, "obscene_auto")}
-                                title="Bio suspectă — marchează flagged"
+                                title={t("admin.status.suspicious_hint")}
                                 className="inline-flex items-center gap-1 text-red-300/90 hover:text-red-200"
                               >
-                                <ShieldAlert size={14} /> Suspicios
+                                <ShieldAlert size={14} /> {t("admin.status.suspicious")}
                               </button>
                             )}
                           </div>
@@ -333,43 +340,43 @@ export default function AdminPage() {
                           <div className="flex flex-wrap gap-2">
                             <button
                               onClick={async () => setSelected(await fetchUserDetails(u.id))}
-                              title="Vezi detalii"
+                              title={t("admin.actions.details")}
                               className="px-2 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900 flex items-center gap-2"
                             >
-                              <Eye size={14} /> Detalii
+                              <Eye size={14} /> {t("admin.actions.details")}
                             </button>
                             <button
                               onClick={() => markVerified(u.id, !u.verified)}
                               className="px-2 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900"
                             >
-                              {u.verified ? "Revocă" : "Verifică"}
+                              {u.verified ? t("admin.actions.revoke") : t("admin.actions.verify")}
                             </button>
                             <button
                               onClick={() => promoteUser(u.id, !u.featured)}
                               className="px-2 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900"
                             >
-                              {u.featured ? "Anulează promo" : "Promovează"}
+                              {u.featured ? t("admin.actions.cancel_promo") : t("admin.actions.promote")}
                             </button>
                             {!u.flagged ? (
                               <button
                                 onClick={() => flagUser(u.id, "manual")}
                                 className="px-2 py-1 rounded-md border border-red-900/60 bg-red-900/20 hover:bg-red-900/30 text-red-300 flex items-center gap-2"
                               >
-                                <Flag size={14} /> Flag
+                                <Flag size={14} /> {t("admin.actions.flag")}
                               </button>
                             ) : (
                               <button
                                 onClick={() => unflagUser(u.id)}
                                 className="px-2 py-1 rounded-md border border-green-900/60 bg-green-900/20 hover:bg-green-900/30 text-green-300"
                               >
-                                Unflag
+                                {t("admin.actions.unflag")}
                               </button>
                             )}
                             <button
                               onClick={() => setConfirmAction({ type: "delete", userId: u.id })}
                               className="px-2 py-1 rounded-md border border-red-900/60 bg-red-900/20 hover:bg-red-900/30 text-red-300 flex items-center gap-2"
                             >
-                              <Trash size={14} /> Șterge
+                              <Trash size={14} /> {t("admin.actions.delete")}
                             </button>
                           </div>
                         </td>
@@ -384,19 +391,20 @@ export default function AdminPage() {
 
         {/* DETALII USER + POZE ID + AUDIT */}
         <aside className="bg-gray-950/60 border border-gray-800 rounded-2xl p-4">
-          <h3 className="font-semibold mb-3">Detalii & Audit</h3>
+          <h3 className="font-semibold mb-3">{t("admin.details_audit")}</h3>
           {selected ? (
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <img
                   src={selected.photoURL || "/placeholder-avatar.png"}
                   className="w-16 h-16 rounded-md object-cover border border-gray-800"
+                  alt="avatar"
                 />
                 <div>
                   <div className="font-medium">{selected.displayName || selected.stageName || "—"}</div>
                   <div className="text-sm text-gray-400">{selected.email || "—"}</div>
                   <div className="text-xs text-gray-500">
-                    Înregistrat:{" "}
+                    {t("admin.registered")}:{" "}
                     {selected.createdAt?.toDate
                       ? selected.createdAt.toDate().toLocaleString()
                       : selected.createdAt || "—"}
@@ -405,24 +413,24 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <h4 className="text-sm font-medium">Bio</h4>
+                <h4 className="text-sm font-medium">{t("admin.bio")}</h4>
                 <p className="text-sm text-gray-300 max-h-24 overflow-auto whitespace-pre-wrap border border-gray-800 rounded-md p-2">
                   {selected.bio || "—"}
                 </p>
                 {hasObsceneContent(selected.bio) && (
                   <div className="mt-2 text-red-300 text-sm inline-flex items-center gap-1">
-                    <ShieldAlert size={14} /> Bio suspectă (detecție automată)
+                    <ShieldAlert size={14} /> {t("admin.bio_suspicious")}
                   </div>
                 )}
               </div>
 
               <div>
-                <h4 className="text-sm font-medium">Poze ID</h4>
+                <h4 className="text-sm font-medium">{t("admin.id_photos")}</h4>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   {selected.idPhotos && selected.idPhotos.length > 0 ? (
                     selected.idPhotos.map((p, i) => <IdPhoto key={i} storagePath={p} />)
                   ) : (
-                    <div className="text-sm text-gray-500">Nu există poze de ID încă.</div>
+                    <div className="text-sm text-gray-500">{t("admin.no_id_photos")}</div>
                   )}
                 </div>
               </div>
@@ -432,51 +440,51 @@ export default function AdminPage() {
                   onClick={() => markVerified(selected.id, !selected.verified)}
                   className="px-3 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900"
                 >
-                  {selected.verified ? "Revocă verificare" : "Verifică cont"}
+                  {selected.verified ? t("admin.actions.revoke_verify") : t("admin.actions.verify_account")}
                 </button>
                 <button
                   onClick={() => promoteUser(selected.id, !selected.featured)}
                   className="px-3 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900"
                 >
-                  {selected.featured ? "Anulează promo" : "Promovează"}
+                  {selected.featured ? t("admin.actions.cancel_promo") : t("admin.actions.promote")}
                 </button>
                 {!selected.flagged ? (
                   <button
                     onClick={() => flagUser(selected.id, "manual")}
                     className="px-3 py-1 rounded-md border border-red-900/60 bg-red-900/20 hover:bg-red-900/30 text-red-300"
                   >
-                    Marchează flagged
+                    {t("admin.actions.mark_flagged")}
                   </button>
                 ) : (
                   <button
                     onClick={() => unflagUser(selected.id)}
                     className="px-3 py-1 rounded-md border border-green-900/60 bg-green-900/20 hover:bg-green-900/30 text-green-300"
                   >
-                    Unflag
+                    {t("admin.actions.unflag")}
                   </button>
                 )}
                 <button
                   onClick={() => setConfirmAction({ type: "delete", userId: selected.id })}
                   className="px-3 py-1 rounded-md border border-red-900/60 bg-red-900/20 hover:bg-red-900/30 text-red-300"
                 >
-                  Șterge cont
+                  {t("admin.actions.delete_account")}
                 </button>
                 <button
                   onClick={() => setSelected(null)}
                   className="px-3 py-1 rounded-md border border-gray-800 bg-gray-900/60 hover:bg-gray-900"
                 >
-                  Închide
+                  {t("common.close")}
                 </button>
               </div>
 
               <div>
-                <h4 className="text-sm font-medium">Ultimele acțiuni</h4>
+                <h4 className="text-sm font-medium">{t("admin.audit.latest_actions")}</h4>
                 <AuditLog userId={selected.id} />
               </div>
             </div>
           ) : (
             <div className="text-sm text-gray-500">
-              Selectează un cont pentru a vedea detaliile. Poți vizualiza bio, poze de ID, și istoricul de acțiuni.
+              {t("admin.select_an_account")}
             </div>
           )}
         </aside>
@@ -487,17 +495,17 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black/60" aria-hidden />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="bg-gray-950 border border-gray-800 rounded-xl p-6 w-full max-w-lg">
-            <Dialog.Title className="font-semibold text-lg">Confirmare</Dialog.Title>
+            <Dialog.Title className="font-semibold text-lg">{t("admin.confirm.title")}</Dialog.Title>
             <div className="mt-4 space-y-2 text-gray-300">
-              {confirmAction?.type === "delete" && <p>Confirmi ștergerea permanentă a acestui cont?</p>}
-              {confirmAction?.type === "bulkDelete" && <p>Confirmi ștergerea tuturor conturilor selectate?</p>}
-              {confirmAction?.type === "bulkVerify" && <p>Confirmi verificarea tuturor conturilor selectate?</p>}
-              {confirmAction?.type === "bulkPromote" && <p>Confirmi promovarea conturilor selectate?</p>}
-              {confirmAction?.type === "bulkFlag" && <p>Confirmi marcarea ca „flagged” pentru conturile selectate?</p>}
+              {confirmAction?.type === "delete" && <p>{t("admin.confirm.delete_one")}</p>}
+              {confirmAction?.type === "bulkDelete" && <p>{t("admin.confirm.bulk_delete")}</p>}
+              {confirmAction?.type === "bulkVerify" && <p>{t("admin.confirm.bulk_verify")}</p>}
+              {confirmAction?.type === "bulkPromote" && <p>{t("admin.confirm.bulk_promote")}</p>}
+              {confirmAction?.type === "bulkFlag" && <p>{t("admin.confirm.bulk_flag")}</p>}
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={() => setConfirmAction(null)} className="px-3 py-1 rounded-md border border-gray-800 bg-gray-900/60">
-                Anulează
+                {t("common.cancel")}
               </button>
               <button
                 onClick={async () => {
@@ -513,7 +521,7 @@ export default function AdminPage() {
                 }}
                 className="px-3 py-1 rounded-md bg-red-600 hover:bg-red-700 text-white"
               >
-                Confirmă
+                {t("common.confirm")}
               </button>
             </div>
           </Dialog.Panel>
@@ -525,6 +533,7 @@ export default function AdminPage() {
 
 /** ——— Poze ID din Storage ——— */
 function IdPhoto({ storagePath }) {
+  const { t } = useTranslation();
   const [url, setUrl] = useState(null);
   useEffect(() => {
     let mounted = true;
@@ -542,7 +551,7 @@ function IdPhoto({ storagePath }) {
   if (!url)
     return (
       <div className="w-24 h-16 rounded-md bg-gray-900/60 border border-gray-800 flex items-center justify-center text-xs text-gray-500">
-        Se încarcă
+        {t("common.loading_short")}
       </div>
     );
   return (
@@ -552,8 +561,9 @@ function IdPhoto({ storagePath }) {
   );
 }
 
-/** ——— Audit log opțional (colecția 'auditLogs' cu userId, action, createdAt) ——— */
+/** ——— Audit log opțional ——— */
 function AuditLog({ userId }) {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState([]);
   useEffect(() => {
     if (!userId) return;
@@ -561,7 +571,10 @@ function AuditLog({ userId }) {
     const unsub = onSnapshot(
       qRef,
       (snap) => {
-        const all = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((l) => l.userId === userId).slice(0, 12);
+        const all = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((l) => l.userId === userId)
+          .slice(0, 12);
         setLogs(all);
       },
       (err) => console.error("[Admin] audit onSnapshot error:", err)
@@ -569,7 +582,7 @@ function AuditLog({ userId }) {
     return () => unsub();
   }, [userId]);
 
-  if (logs.length === 0) return <div className="text-sm text-gray-500">Niciun eveniment recent.</div>;
+  if (logs.length === 0) return <div className="text-sm text-gray-500">{t("admin.audit.none")}</div>;
   return (
     <ul className="text-sm space-y-2 max-h-48 overflow-auto pr-1">
       {logs.map((l) => (

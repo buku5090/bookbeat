@@ -3,8 +3,10 @@
 import { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "./cropImageHelper";
+import { useTranslation } from "react-i18next";
 
 export default function AvatarCropModal({ image, onCancel, onCropComplete }) {
+  const { t } = useTranslation();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
@@ -41,13 +43,19 @@ export default function AvatarCropModal({ image, onCancel, onCropComplete }) {
           <button
             onClick={() => handleZoom(-1)}
             className="!w-10 !h-10 !bg-gray-100 hover:!bg-gray-200 !rounded-full !text-xl !font-bold"
+            aria-label={t("avatar_crop.zoom_out")}
+            title={t("avatar_crop.zoom_out")}
           >
             −
           </button>
-          <span className="text-sm text-gray-600">Zoom: {zoom.toFixed(1)}x</span>
+        <span className="text-sm text-gray-600">
+            {t("avatar_crop.zoom", { value: zoom.toFixed(1) })}
+          </span>
           <button
             onClick={() => handleZoom(1)}
             className="w-10 h-10 !bg-gray-100 hover:bg-gray-200 rounded-full text-xl font-bold"
+            aria-label={t("avatar_crop.zoom_in")}
+            title={t("avatar_crop.zoom_in")}
           >
             +
           </button>
@@ -58,17 +66,16 @@ export default function AvatarCropModal({ image, onCancel, onCropComplete }) {
             onClick={onCancel}
             className="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100"
           >
-            Anulează
+            {t("avatar_crop.cancel")}
           </button>
           <button
             onClick={handleDone}
             className="px-4 py-2 text-sm rounded bg-black text-white hover:bg-gray-900"
           >
-            Salvează
+            {t("avatar_crop.save")}
           </button>
         </div>
       </div>
     </div>
   );
 }
-

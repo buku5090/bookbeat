@@ -1,6 +1,7 @@
 // components/profiles/ProfileCard.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { RatingStars } from "./RatingStars";
 import { VerifiedBadge, UnverifiedBadge, NewBadge, TypeBadge } from "./Badges";
 import { ChipRow } from "./ChipRow";
@@ -10,12 +11,17 @@ const toChips = (v) =>
   Array.isArray(v)
     ? v.filter(Boolean).slice(0, 8)
     : typeof v === "string" && v.trim()
-    ? v.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 8)
+    ? v
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 8)
     : [];
 
 const nf = (n) => new Intl.NumberFormat("ro-RO").format(n);
 
-const getArtistTariffLabel = (p) => {
+/** Folosește t() pentru stringuri */
+const getArtistTariffLabel = (p, t) => {
   let v =
     p?.rate ??
     p?.price ??
@@ -24,39 +30,52 @@ const getArtistTariffLabel = (p) => {
     p?.fee ??
     p?.minFee;
   if (v == null) return null;
+
+  const currency = t("pricing.currency");
+
   if (typeof v === "string") {
     const s = v.trim();
-    if (/gratis/i.test(s)) return "Gratis";
+    if (/gratis/i.test(s)) return t("pricing.free");
     const num = Number(s.replace(/[^\d]/g, ""));
-    if (Number.isFinite(num)) return `${nf(num)} RON / set`;
+    if (Number.isFinite(num))
+      return t("pricing.perSet", { amount: nf(num), currency });
     return s;
   }
+
   const n = Number(v);
   if (!Number.isFinite(n)) return null;
-  if (n === 0) return "Gratis";
-  return `${nf(n)} RON / set`;
+  if (n === 0) return t("pricing.free");
+  return t("pricing.perSet", { amount: nf(n), currency });
 };
 
-const getVenueBudgetLabel = (p) => {
+const getVenueBudgetLabel = (p, t) => {
+  const currency = t("pricing.currency");
   const from = Number(p?.budgetFrom ?? p?.minBudget ?? NaN);
-  const to   = Number(p?.budgetTo   ?? p?.maxBudget ?? NaN);
-  if (Number.isFinite(from) && Number.isFinite(to)) return `${nf(from)}–${nf(to)} RON`;
-  if (Number.isFinite(from)) return `de la ${nf(from)} RON`;
-  if (Number.isFinite(to)) return `până la ${nf(to)} RON`;
+  const to = Number(p?.budgetTo ?? p?.maxBudget ?? NaN);
+
+  if (Number.isFinite(from) && Number.isFinite(to))
+    return t("pricing.range", { from: nf(from), to: nf(to), currency });
+  if (Number.isFinite(from))
+    return t("pricing.from", { amount: nf(from), currency });
+  if (Number.isFinite(to))
+    return t("pricing.to", { amount: nf(to), currency });
 
   const b = p?.budget ?? p?.price ?? null;
   if (b == null) return null;
+
   if (typeof b === "string") {
     const s = b.trim();
-    if (/gratis/i.test(s)) return "Gratis";
+    if (/gratis/i.test(s)) return t("pricing.free");
     const num = Number(s.replace(/[^\d]/g, ""));
-    if (Number.isFinite(num)) return `${nf(num)} RON`;
+    if (Number.isFinite(num))
+      return t("pricing.amount", { amount: nf(num), currency });
     return s;
   }
+
   const n = Number(b);
   if (!Number.isFinite(n)) return null;
-  if (n === 0) return "Gratis";
-  return `${nf(n)} RON`;
+  if (n === 0) return t("pricing.free");
+  return t("pricing.amount", { amount: nf(n), currency });
 };
 
 const cityFrom = (p) =>
@@ -113,6 +132,7 @@ function useCompact(threshold = 520) {
 /* ======================= CARD ======================= */
 export default function ProfileCard({ profile }) {
   const [cardRef, compact] = useCompact(520);
+  const { t } = useTranslation();
 
   const {
     id,
@@ -144,12 +164,12 @@ export default function ProfileCard({ profile }) {
   const promoted = !!profile.promoted;
 
   const city = cityFrom(profile);
-  const artistTariff = getArtistTariffLabel(profile);
-  const venueBudget = getVenueBudgetLabel(profile);
+  const artistTariff = getArtistTariffLabel(profile, t);
+  const venueBudget = getVenueBudgetLabel(profile, t);
 
   // chips
   const prefs = toChips(profile.preferences);
-  const gens  = toChips(profile.genres);
+  const gens = toChips(profile.genres);
   const specs = toChips(profile.specializations);
   const locChips = toChips(
     profile.locationTypes ?? profile.venueTypes ?? profile.placeTypes
@@ -165,7 +185,7 @@ export default function ProfileCard({ profile }) {
           {children}
         </Link>
         <div className="text-center py-1.5 text-white text-[10px] md:text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 rounded-b-2xl">
-          PROMOVAT
+          {t("profile.promoted")}
         </div>
       </div>
     ) : (
@@ -292,3 +312,5 @@ export default function ProfileCard({ profile }) {
     </CardShell>
   );
 }
+
+

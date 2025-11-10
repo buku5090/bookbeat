@@ -10,8 +10,10 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import Button from "../components/Button";
+import { useTranslation } from "react-i18next";
 
 export default function Register() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -23,14 +25,13 @@ export default function Register() {
     const ref = doc(db, "users", user.uid);
     const snap = await getDoc(ref);
 
-    // Setăm un schelet minimal + type:null (alegerea vine în ProfilePage)
+    // schelet minimal + type:null (alegerea vine în ProfilePage)
     const payload = {
       uid: user.uid,
       email: user.email || email,
       name: displayName || user.displayName || "",
       photoURL: user.photoURL || "",
-      type: snap.exists() ? snap.data()?.type ?? null : null, // nu forțăm dacă există deja
-      // câmpuri utile pt profil (le poți extinde sau lăsa goale)
+      type: snap.exists() ? snap.data()?.type ?? null : null,
       stageName: snap.exists() ? snap.data()?.stageName ?? "" : "",
       locationName: snap.exists() ? snap.data()?.locationName ?? "" : "",
       bio: snap.exists() ? snap.data()?.bio ?? "" : "",
@@ -52,7 +53,6 @@ export default function Register() {
     setBusy(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), pass);
-      // optional: setează displayName în Auth
       if (name.trim()) {
         await updateProfile(cred.user, { displayName: name.trim() });
       }
@@ -60,7 +60,7 @@ export default function Register() {
       navigate("/user");
     } catch (e) {
       console.error(e);
-      setErr(e.message || "Eroare la înregistrare.");
+      setErr(e.message || t("register_doc.error_generic"));
     } finally {
       setBusy(false);
     }
@@ -76,7 +76,7 @@ export default function Register() {
       navigate("/user");
     } catch (e) {
       console.error(e);
-      setErr(e.message || "Eroare la autentificarea cu Google.");
+      setErr(e.message || t("register_doc.error_google"));
     } finally {
       setBusy(false);
     }
@@ -85,10 +85,9 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-white text-black rounded-xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-1">Creează cont</h1>
-        <p className="text-sm text-gray-600 mb-6">
-          Creează-ți contul și intră în comunitate. Restul detaliilor le poți adăuga oricând din profil.
-        </p>
+        <h1 className="text-2xl font-bold mb-1">{t("register_doc.title")}</h1>
+        <p className="text-sm text-gray-600 mb-6">{t("register_doc.subtitle")}</p>
+
         {err && (
           <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">
             {err}
@@ -97,39 +96,48 @@ export default function Register() {
 
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm mb-1">Username</label>
+            <label className="block text-sm mb-1" htmlFor="reg-username">
+              {t("register_doc.username")}
+            </label>
             <input
+              id="reg-username"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
-              placeholder="Ex: Alex Pop"
+              placeholder={t("register_doc.username_placeholder")}
               autoComplete="name"
             />
           </div>
 
           <div>
-            <label className="block text-sm mb-1">Email</label>
+            <label className="block text-sm mb-1" htmlFor="reg-email">
+              {t("register_doc.email")}
+            </label>
             <input
+              id="reg-email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
-              placeholder="you@example.com"
+              placeholder={t("register_doc.email_placeholder")}
               autoComplete="email"
             />
           </div>
 
           <div>
-            <label className="block text-sm mb-1">Parolă</label>
+            <label className="block text-sm mb-1" htmlFor="reg-pass">
+              {t("register_doc.password")}
+            </label>
             <input
+              id="reg-pass"
               type="password"
               required
               value={pass}
               onChange={(e) => setPass(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-black"
-              placeholder="••••••••"
+              placeholder={t("register_doc.password_placeholder")}
               autoComplete="new-password"
               minLength={6}
             />
@@ -142,13 +150,13 @@ export default function Register() {
             isLoading={busy}
             disabled={busy}
           >
-            Creează cont
+            {t("register_doc.submit")}
           </Button>
         </form>
 
         <div className="my-4 flex items-center gap-3">
           <div className="h-px bg-gray-200 flex-1" />
-          <span className="text-xs text-gray-500">sau</span>
+          <span className="text-xs text-gray-500">{t("common.or")}</span>
           <div className="h-px bg-gray-200 flex-1" />
         </div>
 
@@ -158,13 +166,13 @@ export default function Register() {
           onClick={signUpWithGoogle}
           disabled={busy}
         >
-          Continuă cu Google
+          {t("register_doc.continue_google")}
         </Button>
 
         <p className="mt-4 text-sm text-gray-600">
-          Ai deja cont?{" "}
+          {t("register_doc.have_account")}{" "}
           <Link to="/login" className="text-black underline">
-            Autentificare
+            {t("register_doc.login_link")}
           </Link>
         </p>
       </div>

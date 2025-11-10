@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import Button from "./Button";
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Hook privat (separat de pagină)
 function useReviews(profileUid) {
@@ -40,6 +41,7 @@ function useReviews(profileUid) {
 }
 
 export default function ReviewsSection({ profileUid, authUser }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { reviews, avg } = useReviews(profileUid);
   const [myRating, setMyRating] = useState(0);
@@ -77,7 +79,7 @@ export default function ReviewsSection({ profileUid, authUser }) {
           ))}
         </div>
         <span className="text-sm text-gray-600">
-          {avg ? `${avg} / 5` : "Fără rating încă"} ({reviews.length})
+          {avg ? t("reviews.avg_out_of", { avg }) : t("reviews.no_rating_yet")} ({reviews.length})
         </span>
       </div>
 
@@ -86,7 +88,7 @@ export default function ReviewsSection({ profileUid, authUser }) {
           <div className="space-y-2">
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((i) => (
-                <button key={i} onClick={() => setMyRating(i)} aria-label={`${i} stele`}>
+                <button key={i} onClick={() => setMyRating(i)} aria-label={t("reviews.stars_aria", { count: i })}>
                   <Star
                     className={`w-7 h-7 ${
                       i <= myRating
@@ -101,17 +103,17 @@ export default function ReviewsSection({ profileUid, authUser }) {
               className="w-full border rounded p-2 resize-none"
               rows={2}
               maxLength={400}
-              placeholder="Lasă un comentariu (opțional)"
+              placeholder={t("reviews.comment_placeholder")}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
             <Button variant="primary" onClick={submit} disabled={sending || !myRating}>
-              Trimite review
+              {t("reviews.submit_review")}
             </Button>
           </div>
         ) : (
           <Button variant="outline" onClick={() => navigate("/login")}>
-            Loghează-te pentru a lăsa un review
+            {t("reviews.login_to_review")}
           </Button>
         )}
       </div>
@@ -133,7 +135,7 @@ export default function ReviewsSection({ profileUid, authUser }) {
                     />
                   ))}
                 </div>
-                <span>{r.rating}/5</span>
+                <span>{t("reviews.avg_out_of", { avg: r.rating })}</span>
               </div>
               {r.comment && (
                 <p className="text-sm mt-1 whitespace-pre-wrap break-words">

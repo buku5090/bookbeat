@@ -7,19 +7,20 @@ import {
 } from "../components/uiux";
 import EventCard from "../components/eventspage/EventCard";
 import { events } from "../src/data/events";
-// 👉 ajustează importul după cum îl ai în proiect
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* HERO / BANNER */}
+      {/* HERO */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-12 sm:pt-20">
         <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600">
+
           <div className="absolute inset-0 opacity-20">
-            {/* pattern simplu */}
             <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -31,33 +32,33 @@ export default function HomePage() {
           </div>
 
           <div className="relative z-10 px-6 py-16 text-center sm:px-12 sm:py-24">
+
             <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-              BookMix — conectăm artiștii cu locațiile
+              {t("home.hero.title")}
             </h1>
+
             <p className="mx-auto mt-4 max-w-2xl text-white/90 sm:text-lg">
-              Descoperă DJ-i, trupe și locații (baruri, cluburi, cafenele) pregătite pentru evenimentul tău.
+              {t("home.hero.subtitle")}
             </p>
 
             <div className="mt-8 flex items-center justify-center gap-4">
               <Link to="/discover">
                 <Button size="lg" className="bg-white text-black hover:opacity-90">
-                  Descoperă artiști & locații
+                  {t("home.hero.discover")}
                 </Button>
               </Link>
 
-              {/* Afișăm butonul de autentificare doar când NU ești logat.
-                  Când ești logat, arătăm "Contul meu". În timpul încărcării ascundem al doilea buton. */}
               {!loading && (
                 user ? (
                   <Link to="/account">
                     <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
-                      Contul meu
+                      {t("home.hero.my_account")}
                     </Button>
                   </Link>
                 ) : (
                   <Link to="/login">
                     <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
-                      Intră în cont
+                      {t("home.hero.login")}
                     </Button>
                   </Link>
                 )
@@ -67,30 +68,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* BENEFICII / FEATURE CARDS */}
+      {/* FEATURES */}
       <section className="mx-auto mt-16 max-w-6xl px-4 sm:px-6">
         <div className="grid gap-6 sm:grid-cols-3">
           <FeatureCard
-            title="Match inteligent"
-            desc="Filtre și căutare pentru genuri, tarif și disponibilitate."
+            title={t("home.features.match_title")}
+            desc={t("home.features.match_desc")}
           />
           <FeatureCard
-            title="Profiluri curate"
-            desc="Galerie, genuri, echipamente, recenzii verificate."
+            title={t("home.features.clean_profiles_title")}
+            desc={t("home.features.clean_profiles_desc")}
           />
           <FeatureCard
-            title="Booking simplu"
-            desc="Contact direct și blocare în calendar în câteva clickuri."
+            title={t("home.features.simple_booking_title")}
+            desc={t("home.features.simple_booking_desc")}
           />
         </div>
       </section>
 
-      {/* CTA secundar */}
+      {/* CTA EVENIMENTE */}
       <section className="mx-auto my-20 max-w-6xl px-4 sm:px-6">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-8 sm:p-12">
           <div className="mb-6 text-center">
-            <h2 className="text-2xl font-semibold">Evenimente următoare</h2>
-            <p className="mt-2 text-white/80">Descoperă ce urmează în comunitatea BookMix.</p>
+            <h2 className="text-2xl font-semibold">{t("home.events.title")}</h2>
+            <p className="mt-2 text-white/80">{t("home.events.subtitle")}</p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -103,7 +104,7 @@ export default function HomePage() {
           <div className="mt-8 flex justify-center">
             <Link to="/events">
               <Button variant="outline" className="border-white/40 text-white hover:bg-white/10">
-                Vezi toate evenimentele
+                {t("home.events.see_all")}
               </Button>
             </Link>
           </div>

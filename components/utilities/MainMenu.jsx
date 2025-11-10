@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import UserMenu from "./UserMenu";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 function useHideOnScroll({ threshold = 80, disabled = false } = {}) {
   const [hidden, setHidden] = useState(false);
@@ -29,6 +30,7 @@ function useHideOnScroll({ threshold = 80, disabled = false } = {}) {
 const abs = (p = "/") => (String(p).startsWith("/") ? p : `/${p}`);
 
 export default function MainMenu() {
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -76,10 +78,10 @@ export default function MainMenu() {
   useEffect(() => setMobileMenuOpen(false), [location.pathname]);
 
   const menuItems = [
-    { label: "Acasă", path: "/" },
-    { label: "Descoperă", path: "/discover" },
-    { label: "Evenimente", path: "/events" },
-    { label: "Caută", path: "/search" },
+    { label: t("menu.home"), path: "/" },
+    { label: t("menu.discover"), path: "/discover" },
+    { label: t("menu.events"), path: "/events" },
+    { label: t("menu.search"), path: "/search" },
   ];
   const lastItem = menuItems[menuItems.length - 1];
   const leftItems = menuItems.slice(0, -1);
@@ -241,26 +243,22 @@ export default function MainMenu() {
                     </NavLink>
                   </li>
                 ))}
+                <button
+                  aria-label={t("menu.close_menu")}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="absolute right-4 top-4 z-10 h-10 w-10 flex items-center justify-center rounded-xl !bg-white"
+                >
+                  <X size={25} className="!fill-black" />
+                </button>
+
+                {/* ADMIN */}
                 {isAdmin && (
-                  <li
-                    className="opacity-0 will-change-transform"
-                    style={{
-                      animation: `fadeUp 320ms ease-out forwards`,
-                      animationDelay: `${120 + menuItems.length * 60}ms`,
-                    }}
+                  <NavLink
+                    to="/admin"
+                    className="text-red-600 font-bold"
                   >
-                    <NavLink
-                      to="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={({ isActive }) =>
-                        `block w-full rounded-xl px-2 py-2 text-[20px] font-extrabold tracking-wide transition ${
-                          isActive ? "text-red-700" : "text-red-600"
-                        }`
-                      }
-                    >
-                      ADMIN
-                    </NavLink>
-                  </li>
+                    {t("menu.admin")}
+                  </NavLink>
                 )}
               </ul>
               {/* safe-area bottom */}

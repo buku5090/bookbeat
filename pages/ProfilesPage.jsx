@@ -1,3 +1,4 @@
+// pages/ProfilesPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../src/firebase";
@@ -8,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 import ProfileCard from "../components/profiles/ProfileCard";
 import SkeletonCard from "../components/profiles/SkeletonCard";
+import { useTranslation } from "react-i18next";
 
 const PER_PAGE = 10;
 const SORT_OPTIONS = ["newest", "oldest", "rating_desc", "distance_asc", "price_asc", "price_desc"];
@@ -26,6 +28,7 @@ function useSafeLoading() {
 }
 
 export default function ProfilesPage() {
+  const { t } = useTranslation();
   const { startLoading, stopLoading } = useSafeLoading();
   const { page: pageParam } = useParams();
   const navigate = useNavigate();
@@ -135,22 +138,42 @@ export default function ProfilesPage() {
             value={sortOrder}
             onChange={handleSortChange}
             className="appearance-none px-3 py-2 pr-8 rounded-xl border border-white/15 bg-black text-white text-sm font-medium"
+            aria-label={t("profiles.sort.aria")}
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>
-                {opt === "newest" ? "Cele mai noi"
-                  : opt === "oldest" ? "Cele mai vechi"
-                  : opt === "rating_desc" ? "Rating descrescător"
-                  : opt === "price_asc" ? "Preț crescător"
-                  : "Preț descrescător"}
+                {opt === "newest" ? t("profiles.sort.newest")
+                  : opt === "oldest" ? t("profiles.sort.oldest")
+                  : opt === "rating_desc" ? t("profiles.sort.rating_desc")
+                  : opt === "price_asc" ? t("profiles.sort.price_asc")
+                  : opt === "price_desc" ? t("profiles.sort.price_desc")
+                  : opt}
               </option>
             ))}
           </select>
 
           <div className="flex items-center gap-2 ml-auto">
-            <button onClick={goPrev} disabled={page <= 1} className="px-3 py-2 border border-white/20 rounded-xl">←</button>
-            <span className="text-xs text-white/70">Pagina {page} / {totalPages}</span>
-            <button onClick={goNext} disabled={page >= totalPages} className="px-3 py-2 border border-white/20 rounded-xl">→</button>
+            <button
+              onClick={goPrev}
+              disabled={page <= 1}
+              className="px-3 py-2 border border-white/20 rounded-xl"
+              aria-label={t("profiles.pagination.prev")}
+              title={t("profiles.pagination.prev")}
+            >
+              ←
+            </button>
+            <span className="text-xs text-white/70">
+              {t("profiles.pagination.page_of", { page, total: totalPages })}
+            </span>
+            <button
+              onClick={goNext}
+              disabled={page >= totalPages}
+              className="px-3 py-2 border border-white/20 rounded-xl"
+              aria-label={t("profiles.pagination.next")}
+              title={t("profiles.pagination.next")}
+            >
+              →
+            </button>
           </div>
         </div>
 

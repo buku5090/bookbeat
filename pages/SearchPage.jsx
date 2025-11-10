@@ -56,37 +56,55 @@ const TYPE_BY_PREFIX = Object.fromEntries(
 // returnează { tokens, currentRaw } și unește free tokens în genuri multi-cuvânt
 function parseQuery(q) {
   const parts = (q || "").split(/\s+/).filter(Boolean);
-  const rawTokens = [];
-  let currentRaw = "";
 
+  // 1) tokenize cu prefixe dacă există (compatibilitate înapoi)
+  const raw = [];
+  let currentRaw = "";
   for (const p of parts) {
     const prefix = p[0];
     const type = TYPE_BY_PREFIX[prefix];
     if (type) {
       const value = p.slice(1);
-      if (value.length) rawTokens.push({ type, value });
-      else currentRaw = p;
+      if (value.length) raw.push({ type, value });
+      else currentRaw = p; // încă tastează un prefix
     } else {
-      rawTokens.push({ type: "free", value: p });
+      raw.push({ type: "free", value: p });
     }
   }
 
-  // ── unește token-urile free adiacente dacă formează un gen cunoscut
+  // 2) greedy merge pentru genuri:
+  //    - dacă vedem "genre" urmat de "free free ..." încercăm să extindem
+  //    - dacă vedem "free free ..." încercăm să-l transformăm în genre
   const merged = [];
-  for (let i = 0; i < rawTokens.length; ) {
-    const t = rawTokens[i];
-    if (t.type !== "free") {
+  for (let i = 0; i < raw.length; ) {
+    let t = raw[i];
+
+    // candidatul inițial și fraza de pornire
+    const canStartAsGenre = t.type === "genre" || t.type === "free";
+    if (!canStartAsGenre) {
       merged.push(t);
       i++;
       continue;
     }
 
-    let j = i;
+    // fraza inițială
+    let phrase = t.value;
+    let j = i + 1;
+
+    // putem extinde DOAR peste tokenuri free
     let bestEnd = -1;
     let bestDisplay = null;
-    let phrase = "";
-    while (j < rawTokens.length && rawTokens[j].type === "free") {
-      phrase = (phrase ? phrase + " " : "") + rawTokens[j].value;
+
+    // verifică și varianta „ne-extinsă”
+    const hit0 = GENRE_BY_NORM.get(norm(phrase));
+    if (hit0) {
+      bestEnd = i;
+      bestDisplay = hit0;
+    }
+
+    // extinde cât timp urmează free-uri
+    while (j < raw.length && raw[j].type === "free") {
+      phrase += " " + raw[j].value;
       const hit = GENRE_BY_NORM.get(norm(phrase));
       if (hit) {
         bestEnd = j;
@@ -96,10 +114,12 @@ function parseQuery(q) {
     }
 
     if (bestEnd >= i) {
+      // am găsit un gen (scurt sau extins)
       merged.push({ type: "genre", value: bestDisplay });
       i = bestEnd + 1;
     } else {
-      merged.push(t);
+      // nu e gen -> păstrează tokenul original
+      merged.push(t.type === "genre" ? { type: "free", value: t.value } : t);
       i++;
     }
   }
@@ -296,17 +316,17 @@ export default function SearchPage() {
     setSuggestions(filtered);
   }, [rawQuery, users, events]);
 
-  const applySuggestion = (s) => {
-    const parts = rawQuery.trimRight().split(/\s+/);
-    const last = parts[parts.length - 1] || "";
-    const hasPrefix = !!TYPE_BY_PREFIX[last[0]];
+const applySuggestion = (s) => {
+  const parts = rawQuery.trimRight().split(/\s+/);
+  if (parts.length === 0 || rawQuery.endsWith(" ")) {
+    setRawQuery((rawQuery ? rawQuery : "") + s + " ");
+    return;
+  }
+  parts[parts.length - 1] = s;
+  const next = parts.join(" ") + " ";
+  setRawQuery(next);
+};
 
-    // dacă ultimul token are prefix, îl păstrăm; altfel, forțăm prefix de gen ">"
-    const prefix = hasPrefix ? last[0] : ">";
-    parts[parts.length - 1] = `${prefix}${s}`;
-    const next = parts.join(" ") + " ";
-    setRawQuery(next);
-  };
 
   const removeToken = (idx) => {
     const parts = rawQuery.split(/\s+/).filter(Boolean);
