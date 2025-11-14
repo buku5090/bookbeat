@@ -4,6 +4,35 @@ import { useTranslation } from "react-i18next";
 
 const SUGGESTIONS = [...new Set(GENRES.map((g) => String(g).trim()).filter(Boolean))];
 
+// Paletă BookMix (dark + accent mov)
+const BOOKMIX_THEME = {
+  // text & fundaluri de bază
+  text: "#EDEDED",
+  hint: "#9CA3AF",
+  bg: "#0B0B0F",        // fundal input / container
+  border: "#232323",
+
+  // chips
+  chipBg: "#161616",
+  chipBorder: "#2A2A2A",
+  chipText: "#EDEDED",
+  chipSelectedBg: "#8B5CF6", // accent mov
+  chipSelectedText: "#0B0B0F",
+
+  // dropdown / opțiuni
+  dropdownBg: "#0F0F14",
+  dropdownBorder: "#242424",
+  optionText: "#EDEDED",
+  optionHoverBg: "#1F2937",
+  optionHoverText: "#FFFFFF",
+  optionActiveBg: "#8B5CF6",
+  optionActiveText: "#0B0B0F",
+
+  // scrollbar (opțional)
+  scrollThumb: "#2A2A2A",
+  scrollTrack: "transparent",
+};
+
 export default function EditableGenres({ value = [], canEdit, onSave, onChipClick }) {
   const { t } = useTranslation();
 
@@ -14,7 +43,6 @@ export default function EditableGenres({ value = [], canEdit, onSave, onChipClic
     const unique = [
       ...new Map(inList.map((s) => [String(s).toLowerCase(), String(s).trim()])).values(),
     ].slice(0, 5);
-
     onSave?.(unique);
   };
 
@@ -30,12 +58,7 @@ export default function EditableGenres({ value = [], canEdit, onSave, onChipClic
       max={5}
       allowCustom={false}
       onChipClick={onChipClick}
-      customTheme={{
-        bg: "#E7F0FF",
-        border: "#E7F0FF",
-        text: "#1F2A44",
-        hint: "#4A4A4A",
-      }}
+      customTheme={BOOKMIX_THEME}
       maxMessage={t("editable_genres.max_message")}
     />
   );

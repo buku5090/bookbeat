@@ -84,7 +84,7 @@ async function deleteAvailability(id) {
 function Legend() {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center gap-6 text-sm">
+    <div className="flex items-center gap-6 text-sm text-neutral-200">
       <div className="flex items-center gap-2">
         <span className="inline-block size-4 rounded-full bg-red-500" /> {t("availability_calendar.busy")}
       </div>
@@ -211,7 +211,7 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
       : t("availability_calendar.book_generic");
 
   return (
-    <div className="w-full min-w-0">
+    <div className="w-full min-w-0 bg-black text-white flex flex-col items-center justify-center">
       {canBook && !showCalendar && (
         <div className="mb-3">
           <Button className="w-full rounded-full h-10" onClick={() => setShowCalendar(true)}>
@@ -222,7 +222,7 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
 
       {(showCalendar || isOwner) && (
         <>
-          <div className="rounded-2xl border p-2 overflow-hidden max-w-full">
+          <div className="w-fit rounded-2xl border border-neutral-800 p-3 overflow-hidden bg-black text-white">
             <DayPicker
               locale={ro}
               weekStartsOn={1}
@@ -231,65 +231,76 @@ export default function AvailabilityCalendar({ userId, currentUser, type, editab
               startMonth={todayStart}
               month={displayMonth}
               onMonthChange={handleMonthChange}
-              disabled={{ before: todayStart }}
+              disabled={{ before: todayStart }}             // zilele anterioare = disabled
               selected={range}
               onSelect={setRange}
               onDayClick={(d) => setSelectedDay(d)}
               modifiers={{ busy: busyDates, free: freeMatcher }}
-              className="!bg-white !text-neutral-900 !p-0 !m-0"
+              className="!bg-black !text-white !p-0 !m-0"
               modifiersClassNames={{
-                busy: "!text-red-500",
-                free: "text-emerald-500",
+                // culori cerute
+                busy: "!text-red-500 font-medium",
+                free: "text-emerald-500 font-medium",
+              }}
+              styles={{
+                /* caption (titlul lunii) centrat */
+                caption: { display: "flex", justifyContent: "center", alignItems: "center" },
+                caption_label: { color: "#fff", fontWeight: 600, textTransform: "lowercase" },
+
+                /* header zile săptămână */
+                head_cell: { color: "#a3a3a3", textAlign: "center", fontWeight: 500 },
+
+                /* fiecare zi – fundal transparent */
+                day: {
+                  backgroundColor: "transparent",
+                  borderRadius: "10px",
+                  transition: "transform 0.15s ease",
+                },
+
+                /* azi cu contur accent (opțional) */
+                day_today: { border: "1px solid #6b21a8" },
+
+                /* selectat (dacă folosești range/select) */
+                day_selected: { backgroundColor: "transparent", outline: "2px solid #6b21a8", color: "#fff" },
+
+                /* zile disabled (înainte de azi) */
+                day_disabled: { opacity: 0.35, cursor: "not-allowed" },
+
+                /* zile în afara lunii */
+                day_outside: { opacity: 0.35 },
+
+                /* navigația (săgețile) */
+                nav: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+                nav_button: {
+                  background: "transparent",
+                  border: "1px solid #fff",
+                  color: "#fff",
+                  borderRadius: 12,
+                  width: 36,
+                  height: 36,
+                  display: "grid",
+                  placeItems: "center",
+                  cursor: "pointer",
+                },
+                nav_button_previous: { background: "transparent", border: "1px solid #fff", color: "#fff" },
+                nav_button_next: { background: "transparent", border: "1px solid #fff", color: "#fff" },
+                chevron: { fill: "white" },
               }}
             />
 
-            <div className="mt-3">
-              <Legend />
-            </div>
 
-            {selectedDay && (
-              <div className="mt-4 rounded-xl border p-3">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">{format(selectedDay, "EEEE, d LLLL yyyy")}</div>
-                  <Button variant="secondary" size="lg" onClick={() => setSelectedDay(null)}>
-                    {t("availability_calendar.close")}
-                  </Button>
+            <div className="mt-4">
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block size-4 rounded-full bg-red-500" /> Ocupat
                 </div>
-
-                {eventsForSelected.length === 0 ? (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {t("availability_calendar.no_entries")}
-                  </p>
-                ) : (
-                  <div className="mt-2 space-y-2">
-                    {eventsForSelected.map((ev) => (
-                      <div key={ev.id} className="flex items-start justify-between gap-3 rounded-lg border p-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={ev.status === "busy" ? "destructive" : "default"}>
-                              {t(`availability_calendar.${ev.status}`)}
-                            </Badge>
-                            <div className="font-medium truncate">{ev.title}</div>
-                          </div>
-                          {ev.notes && <div className="text-sm text-muted-foreground mt-1">{ev.notes}</div>}
-                        </div>
-                        {isOwner && (
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => handleDelete(ev.id)}
-                            title={t("availability_calendar.delete")}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <span className="inline-block size-4 rounded-full bg-emerald-500" /> Liber
+                </div>
               </div>
-            )}
+            </div>
           </div>
+
 
           {isOwner && (
             <div className="mb-3 flex justify-end">

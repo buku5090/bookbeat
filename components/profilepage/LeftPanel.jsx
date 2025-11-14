@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-undef */
 // components/profilepage/LeftPanel.jsx
 import { useMemo, useState } from "react";
 import { Button } from "../uiux";
@@ -108,6 +110,9 @@ export default function LeftPanel({
     return wipe;
   };
 
+  // 👇 cont promovat = gradient pe username
+  const isPromoted = !!userData?.promoted;
+
   const handleConfirmTypeChange = async () => {
     try {
       const currentType = userData?.type ?? "user";
@@ -134,7 +139,7 @@ export default function LeftPanel({
 
   /* ------------------------ Badge-uri vizuale ------------------------ */
   const badge = (
-    <div className="flex flex-wrap items-center gap-2 mt-2">
+    <div className="flex flex-wrap items-center gap-2 mt-2 flex w-full justify-center column">
       {isNewAccount && (
         <span
           title={t("profile.badge_new_title")}
@@ -144,10 +149,16 @@ export default function LeftPanel({
         </span>
       )}
       {userData?.promoted && (
-        <span className="text-xs font-semibold uppercase bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+        <span
+          className="text-sm font-semibold uppercase 
+                    bg-gradient-to-r from-violet-600 via-fuchsia-600 to-purple-600 
+                    text-white px-3 py-1.5 rounded-full shadow-md
+                    tracking-wide select-none"
+        >
           {t("profile.badge_promoted")}
         </span>
       )}
+
       {verificationStatus === "verified" && (
         <span className="text-xs font-semibold uppercase bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
           {t("profile.badge_verified")}
@@ -165,7 +176,7 @@ export default function LeftPanel({
   return (
     <div className="w-full md:w-1/4 flex flex-col items-center md:items-start">
       {/* Avatar */}
-      <div className="relative w-[160px] h-[160px] rounded-full overflow-visible !w-full !flex justify-center">
+      <div className="relative w-[160px] h-fit rounded-full overflow-visible !w-full !flex justify-center">
         <ProfileAvatarWithProgress
           imageSrc={imageSrc}
           progress={progressPercent}
@@ -175,14 +186,26 @@ export default function LeftPanel({
         />
       </div>
 
-      {/* Nume */}
-      <p className="text-base font-semibold text-gray-700">{username}</p>
+      {/* Username */}
+      <p
+        className={
+          "text-xl font-semibold mt-2 text-center md:text-left !flex w-full !justify-center " +
+          (isPromoted
+            ? "!bg-gradient-to-r !from-violet-500 !via-fuchsia-500 !to-blue-500 !bg-clip-text !text-transparent"
+            : "text-gray-200")
+        }
+      >
+        {username}
+      </p>
+
+      {/* 🔻 Badge-urile (inclusiv Promovat) afisate imediat sub username */}
+      {badge}
 
       {/* Oraș */}
       <div className="mt-3 w-full">
-        <label className="block text-xs font-semibold text-gray-500 mb-1">
+        <SectionTitle>
           {t("profile.city_label")}
-        </label>
+        </SectionTitle>
         {isOwnProfile ? (
           <CityAutocomplete
             value={userData.city || ""}
@@ -245,8 +268,6 @@ export default function LeftPanel({
         </div>
       )}
 
-      {badge}
-
       {/* Switch tip cont */}
       {isOwnProfile && (
         <AccountTypeSwitcher
@@ -268,23 +289,25 @@ export default function LeftPanel({
       <div className="mt-6 space-y-3 text-sm w-full">
         {/* Tarif artist */}
         {isArtist && (
-          <EditableField
-            label={t("profile.rate_label")}
-            value={
-              userData.rate === 0 || /^gratis$/i.test(String(userData.rate))
-                ? t("common.free")
-                : String(userData.rate || "")
-            }
-            placeholder={t("profile.rate_placeholder")}
-            canEdit={isOwnProfile}
-            isPrice
-            type="number"
-            onSave={(val) => {
-              const num = Number(String(val).replace(/[^\d]/g, "")) || 0;
-              const finalValue = num === 0 ? t("common.free") : `${num} RON / set`;
-              applyUpdate({ field: "rate", value: finalValue });
-            }}
-          />
+          <div>
+            <SectionTitle>{t("profile.rate_label")}</SectionTitle>
+            <EditableField
+              value={
+                userData.rate === 0 || /^gratis$/i.test(String(userData.rate))
+                  ? t("common.free")
+                  : String(userData.rate || "")
+              }
+              placeholder={t("profile.rate_placeholder")}
+              canEdit={isOwnProfile}
+              isPrice
+              type="number"
+              onSave={(val) => {
+                const num = Number(String(val).replace(/[^\d]/g, "")) || 0;
+                const finalValue = num === 0 ? t("common.free") : `${num} RON / set`;
+                applyUpdate({ field: "rate", value: finalValue });
+              }}
+            />
+          </div>
         )}
 
         {/* Toggle promovat */}

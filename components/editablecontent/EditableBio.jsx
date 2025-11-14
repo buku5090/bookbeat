@@ -13,15 +13,14 @@ function escapeHtml(s = "") {
     .replace(/'/g, "&#39;");
 }
 
-/** Linkify URL-uri în text simplu (http(s)://… sau www.…). Sigur pentru XSS (prin escape). */
+/** Linkify URL-uri în text simplu. */
 function linkify(text = "") {
   const esc = escapeHtml(text);
   const urlRegex = /(?:https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
   const withLinks = esc.replace(urlRegex, (match) => {
-    const display = match;
     const href = match.startsWith("www.") ? `http://${match}` : match;
     const safeHref = href.replace(/"/g, "&quot;");
-    return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${display}</a>`;
+    return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${match}</a>`;
   });
   return withLinks.replace(/\r?\n/g, "<br/>");
 }
@@ -31,9 +30,13 @@ export default function EditableBio({ value, canEdit, onSave, maxLength = 1000 }
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(value || "");
   const [saving, setSaving] = useState(false);
+  const [expanded, setExpanded] = useState(false); // 👈 nou
   const taRef = useRef(null);
 
-  useEffect(() => setVal(value || ""), [value]);
+  useEffect(() => {
+    setVal(value || "");
+    setExpanded(false); // când se schimbă bio-ul din afară, resetezi „afișează mai mult”
+  }, [value]);
 
   // Auto-resize textarea
   useLayoutEffect(() => {
@@ -62,50 +65,86 @@ export default function EditableBio({ value, canEdit, onSave, maxLength = 1000 }
     }
   };
 
-  const count = (val || "").trim().length;
+  // ✅ numără exact ca maxLength (fără trim), ca să nu apară discrepanțe
+  const count = (val || "").length;
   const nearMax = count >= Math.floor(maxLength * 0.9);
-  const counterColor = nearMax ? "text-orange-600" : "text-gray-500";
+
+  // 🔽 LOGICA de „afișează mai mult”
+  const PREVIEW_CHAR_LIMIT = 260; // poți să-l faci prop dacă vrei
+  const raw = (value || "").trim();
+  const isLong = raw.length > PREVIEW_CHAR_LIMIT;
+
+  const displayText =
+    !expanded && isLong
+      ? raw.slice(0, PREVIEW_CHAR_LIMIT).trimEnd() + "…"
+      : raw;
+
+  const htmlForView = displayText
+    ? linkify(displayText)
+    : `<span class="text-gray-400 italic">${escapeHtml(
+        t("editable_bio.placeholder")
+      )}</span>`;
 
   return (
     <div className="relative">
       {canEdit && !editing && (
-        <div className="flex items-center justify-between">
-          <button
-            onClick={start}
-            className="right-0 !p-3 rounded !bg-white !text-gray-400 hover:!text-gray-600 transition"
-            aria-label={t("editable_bio.edit")}
-            title={t("editable_bio.edit")}
-          >
-            <Pencil size={14} />
-          </button>
-        </div>
+        <button
+          onClick={start}
+          className="absolute top-0 right-0 !py-2 !px-4 border !border-white rounded !bg-black !text-white hover:!text-gray-200 hover:!bg-gray-800 transition"
+          aria-label={t("editable_bio.edit")}
+          title={t("editable_bio.edit")}
+        >
+          <Pencil size={14} />
+        </button>
       )}
 
       {!editing ? (
-        <div
-          className="cursor-text whitespace-pre-wrap break-words prose prose-sm max-w-none"
-          onClick={start}
-          dangerouslySetInnerHTML={{
-            __html:
-              (value || "").trim()
-                ? linkify(value)
-                : `<span class="text-gray-400 italic">${escapeHtml(
-                    t("editable_bio.placeholder")
-                  )}</span>`,
-          }}
-        />
+        <div className="cursor-text">
+          {/* textul în sine pornește editarea la click */}
+          <div
+            className="whitespace-pre-wrap break-words prose prose-sm max-w-none"
+            onClick={start}
+            dangerouslySetInnerHTML={{
+              __html: htmlForView,
+            }}
+          />
+
+          {/* butonul de show more/less NU trebuie să pornească editarea */}
+          {isLong && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded((prev) => !prev);
+              }}
+              className="mt-1 text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              {expanded
+                ? t("editable_bio.show_less", "Afișează mai puțin")
+                : t("editable_bio.show_more", "Afișează mai mult")}
+            </button>
+          )}
+        </div>
       ) : (
         <div className="relative">
-          {/* Counter */}
-          <div className={`absolute -top-6 right-0 text-xs ${counterColor}`}>
-            {t("editable_bio.counter", { count, max: maxLength })}
+          {/* ✅ Counter fix în colțul din textarea */}
+          <div className="pointer-events-none absolute right-3 top-2">
+            <span
+              className={[
+                "rounded-full px-2 py-0.5 text-[11px] leading-none",
+                "bg-black/80 text-white",
+                nearMax ? "ring-1 ring-orange-500/60" : "",
+              ].join(" ")}
+            >
+              {t("editable_bio.counter", { count, max: maxLength })}
+            </span>
           </div>
 
           <textarea
             ref={taRef}
             dir="ltr"
             style={{ direction: "ltr" }}
-            className="w-full border rounded-xl px-3 py-2 resize-none overflow-hidden whitespace-pre-wrap break-words
+            className="w-full border rounded-xl px-3 pr-16 py-2 resize-none overflow-hidden whitespace-pre-wrap break-words
                        focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             value={val}
             maxLength={maxLength}

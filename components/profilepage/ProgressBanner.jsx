@@ -8,10 +8,10 @@ export default function ProgressBanner({ isTypeChosen, percent, missing }) {
     <div
       className={`mb-4 text-sm font-medium rounded px-4 py-2 ${
         !isTypeChosen
-          ? "bg-amber-100 text-amber-800"
+          ? "bg-amber-600 text-amber-800"
           : ok
-          ? "bg-green-100 text-green-800"
-          : "bg-yellow-100 text-yellow-800"
+          ? "bg-green-600 text-green-800"
+          : "bg-yellow-600 text-yellow-800"
       }`}
       role="status"
       aria-live="polite"

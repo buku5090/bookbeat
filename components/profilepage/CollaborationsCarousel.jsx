@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "../Button";
 import { useTranslation } from "react-i18next";
 
+/* ---------------- Demo data ---------------- */
 const DEMO_ITEMS = [
   { id: "loc-a", name: "Club Aurora" },
   { id: "loc-b", name: "Bar Selene" },
@@ -11,7 +12,7 @@ const DEMO_ITEMS = [
   { id: "loc-e", name: "Rooftop 27" },
   { id: "loc-f", name: "Subground" },
   { id: "loc-g", name: "Luna Lounge" },
-  { id: "loc-h", name: "MUSE" }
+  { id: "loc-h", name: "MUSE" },
 ];
 
 const fallbackAvatar = (name) =>
@@ -19,6 +20,7 @@ const fallbackAvatar = (name) =>
     name || "Locație"
   )}&background=111827&color=fff`;
 
+/* ---------------- Component ---------------- */
 export default function CollaborationsCarousel({
   title = null,
   items = [],
@@ -27,7 +29,7 @@ export default function CollaborationsCarousel({
   const { t } = useTranslation();
 
   const data = useMemo(() => {
-    const src = items?.length ? items : (useDemoWhenEmpty ? DEMO_ITEMS : []);
+    const src = items?.length ? items : useDemoWhenEmpty ? DEMO_ITEMS : [];
     return src.map((it, i) => ({
       id: it.id ?? `tmp-${i}`,
       name: String(it.name || t("collab.unknown_location")),
@@ -80,27 +82,24 @@ export default function CollaborationsCarousel({
   };
 
   if (!data.length) {
-    return (
-      <p className="text-sm text-gray-500">
-        {t("collab.no_collabs")}
-      </p>
-    );
+    return <p className="text-sm text-gray-400">{t("collab.no_collabs")}</p>;
   }
 
   return (
-    <section className="relative">
+    <section className="relative rounded-2xl border border-neutral-800 bg-black p-3 text-white">
       {title && <h4 className="text-lg font-semibold mb-2">{title}</h4>}
 
-      {canScroll && (
-        <>
-          <div className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-white to-transparent rounded-l-lg" />
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white to-transparent rounded-r-lg" />
-        </>
+      {/* Edge fades – show only when needed; use dark gradient so no white line remains */}
+      {canScroll && !atStart && (
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-black/80 to-transparent rounded-l-2xl" />
+      )}
+      {canScroll && !atEnd && (
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-black/80 to-transparent rounded-r-2xl" />
       )}
 
       <div
         ref={scrollerRef}
-        className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 pr-6 pl-1"
+        className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar py-2 pl-1 pr-4"
         style={{ scrollSnapType: "x mandatory" }}
       >
         {data.map((it) => {
@@ -110,11 +109,11 @@ export default function CollaborationsCarousel({
             <Card
               key={it.id}
               {...cardProps}
-              className="w-28 flex-shrink-0 text-center"
+              className="w-36 flex-shrink-0 text-center"
               style={{ scrollSnapAlign: "start" }}
               title={it.name}
             >
-              <div className="mx-auto h-20 w-20 rounded-full ring-1 ring-black/10 overflow-hidden shadow">
+              <div className="mx-auto h-40 w-40 rounded-full bg-[#0f172a] ring-1 ring-white/10 overflow-hidden shadow">
                 <img
                   src={it.photo}
                   alt={it.name}
@@ -123,7 +122,8 @@ export default function CollaborationsCarousel({
                   decoding="async"
                 />
               </div>
-              <div className="mt-2 text-xs font-medium truncate">{it.name}</div>
+              <div className="mt-3 text-base font-semibold truncate">{it.name}</div>
+              {/* rating / text slots pot fi adăugate aici */}
             </Card>
           );
         })}
@@ -134,7 +134,7 @@ export default function CollaborationsCarousel({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute -left-1 top-1/2 -translate-y-1/2 bg-white/90"
+            className="absolute -left-1 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/80 text-white border border-white/10"
             onClick={() => scrollByDir(-1)}
             aria-label={t("collab.back")}
             disabled={atStart}
@@ -145,7 +145,7 @@ export default function CollaborationsCarousel({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute -right-1 top-1/2 -translate-y-1/2 bg-white/90"
+            className="absolute -right-1 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/80 text-white border border-white/10"
             onClick={() => scrollByDir(1)}
             aria-label={t("collab.forward")}
             disabled={atEnd}

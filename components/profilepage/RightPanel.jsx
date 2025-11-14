@@ -32,7 +32,7 @@ export default function RightPanel({
 
   // small helper for consistent dark cards
   const Card = ({ children }) => (
-    <section className="rounded-2xl p-4 md:p-5 !bg-black !border !border-white/10">
+    <section className="rounded-2xl !bg-black !border !border-white/10">
       {children}
     </section>
   );
@@ -56,7 +56,7 @@ export default function RightPanel({
       {isArtist && (
         <>
           {/* Genres first (what you play) */}
-          <SectionTitle>{t("profile.genres")}</SectionTitle>
+          <SectionTitle>{t("editable_genres.label")}</SectionTitle>
           <Card>
             <EditableGenres
               value={Array.isArray(userData.genres) ? userData.genres : []}
@@ -67,7 +67,7 @@ export default function RightPanel({
           </Card>
 
           {/* Specializations / preferences */}
-          <SectionTitle>{t("profile.specializations")}</SectionTitle>
+          <SectionTitle>{t("editable_specializations.label")}</SectionTitle>
           <Card>
             <EditableSpecializations
               value={Array.isArray(userData.specializations) ? userData.specializations : []}
@@ -80,7 +80,7 @@ export default function RightPanel({
           {/* Equipment */}
           {(isOwnProfile || (userData.djEquipment && userData.djEquipment.length > 0)) && (
             <>
-              <SectionTitle>{t("profile.equipment")}</SectionTitle>
+              <SectionTitle>{t("editable_dj_equipment.title")}</SectionTitle>
               <Card>
                 <EditableDJEquipment
                   type="artist"

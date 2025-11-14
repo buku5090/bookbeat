@@ -6,7 +6,7 @@ const variants = {
   default: "!bg-black !text-white hover:!opacity-90",
   primary: "!bg-black !text-white hover:!opacity-90",
   outline: "!border !border-neutral-300 hover:!bg-neutral-50",
-  secondary: "!bg-neutral-200 hover:!bg-neutral-300",
+  secondary: "!bg-transparent border-solid !border-1 !border-white",
   ghost: "hover:!bg-neutral-100",
   link: "!underline underline-offset-4 !p-0 !bg-transparent",
   destructive: "!bg-red-600 !text-white hover:!bg-red-700",

@@ -266,7 +266,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen !bg-black !text-white md:p-6">
+    <div className="min-h-screen !bg-black !text-white">
       {/* Card central – full dark */}
       <div
         className="

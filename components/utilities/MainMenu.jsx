@@ -144,11 +144,11 @@ export default function MainMenu() {
             <button
               ref={toggleRef}
               onClick={() => setMobileMenuOpen((v) => !v)}
-              className="h-10 w-10 rounded-2xl flex items-center justify-center !bg-red !border-none"
+              className="h-10 w-10 !bg-transparent rounded-2xl !p-0 flex items-center justify-center !bg-red !border-none"
             >
               {mobileMenuOpen
                 ? <X size={24} className="!fill-white" />
-                : <Menu size={24} className="!text-white" />
+                : <Menu size={35} className="!text-white" />
               }
             </button>
             <UserMenu />
@@ -195,7 +195,7 @@ export default function MainMenu() {
             <button
               aria-label={t("menu.close_menu")}
               onClick={() => setMobileMenuOpen(false)}
-              className="absolute right-4 top-4 z-10 h-10 w-10 flex items-center justify-center rounded-xl !bg-black !text-white !border !border-white/10"
+              className="absolute !p-0 right-4 top-4 z-10 h-10 w-10 flex items-center justify-center rounded-xl !bg-black !text-white !border !border-white/10"
               style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
               <X size={25} />

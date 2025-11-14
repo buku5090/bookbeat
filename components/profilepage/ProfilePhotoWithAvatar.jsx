@@ -82,7 +82,7 @@ export default function ProfileAvatarWithProgress({
 
   return (
     <>
-      <div className="relative mb-4" style={{ width: size, height: size }}>
+      <div className="relative" style={{ width: size, height: size }}>
         {canEdit && (
           <svg
             width={size}
@@ -134,11 +134,11 @@ export default function ProfileAvatarWithProgress({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-10 h-10 absolute bottom-0 right-0 z-10 bg-white rounded-full border border-gray-300 grid place-items-center p-0"
+              className="absolute bottom-0 z-1000 right-0 !py-2 !px-4 border !border-white rounded !bg-black !text-white hover:!text-gray-200 hover:!bg-gray-800 transition"
               aria-label={t("avatar.change")}
               title={t("avatar.change")}
             >
-              <Pencil size={14} className="text-gray-400" />
+              <Pencil size={14} />
             </button>
 
             <input

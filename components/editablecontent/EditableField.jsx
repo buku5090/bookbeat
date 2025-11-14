@@ -3,7 +3,6 @@ import { Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export function EditableField({
-  label,
   value,
   onSave,
   type = "text",
@@ -49,8 +48,7 @@ export function EditableField({
   };
 
   return (
-    <div className="w-full">
-      {label && <label className="text-xl font-bold mb-2 !uppercase">{label}</label>}
+    <div className="w-full relative">
 
       {isEditing ? (
         <div className="space-y-2 mb-1 mt-1">
@@ -108,7 +106,7 @@ export function EditableField({
           {canEdit && (
             <button
               onClick={() => setIsEditing(true)}
-              className="!bg-white !px-3 !py-1 !text-gray-400 hover:text-gray-700 transition"
+              className="absolute top-0 right-0 !py-2 !px-4 border !border-white rounded !bg-black !text-white hover:!text-gray-200 hover:!bg-gray-800 transition"
               aria-label={t("editable_field.edit")}
               type="button"
             >

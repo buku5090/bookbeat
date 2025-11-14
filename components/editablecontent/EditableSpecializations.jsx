@@ -19,6 +19,7 @@ export default function EditableSpecializations({
     <EditableChips
       label={t("editable_specializations.label")}
       value={Array.isArray(value) ? value : []}
+      variant="specializations"
       canEdit={!!canEdit}
       onSave={onSave}
       suggestions={SPECIALIZATION_OPTIONS}
@@ -26,12 +27,6 @@ export default function EditableSpecializations({
       max={max}
       allowCustom={false}
       onChipClick={onChipClick}
-      customTheme={{
-        bg: "#FFE9F1",
-        border: "#E7F0FF",
-        text: "#5A0E30",
-        hint: "#4A4A4A",
-      }}
     />
   );
 }
