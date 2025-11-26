@@ -286,7 +286,7 @@ export default function ProfilePage() {
           />
         )}
 
-        <div className="md:flex gap-10">
+        <div className="lg:flex gap-10">
           <LeftPanel
             isOwnProfile={isOwnProfile}
             isArtist={isArtist}

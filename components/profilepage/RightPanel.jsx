@@ -38,7 +38,7 @@ export default function RightPanel({
   );
 
   return (
-    <div className="w-full md:w-2/3 space-y-8 text-white">
+    <div className="w-full lg:w-2/3 space-y-8 text-white">
       {/* ABOUT */}
       <SectionTitle>{t("profile.about")}</SectionTitle>
       {(isOwnProfile || (userData.bio && userData.bio.trim().length > 0)) && (

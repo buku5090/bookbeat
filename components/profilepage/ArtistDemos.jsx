@@ -38,7 +38,10 @@ const ytThumb = (url) => {
 export default function ArtistDemos({ canEdit, current = [], onAdded, onDeleted }) {
   const { t } = useTranslation();
   const [url, setUrl] = useState("");
-  const remaining = useMemo(() => Math.max(0, 3 - (current?.length || 0)), [current?.length]);
+  const remaining = useMemo(
+    () => Math.max(0, 3 - (current?.length || 0)),
+    [current?.length]
+  );
   const disabled = !url || !isSupported(url) || current.length >= 3;
 
   const onAdd = () => {
@@ -52,41 +55,42 @@ export default function ArtistDemos({ canEdit, current = [], onAdded, onDeleted 
   };
 
   return (
-    <div
-      className="w-full rounded-2xl p-4 md:p-5"
-      style={{ backgroundColor: BM.black }}
-    >
+    <div className="w-full rounded-2xl p-3 md:p-4" style={{ backgroundColor: BM.black }}>
       {canEdit && (
-        <div className="mb-4">
+        <div className="mb-3">
           <div className="flex gap-2">
             <input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder={t("demos.placeholder")}
-              className="flex-1 rounded-xl px-4 py-2 outline-none border !border-neutral-800 bg-neutral-900 text-neutral-100 placeholder-neutral-500 focus:!border-teal-400 focus:!ring-2 focus:!ring-teal-500/40 transition"
-              style={{ '--tw-ring-color': BM.teal }}
+              className="flex-1 rounded-xl px-3 py-2 outline-none border !border-neutral-800 bg-neutral-900 text-neutral-100 placeholder-neutral-500 focus:!border-teal-400 focus:!ring-2 focus:!ring-teal-500/40 transition text-sm"
+              style={{ "--tw-ring-color": BM.teal }}
             />
             <Button
               variant="primary"
               onClick={onAdd}
               disabled={disabled}
-              className="!bg-[var(--bm-teal)] !text-black !font-semibold !px-4 !py-2 !rounded-xl hover:!opacity-90 disabled:!opacity-40"
-              style={{ ['--bm-teal']: BM.teal }}
+              className="!bg-[var(--bm-teal)] !text-black !font-semibold !px-3 !py-2 !rounded-xl hover:!opacity-90 disabled:!opacity-40 text-sm"
+              style={{ ["--bm-teal"]: BM.teal }}
             >
               {t("demos.add")}
             </Button>
           </div>
-          <div className="mt-2 text-xs" style={{ color: "#bfbfbf" }}>
+
+          <div className="mt-1.5 text-xs" style={{ color: "#bfbfbf" }}>
             {t("demos.remaining", { count: remaining })}{" "}
-            <span className="ml-2 px-2 py-[2px] rounded-full"
-              style={{ background: BM.purple, color: BM.white }}>
+            <span
+              className="ml-2 px-2 py-[2px] rounded-full"
+              style={{ background: BM.purple, color: BM.white }}
+            >
               3 max
             </span>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* mobile: 2 cols, tight gap; desktop: 3 cols */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
         {current.map((d) => (
           <DemoCard key={d.url} demo={d} onDelete={onDeleted} canEdit={canEdit} />
         ))}
@@ -109,18 +113,28 @@ function DemoCard({ demo, onDelete, canEdit }) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden border shadow-sm flex flex-col"
+      className="rounded-xl overflow-hidden border flex flex-col"
       style={{ backgroundColor: "#0b0b0b", borderColor: "#1f1f1f" }}
     >
-      <a href={demo.url} target="_blank" rel="noreferrer" className="block">
+      {/* THUMBNAIL: hidden on phone, visible small on desktop */}
+      <a
+        href={demo.url}
+        target="_blank"
+        rel="noreferrer"
+        className="hidden sm:block"
+      >
         {thumb ? (
-          <img src={thumb} alt="thumbnail" className="w-full h-40 object-cover" />
+          <img
+            src={thumb}
+            alt="thumbnail"
+            className="w-full h-24 md:h-28 object-cover"
+          />
         ) : (
           <div
-            className="w-full h-40 flex items-center justify-center text-4xl"
+            className="w-full h-24 md:h-28 flex items-center justify-center text-2xl"
             style={{
               background:
-                "linear-gradient(135deg, rgba(138,43,226,0.15), rgba(0,206,209,0.15))",
+                "linear-gradient(135deg, rgba(138,43,226,0.12), rgba(0,206,209,0.12))",
               color: BM.white,
             }}
           >
@@ -129,41 +143,50 @@ function DemoCard({ demo, onDelete, canEdit }) {
         )}
       </a>
 
-      <div className="p-3 space-y-2 flex-1">
+      {/* compact header */}
+      <div className="px-2 pt-2 md:px-2.5 md:pt-2.5 flex items-center justify-between">
         <span
-          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full"
-          style={{ background: "rgba(138,43,226,0.18)", color: BM.white, border: "1px solid rgba(138,43,226,0.35)" }}
+          className="inline-flex items-center gap-1 text-[9px] md:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+          style={{
+            background: "rgba(138,43,226,0.16)",
+            color: BM.white,
+            border: "1px solid rgba(138,43,226,0.30)",
+          }}
         >
           {icon} {p}
         </span>
 
+        {/* tiny “open” link instead of full URL */}
         <a
           href={demo.url}
           target="_blank"
           rel="noreferrer"
-          className="block truncate break-all max-w-full"
+          className="text-[10px] md:text-xs font-semibold underline underline-offset-2"
           style={{ color: BM.teal }}
         >
-          {demo.url}
+          open
         </a>
+      </div>
 
+      {/* embed only, no extra chrome */}
+      <div className="p-2 md:p-2.5 pt-1.5 md:pt-2">
         <div
-          className="rounded-xl overflow-hidden border"
-          style={{ borderColor: "#2a2a2a", backgroundColor: "#0e0e0e" }}
+          className="rounded-lg overflow-hidden"
+          style={{ backgroundColor: "#0e0e0e" }}
         >
           <DemoEmbed url={demo.url} />
         </div>
       </div>
 
       {canEdit && (
-        <div className="p-3 pt-0 flex justify-end">
+        <div className="px-2 pb-2 md:px-2.5 md:pb-2.5 flex justify-end">
           <button
             onClick={() => onDelete?.(demo.url)}
-            className="px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+            className="px-2 py-1 rounded-md text-[11px] font-semibold transition"
             style={{
               backgroundColor: BM.red,
               color: BM.white,
-              boxShadow: "0 0 0 1px rgba(229,9,20,0.4) inset",
+              boxShadow: "0 0 0 1px rgba(229,9,20,0.35) inset",
             }}
           >
             {t("demos.delete")}
@@ -193,17 +216,24 @@ function DemoEmbed({ url }) {
     return (
       <iframe
         className="w-full"
-        height="120"
-        src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%2300CED1`}
+        height="166"
+        scrolling="no"
+        frameBorder="no"
+        allow="autoplay"
+        src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(
+          url
+        )}&color=%2300CED1&auto_play=false&hide_related=true&show_comments=false&show_reposts=false&show_user=true&show_teaser=false`}
         style={{ backgroundColor: "#0e0e0e" }}
       />
     );
+
+
 
   if (p === "mixcloud")
     return (
       <iframe
         className="w-full"
-        height="120"
+        height="80"
         src={`https://www.mixcloud.com/widget/iframe/?hide_cover=1&light=1&feed=${encodeURIComponent(
           url
         )}`}
@@ -215,7 +245,7 @@ function DemoEmbed({ url }) {
     return (
       <iframe
         className="w-full"
-        height="100"
+        height="72"
         src={url.replace("open.spotify.com/", "open.spotify.com/embed/")}
         style={{ backgroundColor: "#0e0e0e" }}
       />

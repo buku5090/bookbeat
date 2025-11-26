@@ -32,6 +32,7 @@ const EventDetailsPage = lazy(() => import("../pages/EventDetailsPage"));
 const AdvancedSettingsPage = lazy(() => import("../pages/AdvancedSettingsPage"));
 const LanguageSettingsPage = lazy(() => import("../pages/LanguageSettingsPage"));
 const Test = lazy(() => import("../pages/Test"));
+const MessagesPage = lazy(() => import("../pages/MessagesPage"));
 
 // alias helper: /profile/:id -> /user/:id
 function ProfileIdAlias() {
@@ -66,6 +67,24 @@ function AppShell() {
           <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/notificari" element={<NotificationsPage />} />
           <Route path="/settings/language" element={<LanguageSettingsPage />} />
+          {/* Inbox + chat integrat */}
+          <Route
+            path="/messages"
+            element={
+              <RequireAuth>
+                <MessagesPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/messages/:peerId"
+            element={
+              <RequireAuth>
+                <MessagesPage />
+              </RequireAuth>
+            }
+          />
+
 
           {/* Profilul MEU (fără id) – protejat */}
           <Route

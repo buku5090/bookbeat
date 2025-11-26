@@ -35,14 +35,14 @@ export default function ReviewsSummaryFromCollabs({ profileUid, side = "artist" 
   }, [rows, side]);
 
   return (
-    <div className="mt-2 flex items-center gap-2">
+    <div className="mt-2 flex items-center justify-center gap-2">
       <div className="flex">
         {[1, 2, 3, 4, 5].map((i) => (
           <Star key={i} className={`w-5 h-5 ${i <= Math.round(avg) ? "fill-yellow-400 stroke-yellow-400" : "stroke-gray-400"}`} />
         ))}
       </div>
       <span className="text-sm text-gray-600">
-        {avg ? t("reviews.avg_out_of", { avg }) : t("reviews.no_rating_yet")} ({count})
+        {avg ? t("reviews.avg_out_of", { avg }) : ""} ({count})
       </span>
     </div>
   );

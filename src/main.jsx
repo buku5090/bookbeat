@@ -6,6 +6,7 @@ import "./index.css";
 import { AuthProvider } from "../context/AuthContext.jsx";
 import { LoadingProvider } from "../context/LoadingContext.jsx";
 import { LanguageProvider } from "../context/LanguageContext.jsx";
+import { GlobalDialogProvider } from "../context/GlobalDialogContext";
 
 import { ToastProvider } from "../components/utilities/ToastProvider.jsx"; // ✅ import global toast
 
@@ -17,11 +18,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <LoadingProvider>
         <AuthProvider>
           <LanguageProvider>
-            <div className="min-h-screen bg-red">
-              <div className="max-w-7xl mx-auto md:px-4">
-                <App />
+            <GlobalDialogProvider>
+              <div className="min-h-screen">
+                <div className="max-w-7xl mx-auto md:px-4">
+                  <App />
+                </div>
               </div>
-            </div>
+            </GlobalDialogProvider>
           </LanguageProvider>
         </AuthProvider>
       </LoadingProvider>

@@ -120,6 +120,24 @@ textarea::placeholder {
   opacity: 1; /* pentru Safari */
 }
 
+html, body {
+  background: #000;
+}
+
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: #000;
+}
+
+footer {
+  background: #000;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.main-wrapper {
+  background: #000;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

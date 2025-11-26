@@ -117,13 +117,27 @@ export default function EditableBio({ value, canEdit, onSave, maxLength = 1000 }
                 e.stopPropagation();
                 setExpanded((prev) => !prev);
               }}
-              className="mt-1 text-xs text-gray-500 hover:text-gray-700 underline"
+              className="
+                mt-1 !text-xs !font-medium
+                !text-[#9b5cff]
+                hover:!text-white
+                !px-2 !py-[3px]
+                !rounded-md
+                !transition-all
+                duration-200
+                !bg-[#9b5cff]/10
+                hover:!bg-[#9b5cff]/30
+                shadow-[0_0_6px_#9b5cff80]
+                hover:shadow-[0_0_10px_#9b5cffcc]
+                backdrop-blur-sm
+              "
             >
               {expanded
                 ? t("editable_bio.show_less", "Afișează mai puțin")
                 : t("editable_bio.show_more", "Afișează mai mult")}
             </button>
           )}
+
         </div>
       ) : (
         <div className="relative">

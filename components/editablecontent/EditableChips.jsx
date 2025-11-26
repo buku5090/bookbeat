@@ -85,12 +85,12 @@ export default function EditableChips({
   // ---- Styling (force with Tailwind `!`) ----
   const viewChipClasses =
     variant === "specializations"
-      ? "!bg-black !text-white !border-[#00CED1]"
+      ? "!bg-black !text-white !border-[#FF4FB0]"
       : "!bg-black !text-white !border-[#8A2BE2]"; // genres (default)
 
   const suggestionChipClasses =
     variant === "specializations"
-      ? "!bg-[#00CED1] !text-white !border-[#00CED1]"
+      ? "!bg-[#00CED1] !text-white !border-[#FF4FB0]"
       : "!bg-[#8A2BE2] !text-white !border-[#8A2BE2]"; // genres
 
   return (

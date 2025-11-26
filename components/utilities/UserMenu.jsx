@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { auth, db } from "../../src/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { collection, onSnapshot, query, where, doc } from "firebase/firestore";
-import Button from "../uiux/button";
+import { Button } from "../uiux/button";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -53,11 +53,35 @@ const LogoutIcon = (props) => (
   </svg>
 );
 
+const MessageIcon = (props) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" {...props}>
+    <path
+      d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H7l-3 3v-3H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M7 9l4.5 3L16 9"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export default function UserMenu() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  // ✅ avatar stabil, nu se schimbă la open/close
+  const [stableAvatarSrc, setStableAvatarSrc] = useState(placeholderAvatar);
+
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -83,12 +107,41 @@ export default function UserMenu() {
     return () => unsub();
   }, [user?.uid]);
 
+  // 🔔 Mesaje necitite (ajustează path-ul dacă schema ta e alta)
+  useEffect(() => {
+    if (!user?.uid) return setUnreadMessagesCount(0);
+
+    const q = query(
+      collection(db, `users/${user.uid}/messages`),
+      where("read", "==", false)
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+      setUnreadMessagesCount(snap.size || 0);
+    });
+
+    return () => unsub();
+  }, [user?.uid]);
+
+  // ✅ actualizează avatarul stabil DOAR când se schimbă user/profile, nu când se deschide meniul
+  useEffect(() => {
+    const next =
+      profile?.photoURL ||
+      user?.photoURL ||
+      placeholderAvatar;
+
+    setStableAvatarSrc((prev) => (prev === next ? prev : next));
+  }, [profile?.photoURL, user?.photoURL]);
+
   useEffect(() => {
     const outside = (e) => {
       if (e.target.closest('[data-modal-root="language"]')) return;
-      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpen(false);
+      }
     };
     const esc = (e) => e.key === "Escape" && setOpen(false);
+
     document.addEventListener("mousedown", outside);
     document.addEventListener("keyup", esc);
     return () => {
@@ -102,13 +155,19 @@ export default function UserMenu() {
     navigate("/login");
   };
 
-  const displayName =
-    profile?.displayName || user?.displayName || t("user.default_display_name");
+  const displayName = useMemo(
+    () =>
+      profile?.displayName ||
+      user?.displayName ||
+      t("user.default_display_name"),
+    [profile?.displayName, user?.displayName, t]
+  );
+
   const email = user?.email || profile?.email || "";
-  const avatarSrc = profile?.photoURL || user?.photoURL || placeholderAvatar;
 
   return (
-    <div className="relative ml-2" ref={menuRef}>
+    <div className="relative" ref={menuRef}>
+      {/* Avatar sus (stabil) */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -118,7 +177,7 @@ export default function UserMenu() {
       >
         <div className="relative">
           <img
-            src={avatarSrc}
+            src={stableAvatarSrc}
             alt="User avatar"
             className="w-10 h-10 rounded-full shadow-sm transition-transform group-active:scale-95 object-cover"
             referrerPolicy="no-referrer"
@@ -138,15 +197,20 @@ export default function UserMenu() {
         >
           {/* HEADER CU GRADIENT + NUME */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#111827] to-[#1f2937] !text-white">
+            {/* Avatar în meniu (același stabil) */}
             <img
-              src={avatarSrc}
+              src={stableAvatarSrc}
               alt=""
               className="w-10 h-10 rounded-full object-cover"
               referrerPolicy="no-referrer"
             />
             <div className="min-w-0 flex-1">
-              <p className="font-semibold leading-tight truncate">{displayName}</p>
-              {email && <p className="text-xs text-white/70 truncate">{email}</p>}
+              <p className="font-semibold leading-tight truncate">
+                {displayName}
+              </p>
+              {email && (
+                <p className="text-xs text-white/70 truncate">{email}</p>
+              )}
             </div>
             {Number(unreadCount) > 0 && (
               <span className="!bg-[#E50914] !text-white text-[11px] font-semibold rounded-full px-2 py-0.5">
@@ -157,6 +221,7 @@ export default function UserMenu() {
 
           {user ? (
             <>
+              {/* Notificări */}
               <button
                 onClick={() => {
                   navigate("/notificari");
@@ -172,7 +237,9 @@ export default function UserMenu() {
                     </span>
                   )}
                 </div>
-                <span className="flex-1 text-left font-medium">{t("notifications")}</span>
+                <span className="flex-1 text-left font-medium">
+                  {t("notifications")}
+                </span>
                 {Number(unreadCount) > 0 && (
                   <span className="text-[11px] !bg-[#E50914] !text-white rounded-full px-2 py-0.5">
                     {Number(unreadCount) > 9 ? "9+" : unreadCount}
@@ -182,6 +249,37 @@ export default function UserMenu() {
 
               <div className="h-px !bg-white/10" />
 
+              {/* Mesaje */}
+              <button
+                onClick={() => {
+                  navigate("/messages"); // schimbă dacă ruta ta e alta
+                  setOpen(false);
+                }}
+                className="flex items-center gap-3 w-full px-4 py-3 !bg-black hover:!bg-[#111] transition text-sm !text-white"
+              >
+                <div className="relative">
+                  <MessageIcon className="!text-white" />
+                  {Number(unreadMessagesCount) > 0 && (
+                    <span className="absolute -top-1 -right-1 !bg-[#E50914] !text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
+                      •
+                    </span>
+                  )}
+                </div>
+
+                <span className="flex-1 text-left font-medium">
+                  {t("messages") || "Mesaje"}
+                </span>
+
+                {Number(unreadMessagesCount) > 0 && (
+                  <span className="text-[11px] !bg-[#E50914] !text-white rounded-full px-2 py-0.5">
+                    {Number(unreadMessagesCount) > 9 ? "9+" : unreadMessagesCount}
+                  </span>
+                )}
+              </button>
+
+              <div className="h-px !bg-white/10" />
+
+              {/* Contul meu */}
               <button
                 onClick={() => {
                   navigate("/profil");
@@ -190,11 +288,30 @@ export default function UserMenu() {
                 className="flex items-center gap-3 w-full px-4 py-3 !bg-black hover:!bg-[#111] transition text-sm !text-white"
               >
                 <UserIcon className="!text-white" />
-                <span className="flex-1 text-left font-medium">{t("my_account")}</span>
+                <span className="flex-1 text-left font-medium">
+                  {t("my_account")}
+                </span>
               </button>
 
               <div className="h-px !bg-white/10" />
 
+              {/* Setări avansate */}
+              <button
+                onClick={() => {
+                  navigate("/settings");
+                  setOpen(false);
+                }}
+                className="flex items-center gap-3 w-full px-4 py-3 !bg-black hover:!bg-[#111] transition text-sm !text-white"
+              >
+                <span className="text-[18px]">⚙️</span>
+                <span className="flex-1 text-left font-medium">
+                  {t("settings.advanced") || "Setări avansate"}
+                </span>
+              </button>
+
+              <div className="h-px !bg-white/10" />
+
+              {/* Logout */}
               <button
                 onClick={() => {
                   setOpen(false);
@@ -203,7 +320,9 @@ export default function UserMenu() {
                 className="flex items-center gap-3 w-full px-4 py-3 !bg-black hover:!bg-[#2a0a0a] transition text-sm !text-[#E50914]"
               >
                 <LogoutIcon className="!text-[#E50914]" />
-                <span className="flex-1 text-left font-semibold">{t("logout")}</span>
+                <span className="flex-1 text-left font-semibold">
+                  {t("logout")}
+                </span>
               </button>
             </>
           ) : (
@@ -231,24 +350,25 @@ export default function UserMenu() {
             </>
           )}
 
-          {/* LANGUAGE — mereu vizibil, full width */}
+          {/* LANGUAGE */}
           <div className="h-px !bg-white/10" />
-            <Link
-              to="/settings/language"
-              aria-label="Change language"
-              title="Change language"
-              onClick={() => setOpen(false)}     // <-- închide meniul aici
-              className="inline-flex items-center gap-3 px-4 py-3 w-full !text-white !bg-black hover:!bg-[#0b0b0b] transition"
-            >
-              <span className="text-[20px]">🌐</span>
-              <span className="text-[14px] font-medium">Language</span>
 
-              <span className="ml-auto text-xs px-2 py-0.5 rounded-full !bg-[#00CED1] !text-black">
-                {t("current_language")}: {language}
-              </span>
-            </Link>
+          <Link
+            to="/settings/language"
+            aria-label="Change language"
+            title="Change language"
+            onClick={() => setOpen(false)}
+            className="inline-flex items-center gap-3 px-4 py-3 w-full !text-white !bg-black hover:!bg-[#0b0b0b] transition"
+          >
+            <span className="text-[20px]">🌐</span>
+            <span className="text-[14px] font-medium">Language</span>
 
-            <div className="h-2" />
+            <span className="ml-auto text-xs px-2 py-0.5 rounded-full !bg-[#00CED1] !text-black">
+              {t("current_language")}: {language}
+            </span>
+          </Link>
+
+          <div className="h-2" />
         </div>
       )}
     </div>

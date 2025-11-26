@@ -66,7 +66,7 @@ export default function EditableDJEquipment({
       {/* READ-ONLY */}
       {!editing && (
         <div
-          className="relative rounded-2xl border shadow-lg p-4 sm:p-5 bg-black text-white"
+          className="relative rounded-2xl border-none shadow-lg p-4 sm:p-5 bg-black text-white"
           style={{ borderColor: "#7c3aed" }}
         >
           {canEdit && !editing && (
@@ -97,7 +97,7 @@ export default function EditableDJEquipment({
       {editing && canEdit && (
         <div
           className="rounded-2xl p-4 sm:p-5 shadow-xl space-y-4 border bg-black text-white"
-          style={{ borderColor: "#7c3aed" }}
+          style={{ borderColor: "!transparent" }}
         >
           <div className="grid gap-2">
             {OPTIONS.map((key) => {

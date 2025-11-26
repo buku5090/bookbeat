@@ -1,5 +1,6 @@
 // components/ProfilePhotoWithAvatar.jsx
 import React, { useRef, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Pencil } from "lucide-react";
 import AvatarCropModal from "./AvatarCropModal";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -54,6 +55,7 @@ export default function ProfileAvatarWithProgress({
         const reader = new FileReader();
         reader.onloadend = () => {
           setSelectedImage(reader.result);
+          // deschidem modalul după ce avem imaginea
           setCropModalOpen(true);
         };
         reader.readAsDataURL(file);
@@ -134,9 +136,12 @@ export default function ProfileAvatarWithProgress({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 z-1000 right-0 !py-2 !px-4 border !border-white rounded !bg-black !text-white hover:!text-gray-200 hover:!bg-gray-800 transition"
               aria-label={t("avatar.change")}
               title={t("avatar.change")}
+              className="absolute bottom-2 right-2 z-20
+                         !px-3 !py-2 rounded-md border !border-white/60
+                         !bg-black/80 !text-white hover:!text-gray-200 hover:!bg-gray-800
+                         backdrop-blur transition"
             >
               <Pencil size={14} />
             </button>
@@ -152,16 +157,30 @@ export default function ProfileAvatarWithProgress({
         )}
       </div>
 
-      {cropModalOpen && selectedImage && (
-        <AvatarCropModal
-          image={selectedImage}
-          onCancel={() => {
-            setCropModalOpen(false);
-            setSelectedImage(null);
-          }}
-          onCropComplete={handleCropComplete}
-        />
-      )}
+      {/* Modal de crop randat în portal cu z-index foarte mare */}
+      {cropModalOpen && selectedImage &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
+            style={{ pointerEvents: "auto" }}
+          >
+            {/* overlay */}
+            <div className="absolute inset-0 bg-black/70" />
+            {/* container conținut (în fața overlay-ului) */}
+            <div className="relative z-10">
+              <AvatarCropModal
+                image={selectedImage}
+                onCancel={() => {
+                  setCropModalOpen(false);
+                  setSelectedImage(null);
+                }}
+                onCropComplete={handleCropComplete}
+              />
+            </div>
+          </div>,
+          document.body
+        )
+      }
     </>
   );
 }

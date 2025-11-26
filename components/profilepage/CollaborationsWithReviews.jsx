@@ -249,7 +249,7 @@ export default function CollaborationsWithReviews({
           <div className="hidden md:block pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 z-10 px-1">
             <Button
               variant="secondary"
-              className="pointer-events-auto shadow"
+              className="pointer-events-auto"
               onClick={() => scrollByPage(-1)}
               aria-label={t("collab.nav_back")}
               title={t("collab.nav_back")}
@@ -262,7 +262,7 @@ export default function CollaborationsWithReviews({
           <div className="md:hidden pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 z-10">
             <div
               aria-hidden
-              className="h-6 w-6 rounded-full bg-black/20 text-white/70 ring-1 ring-white/30 shadow-sm flex items-center justify-center text-xs"
+              className="h-6 w-6 rounded-full bg-black/20 text-white/70 ring-1 ring-white/30 flex items-center justify-center text-xs"
               title={t("collab.nav_back")}
             >
               ‹
@@ -276,16 +276,7 @@ export default function CollaborationsWithReviews({
           className="no-scrollbar overflow-x-auto overflow-y-hidden relative"
           style={{ paddingBottom: 8 }}
         >
-          {canScroll && (
-            <>
-              {!atStart && (
-                <div className="md:hidden pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white/80 to-transparent" />
-              )}
-              {!atAbsoluteEnd && (
-                <div className="md:hidden pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white/80 to-transparent" />
-              )}
-            </>
-          )}
+          {/* 👇 am șters complet gradient-ele left/right */}
 
           <div
             className="flex items-stretch"
@@ -293,8 +284,16 @@ export default function CollaborationsWithReviews({
           >
             {leftPad > 0 && <div style={{ width: leftPad, flex: "0 0 auto" }} />}
             {data.slice(startIndex, endIndex).map((c) => (
-              <div key={c.id} style={{ width: ITEM_WIDTH, flex: "0 0 auto" }} className="px-2">
-                <CollaborationCard collab={c} viewerSide={side} authUser={authUser} />
+              <div
+                key={c.id}
+                style={{ width: ITEM_WIDTH, flex: "0 0 auto" }}
+                className="px-2"
+              >
+                <CollaborationCard
+                  collab={c}
+                  viewerSide={side}
+                  authUser={authUser}
+                />
               </div>
             ))}
             {rightPad > 0 && <div style={{ width: rightPad, flex: "0 0 auto" }} />}
@@ -306,7 +305,7 @@ export default function CollaborationsWithReviews({
           <div className="hidden md:block pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 z-10 px-1">
             <Button
               variant="secondary"
-              className="pointer-events-auto shadow"
+              className="pointer-events-auto"
               onClick={() => scrollByPage(1)}
               aria-label={t("collab.nav_forward")}
               title={t("collab.nav_forward")}
@@ -319,7 +318,7 @@ export default function CollaborationsWithReviews({
           <div className="md:hidden pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 z-10">
             <div
               aria-hidden
-              className="h-6 w-6 rounded-full bg-black/20 text-white/70 ring-1 ring-white/30 shadow-sm flex items-center justify-center text-xs"
+              className="h-6 w-6 rounded-full bg-black/20 text-white/70 flex items-center justify-center text-xs"
               title={t("collab.nav_forward")}
             >
               ›

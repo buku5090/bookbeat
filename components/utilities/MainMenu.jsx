@@ -140,7 +140,7 @@ export default function MainMenu() {
           </nav>
 
           {/* Mobile: ☰ toggle + UserMenu (UserMenu DUPĂ iconiță) */}
-          <div className="md:hidden flex items-center gap-3">
+          <div className="md:hidden flex items-center gap-1">
             <button
               ref={toggleRef}
               onClick={() => setMobileMenuOpen((v) => !v)}

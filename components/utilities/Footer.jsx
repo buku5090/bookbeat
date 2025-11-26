@@ -15,6 +15,7 @@ export default function Footer() {
           <a href="/despre" className="hover:underline">{t("footer.about")}</a>
           <a href="/contact" className="hover:underline">{t("footer.contact")}</a>
           <a href="/termeni" className="hover:underline">{t("footer.terms")}</a>
+          <a className="hover:underline">varianta 1.02</a>
         </div>
       </div>
     </footer>

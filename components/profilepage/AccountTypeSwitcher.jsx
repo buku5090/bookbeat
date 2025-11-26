@@ -1,7 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import SectionTitle from "../styling/SectionTitle";
 import { useTranslation } from "react-i18next";
 
+/**
+ * AccountTypeSwitcher
+ * - Neonish BookMix UI
+ * - Fully controlled component: it only reflects `value`
+ * - IMPORTANT: parent MUST update `value` when onConfirm fires
+ */
 export default function AccountTypeSwitcher({
   value,
   onConfirm,
@@ -16,9 +22,18 @@ export default function AccountTypeSwitcher({
     onConfirm?.({ field: "type", value: tVal });
   };
 
-  const base = "flex-1 py-2 px-4 rounded-lg border transition text-sm font-medium";
-  const active = "!bg-black !text-white border-black";
-  const inactive = "!bg-white !text-black !border-gray-300 hover:bg-gray-50";
+  const base =
+    "flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-all duration-200 " +
+    "relative overflow-hidden select-none disabled:opacity-40 disabled:cursor-not-allowed";
+
+  const active =
+    "!bg-[#8A2BE2] !text-white !border-[#8A2BE2] !shadow-[0_0_12px_#8A2BE280] " +
+    "!ring-2 !ring-[#c9afff] !scale-[1.03]";
+
+  const inactive =
+    "!bg-black/40 !text-white/70 !border-white/10 " +
+    "hover:!bg-[#9b5cff]/10 hover:!text-white hover:!border-[#9b5cff]/60 " +
+    "hover:!shadow-[0_0_8px_#9b5cff66]";
 
   const isArtist = value === "artist";
   const isLocation = value === "location";
@@ -54,16 +69,48 @@ export default function AccountTypeSwitcher({
       </div>
 
       {!isArtist && !isLocation && (
-        <p className="mt-2 text-xs text-gray-600">
+        <p className="mt-2 text-xs text-gray-400">
           {t("account_type.current_user")}
         </p>
       )}
 
       {(isArtist || isLocation) && (
-        <p className="mt-2 text-xs text-gray-600">
-          {t("account_type.current_selected", { type: t(`account_type.${value}`) })}
+        <p className="mt-2 text-xs text-gray-400">
+          {t("account_type.current_selected", {
+            type: t(`account_type.${value}`),
+          })}
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * OPTIONAL DEMO/REFERENCE USAGE
+ * If your switcher "doesn't work", compare your parent to this.
+ * You can delete this export in your project if you don't need it.
+ */
+export function AccountTypeSwitcherDemo({ initialType = "" }) {
+  const [type, setType] = useState(initialType);
+
+  // Example: sync from props/user if needed
+  useEffect(() => {
+    setType(initialType || "");
+  }, [initialType]);
+
+  const handleConfirm = ({ field, value }) => {
+    if (field === "type") {
+      setType(value); // <-- THIS is the crucial line your parent must do
+    }
+    // then you can save to Firebase / context / redux, etc.
+  };
+
+  return (
+    <div className="max-w-sm">
+      <AccountTypeSwitcher value={type} onConfirm={handleConfirm} />
+      <div className="mt-3 text-xs text-white/70">
+        Current value in parent: <span className="text-white">{type || "—"}</span>
+      </div>
     </div>
   );
 }

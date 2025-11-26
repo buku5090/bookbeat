@@ -75,8 +75,7 @@ export default function CityAutocomplete({
           type="button"
           onClick={handlePencil}
           aria-label="Editează orașul"
-          className="absolute top-1/2 right-3 -translate-y-1/2 p-1.5 border border-white/20 rounded-md 
-                     bg-black text-white hover:text-gray-200 hover:bg-gray-800 transition"
+          className="absolute top-0 right-0 !py-2 !px-4 border !border-white rounded !bg-black !text-white hover:!text-gray-200 hover:!bg-gray-800 transition"
         >
           <Pencil size={14} />
         </button>

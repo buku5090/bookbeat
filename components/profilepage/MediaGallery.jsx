@@ -1,13 +1,20 @@
 // components/MediaGallery.jsx
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Trash2, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button, Dialog, DialogContent } from "../uiux";
+import { Button } from "../uiux";
 import { storage } from "../../src/firebase";
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 import { useTranslation } from "react-i18next";
+import { useGlobalDialog } from "../../context/GlobalDialogContext";
 
 /* ---------------- helpers ---------------- */
-const isValidUrlish = (s = "") => /^(https?:\/\/|blob:|data:image\/)/i.test(String(s).trim());
+const isValidUrlish = (s = "") =>
+  /^(https?:\/\/|blob:|data:image\/)/i.test(String(s).trim());
 
 function normalizeItems(arr = []) {
   const out = [];
@@ -33,7 +40,10 @@ function normalizeItems(arr = []) {
   return out;
 }
 
-const sig = (list = []) => normalizeItems(list).map((it) => `${it.id}|${it.url}`).join(";");
+const sig = (list = []) =>
+  normalizeItems(list)
+    .map((it) => `${it.id}|${it.url}`)
+    .join(";");
 
 async function getImageDimensions(file) {
   return new Promise((resolve, reject) => {
@@ -53,7 +63,181 @@ async function getImageDimensions(file) {
   });
 }
 
-/* ---------------- component ---------------- */
+/* --------- Lightbox content rendered inside GlobalDialog --------- */
+function GalleryLightbox({ images, startIndex = 0 }) {
+  const { closeDialog } = useGlobalDialog();
+  const [index, setIndex] = useState(startIndex);
+  const [isFading, setIsFading] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false); // 👈 pt. border după load
+  const fadeTimeoutRef = useRef(null);
+
+  const hasMultiple = images.length > 1;
+  const current = images[index] || images[0];
+
+  const changeImage = useCallback(
+    (delta) => {
+      if (!hasMultiple || isFading || images.length <= 1) return;
+
+      setIsFading(true);
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+
+      fadeTimeoutRef.current = window.setTimeout(() => {
+        setIndex((prev) => {
+          const len = images.length || 1;
+          return (prev + delta + len) % len;
+        });
+        setIsLoaded(false); // 👈 resetăm încărcarea la schimbarea pozei
+        setIsFading(false);
+      }, 160);
+    },
+    [hasMultiple, isFading, images.length]
+  );
+
+  const goNext = useCallback(() => changeImage(+1), [changeImage]);
+  const goPrev = useCallback(() => changeImage(-1), [changeImage]);
+
+  // SWIPE HANDLERS (mobil)
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const onTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const onTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    const delta = touchEndX.current - touchStartX.current;
+    if (Math.abs(delta) < 50) return;
+    if (delta < 0) goNext();
+    if (delta > 0) goPrev();
+  };
+
+  // ESC + săgeți desktop
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeDialog();
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goNext();
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [closeDialog, goNext, goPrev]);
+
+  useEffect(() => {
+    return () => {
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (!current) return null;
+
+  return (
+    <div
+      className="
+        relative w-full h-full    // 👈 nu mai e fixed inset-0
+        bg-black
+        select-none
+        flex flex-col items-center justify-center
+      "
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* CADRUL IMAGINII */}
+      <div
+        className="
+          w-fit max-w-3xl mx-auto
+          h-[60vh] sm:h-[70vh]
+          flex items-center justify-center
+        "
+      >
+        <img
+          src={current.url}
+          alt=""
+          onClick={goNext}               // 👈 tap/click pe poză = next
+          onLoad={() => setIsLoaded(true)} // 👈 când s-a încărcat, afișăm border
+          className={`
+            h-full max-w-[90%]
+            object-cover object-center
+            rounded-xl shadow-xl
+            ${isLoaded ? "border-4 border-pink-400" : "border-0"} 
+            transition-all duration-200 ease-out
+            ${isFading ? "opacity-0" : "opacity-100"}
+          `}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+
+      {/* NAVIGAȚIE – desktop */}
+      {hasMultiple && (
+        <>
+          <button
+            onClick={goPrev}
+            className="
+              hidden sm:flex
+              absolute left-4 sm:left-8
+              top-1/2 -translate-y-1/2 z-40 p-3
+              !bg-transparent border !border-[#FF4FB0] rounded-full
+              hover:bg-white/20 transition
+            "
+          >
+            <ChevronLeft className="w-7 h-7 text-white" />
+          </button>
+
+          <button
+            onClick={goNext}
+            className="
+              hidden sm:flex
+              absolute right-4 sm:right-8
+              top-1/2 -translate-y-1/2 z-40 p-3
+              !bg-transparent border !border-[#FF4FB0] rounded-full
+              hover:!border-transition
+            "
+          >
+            <ChevronRight className="w-7 h-7 text-white" />
+          </button>
+        </>
+      )}
+
+      {/* INDICATOARE */}
+      {hasMultiple && (
+        <div className="mt-4 mb-10 flex justify-center gap-2">
+          {images.map((img, i) => (
+            <span
+              key={img.id || img.url}
+              className={`
+                h-2 rounded-full transition-all
+                ${i === index ? "w-7 bg-pink-400" : "w-3 bg-white/60"}
+              `}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
+/* ---------------- component principal ---------------- */
 export default function MediaGallery({
   canEdit,
   authUser,
@@ -70,18 +254,17 @@ export default function MediaGallery({
   onValidationError,
 }) {
   const { t } = useTranslation();
+  const { openDialog } = useGlobalDialog();
 
   const [list, setList] = useState(() => normalizeItems(items));
   const [uploadError, setUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [lbLoading, setLbLoading] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => setList(normalizeItems(items)), [items]);
 
   const signature = useMemo(() => sig(list), [list]);
+
   useEffect(() => {
     const cleaned = normalizeItems(list);
     if (sig(cleaned) !== signature) {
@@ -110,7 +293,9 @@ export default function MediaGallery({
       return;
     }
 
-    const imageFiles = files.filter((f) => f.type.startsWith("image/")).slice(0, remaining);
+    const imageFiles = files
+      .filter((f) => f.type.startsWith("image/"))
+      .slice(0, remaining);
     if (imageFiles.length === 0) {
       e.target.value = "";
       return;
@@ -119,7 +304,12 @@ export default function MediaGallery({
     setUploadError("");
     setUploading(true);
     const results = [];
-    const skipped = { tooLargeBytes: 0, tooSmallRes: 0, tooBigRes: 0, other: 0 };
+    const skipped = {
+      tooLargeBytes: 0,
+      tooSmallRes: 0,
+      tooBigRes: 0,
+      other: 0,
+    };
 
     try {
       for (const f of imageFiles) {
@@ -154,7 +344,12 @@ export default function MediaGallery({
 
       if (results.length) emit([...list, ...results]);
 
-      if (skipped.tooLargeBytes || skipped.tooSmallRes || skipped.tooBigRes || skipped.other) {
+      if (
+        skipped.tooLargeBytes ||
+        skipped.tooSmallRes ||
+        skipped.tooBigRes ||
+        skipped.other
+      ) {
         const msg = t("mediaGallery.some_ignored", {
           bytes: skipped.tooLargeBytes,
           small: skipped.tooSmallRes,
@@ -164,10 +359,17 @@ export default function MediaGallery({
           minW: minWidth,
           minH: minHeight,
           maxW: maxWidth,
-          maxH: maxHeight
+          maxH: maxHeight,
         });
         setUploadError(msg);
-        onValidationError?.(msg, { ...skipped, maxFileSizeMB, minWidth, minHeight, maxWidth, maxHeight });
+        onValidationError?.(msg, {
+          ...skipped,
+          maxFileSizeMB,
+          minWidth,
+          minHeight,
+          maxWidth,
+          maxHeight,
+        });
       }
     } finally {
       setUploading(false);
@@ -193,56 +395,23 @@ export default function MediaGallery({
     emit(list.filter((x) => (x.id || x.url) !== (it.id || it.url)));
   };
 
+  const renderList = useMemo(
+    () => list.filter((it) => it && isValidUrlish(it.url)),
+    [list]
+  );
+
   const openLightbox = (idx) => {
-    setLightboxIndex(idx);
-    setLbLoading(true);
-    setLightboxOpen(true);
+    if (!renderList.length) return;
+
+    openDialog({
+      title: "",
+      widthClass: "w-screen max-w-none",
+      heightClass: "h-screen",
+      bgClass: "bg-black",
+      fullscreen: true, // 👈 nou
+      content: <GalleryLightbox images={renderList} startIndex={idx} />,
+    });
   };
-
-  const next = useCallback(() => {
-    if (!list.length) return;
-    setLbLoading(true);
-    setLightboxIndex((i) => (i + 1) % list.length);
-  }, [list.length]);
-
-  const prev = useCallback(() => {
-    if (!list.length) return;
-    setLbLoading(true);
-    setLightboxIndex((i) => (i - 1 + list.length) % list.length);
-  }, [list.length]);
-
-  useEffect(() => {
-    if (!lightboxOpen || !list.length) return;
-    const cur = new Image();
-    cur.src = list[lightboxIndex]?.url || "";
-    const n = new Image();
-    n.src = list[(lightboxIndex + 1) % list.length]?.url || "";
-    const p = new Image();
-    p.src = list[(lightboxIndex - 1 + list.length) % list.length]?.url || "";
-  }, [lightboxOpen, lightboxIndex, list.length]);
-
-  useEffect(() => {
-    if (!lightboxOpen || typeof window === "undefined") return;
-    const onKey = (e) => {
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        if (renderList.length > 1) next();
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        if (renderList.length > 1) prev();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        setLightboxOpen(false);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxOpen, next, prev]);
-
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    setLbLoading(true);
-  }, [lightboxIndex, lightboxOpen]);
 
   const onAddClick = () => {
     if (atLimit) {
@@ -255,17 +424,18 @@ export default function MediaGallery({
   const showAddButton = canEdit && (addButtonMode === "disable" || !atLimit);
   const addDisabled = addButtonMode === "disable" && atLimit;
 
-  const renderList = useMemo(() => list.filter((it) => it && isValidUrlish(it.url)), [list]);
-
   return (
     <section className="relative">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
         {renderList.map((img, idx) => (
-          <div key={img.id || img.url} className="relative group aspect-square overflow-hidden rounded-lg border">
+          <div
+            key={img.id || img.url}
+            className="relative group aspect-square overflow-hidden rounded-lg border border-neutral-800 bg-black"
+          > {/* thumbnail */}
             <img
               src={img.url}
               alt=""
-              className="w-full h-full object-cover cursor-zoom-in will-change-transform"
+              className="w-full h-full object-cover cursor-zoom-in will-change-transform group-hover:scale-[1.02] transition-transform"
               onClick={() => openLightbox(idx)}
               onError={() => handleImgError(img)}
               loading="lazy"
@@ -274,25 +444,15 @@ export default function MediaGallery({
 
             {canEdit && (
               <Button
-                variant="outline"
                 onClick={() => deleteOne(img)}
-                className="!bg-white hover:!bg-gray-200 !border-gray-200 absolute top-2 right-2 transition !px-3"
+                className="group !bg-black/80 hover:!bg-black !border-[#8A2BE2] group-hover:!border-[#E50914] absolute top-2 right-2 transition !px-3"
                 title={t("common.delete")}
                 aria-label={t("common.delete")}
               >
-                <Trash2 className="w-4 h-4 text-black" />
+                <Trash2 className="w-4 h-4 text-white group-hover:text-[#E50914] transition" />
               </Button>
             )}
 
-            <Button
-              variant="outline"
-              onClick={() => openLightbox(idx)}
-              className="absolute bottom-2 right-2 !bg-white hover:!bg-gray-200 !border-gray-200 hidden md:flex transition !px-3"
-              title={t("mediaGallery.enlarge")}
-              aria-label={t("mediaGallery.enlarge")}
-            >
-              <Maximize2 className="w-4 h-4 text-black" />
-            </Button>
           </div>
         ))}
 
@@ -302,8 +462,9 @@ export default function MediaGallery({
             onClick={onAddClick}
             disabled={addDisabled || uploading}
             className={[
-              "!bg-gray-300 aspect-square rounded-lg border-2 border-dashed flex items-center justify-center",
-              "text-3xl text-gray-400 hover:text-white hover:!border-white",
+              "aspect-square rounded-lg border-2 border-dashed flex items-center justify-center",
+              "bg-neutral-900 border-neutral-700 text-3xl text-neutral-500",
+              "hover:text-white hover:border-pink-500 hover:bg-neutral-800",
               addDisabled || uploading ? "opacity-50 cursor-not-allowed" : "",
             ].join(" ")}
             title={
@@ -333,7 +494,7 @@ export default function MediaGallery({
             onChange={handleFiles}
             disabled={addDisabled}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-neutral-400 mt-1">
             {max > 1
               ? t("mediaGallery.hint_multi", {
                   max,
@@ -341,78 +502,11 @@ export default function MediaGallery({
                 })
               : t("mediaGallery.hint_single")}
           </p>
-          {uploadError && <p className="text-xs text-red-600 mt-1">{uploadError}</p>}
+          {uploadError && (
+            <p className="text-xs text-red-500 mt-1">{uploadError}</p>
+          )}
         </>
       )}
-
-      {/* Lightbox */}
-      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-6xl p-0 bg-black/95">
-          <div
-            className="relative w-full h-[80vh] sm:h-[82vh] flex items-center justify-center"
-            onTouchStart={(e) => {
-              const t0 = e.touches?.[0];
-              e.currentTarget.dataset.tsx = String(t0?.clientX ?? 0);
-              e.currentTarget.dataset.tsy = String(t0?.clientY ?? 0);
-            }}
-            onTouchEnd={(e) => {
-              const sx = Number(e.currentTarget.dataset.tsx || 0);
-              const sy = Number(e.currentTarget.dataset.tsy || 0);
-              const t1 = e.changedTouches?.[0];
-              if (!t1) return;
-              const dx = t1.clientX - sx,
-                dy = t1.clientY - sy;
-              if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-                dx < 0 ? next() : prev();
-              }
-            }}
-          >
-            {renderList.length > 0 && (
-              <>
-                {lbLoading && (
-                  <div className="absolute inset-0 grid place-items-center">
-                    <div className="h-10 w-10 rounded-full border-4 border-white/30 border-t-white animate-spin" />
-                  </div>
-                )}
-                <img
-                  src={renderList[lightboxIndex]?.url}
-                  alt=""
-                  className={[
-                    "max-h-full max-w-full object-contain select-none transition-opacity duration-200",
-                    lbLoading ? "opacity-0" : "opacity-100",
-                  ].join(" ")}
-                  loading="eager"
-                  fetchpriority="high"
-                  decoding="async"
-                  onLoad={() => setLbLoading(false)}
-                  draggable={false}
-                />
-                {renderList.length > 1 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={prev}
-                      aria-label={t("common.prev")}
-                      className="absolute left-0 !bg-white"
-                    >
-                      <ChevronLeft className="w-15 h-15 sm:w-10 sm:h-10 !text-gray-800" strokeWidth={2.5} />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={next}
-                      aria-label={t("common.next")}
-                      className="absolute right-0 !bg-white"
-                    >
-                      <ChevronRight className="w-15 h-15 sm:w-10 sm:h-10 !text-gray-800" strokeWidth={2.5} />
-                    </button>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }
