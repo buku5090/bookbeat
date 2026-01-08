@@ -7,7 +7,6 @@ import EditableGenres from "../editablecontent/EditableGenres";
 import CollaborationsWithReviews from "./CollaborationsWithReviews";
 import ArtistDemos from "./ArtistDemos";
 import LocationAddressSimple from "./LocationAddressSimple";
-import AvailabilityCalendar from "./AvailabilityCalendar";
 import MediaGallery from "./MediaGallery";
 import { useTranslation } from "react-i18next";
 
@@ -164,24 +163,6 @@ export default function RightPanel({
           </Card>
         </>
       )}
-
-      {/* Availability */}
-      <SectionTitle>{t("availability.title")}</SectionTitle>
-      <Card>
-        {!userData?.type ? (
-          <p className="text-xs text-white/60">
-            {t("availability.choose_account_type")}
-          </p>
-        ) : (
-          <AvailabilityCalendar
-            /* Always load the calendar for the profile being viewed */
-            userId={profileUid}
-            currentUser={authUser}
-            type={isArtist ? "artist" : isLocation ? "location" : undefined}
-            editable={!!isOwnProfile}
-          />
-        )}
-      </Card>
 
       {/* Media Gallery */}
       <SectionTitle>{t("profile.media_gallery")}</SectionTitle>

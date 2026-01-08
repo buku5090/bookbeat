@@ -291,7 +291,7 @@ export default function NotificationsPage() {
                       navigate(`/messages/${n.fromUserId}`);
                     }
                   }}
-                  className={`relative group px-4 sm:px-6 py-4 sm:py-5 flex items-start gap-4 sm:gap-6 transition-colors ${
+                  className={`relative !overflow-hidden group px-4 sm:px-6 py-4 sm:py-5 flex items-start gap-4 sm:gap-6 transition-colors ${
                     isUnread ? "bg-black" : "opacity-90"
                   } ${isMessage ? "cursor-pointer hover:bg-[#0b0b0b]" : ""}`}
                 >

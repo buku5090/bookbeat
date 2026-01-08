@@ -90,6 +90,13 @@
   line-height: 1;                /* line-height reset, centrat oricum cu flex */
 }
 
+.no-scroll {
+  position: fixed;
+  overflow: hidden !important;
+  width: 100%;
+}
+
+
 /* ======= Responsive – defaults globale ======= */
 /* Pe ecrane mai mici, reducem diametrul implicit al bulinelor.
    Notă: instanțele cu .cal-compact își păstrează override-ul lor. */

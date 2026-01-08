@@ -11,11 +11,6 @@ import AccountTypeSwitcher from "./AccountTypeSwitcher";
 import SectionTitle from "../styling/SectionTitle";
 import CityAutocomplete from "./CityAutocomplete";
 import InlineSelect from "../editablecontent/InlineSelect";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
-import { ro } from "date-fns/locale";
-import { startOfDay, isBefore } from "date-fns";
-import { useGlobalDialog } from "../../context/GlobalDialogContext";
 import { useNavigate } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
@@ -45,7 +40,6 @@ export default function LeftPanel({
   locationTypes,
 }) {
   const { t } = useTranslation();
-  const { openDialog } = useGlobalDialog();
   const navigate = useNavigate();
 
   /* ---------------- Tip cont local pentru UI instant ---------------- */
@@ -199,204 +193,69 @@ export default function LeftPanel({
     </div>
   );
 
+    // ---------------------------
+    // ---------------------------
+  // MY BOOKINGS (doar pentru propriul profil)
   // ---------------------------
-  // BOOK MODAL (GlobalDialog)
-  // ---------------------------
-  const openBookDialog = useCallback(() => {
+  const handleGoToMyBookings = useCallback(() => {
     if (!authUser?.uid) {
       navigate("/login");
       return;
     }
 
-    const isMobile =
-      typeof window !== "undefined" && window.innerWidth < 640;
+    // înainte: navigate("/my-bookings");
+    // acum îl ducem în BookArtistPage pentru propriul profil
+    navigate(`/book/${authUser.uid}`);
+  }, [authUser?.uid, navigate]);
 
-    openDialog({
-      title: isArtist
-        ? "Book artist"
-        : isLocation
-        ? "Book location"
-        : "Book",
-      fullscreen: isMobile,
-      widthClass: isMobile ? "w-full" : "w-full max-w-sm sm:max-w-4xl",
-      heightClass: isMobile ? "h-[100dvh]" : "max-h-[90vh]",
-      bgClass: "bg-neutral-950",
-      content: ({ closeDialog }) => {
-        // state LOCAL în dialog (ca să poți scrie)
-        const todayStart = startOfDay(new Date());
-        const [localMonth, setLocalMonth] = useState(todayStart);
-        const [dialogRange, setDialogRange] = useState({
-          from: undefined,
-          to: undefined,
-        });
-        const [dialogForm, setDialogForm] = useState({
-          title: "",
-          notes: "",
-        });
+  // ---------------------------
+  // MESAJELE MELE (inbox/chat root)
+  // ---------------------------
+  const handleGoToMyMessages = useCallback(() => {
+    if (!authUser?.uid) {
+      navigate("/login");
+      return;
+    }
 
-        const disabledDay = (date) => isBefore(date, todayStart);
+    // adaptează la routing-ul tău real: /messages, /chat, etc.
+    navigate("/messages");
+  }, [authUser?.uid, navigate]);
 
-        const sendRequest = async () => {
-          if (!dialogRange?.from || !dialogRange?.to) return;
 
-          try {
-            const targetUid =
-              userData?.uid || userData?.id || userData?.userId;
+  // ---------------------------
+  // BOOK MODAL (GlobalDialog)
+  // ---------------------------
+  const handleGoToVerificationPage = useCallback(() => {
+    // doar userul autenticat își poate cere verificarea
+    if (!authUser?.uid) {
+      navigate("/login");
+      return;
+    }
 
-            if (!targetUid) {
-              console.warn("No target UID for booking request.");
-              return;
-            }
+    if (!isOwnProfile) return;
 
-            // notificare la owner-ul profilului
-            await addDoc(
-              collection(db, `users/${targetUid}/notifications`),
-              {
-                type: "booking_request",
-                read: false,
-                createdAt: serverTimestamp(),
+    navigate("/verification");
+  }, [authUser?.uid, isOwnProfile, navigate]);
 
-                // cine cere
-                fromUserId: authUser.uid,
-                fromName:
-                  authUser.displayName ||
-                  authUser.email ||
-                  "User",
-                fromPhotoURL: authUser.photoURL || "",
+  // ---------------------------
+  // BOOK (redirect la /book/:id)
+  // ---------------------------
+  const handleBookClick = useCallback(() => {
+    if (!authUser?.uid) {
+      navigate("/login");
+      return;
+    }
 
-                // pentru cine
-                toUserId: targetUid,
+    // id-ul public al profilului (artist sau locație)
+    const targetUid =
+      userData?.uid || userData?.id || userData?.userId;
 
-                // detalii booking
-                rangeFrom: dialogRange.from,
-                rangeTo: dialogRange.to,
-                title: dialogForm.title || "",
-                notes: dialogForm.notes || "",
-                targetType: isArtist
-                  ? "artist"
-                  : isLocation
-                  ? "location"
-                  : "user",
-              }
-            );
+    // nu are sens să te book-uiești pe tine
+    if (!targetUid || targetUid === authUser.uid) return;
 
-            closeDialog?.();
-          } catch (e) {
-            console.error("Booking request error:", e);
-          }
-        };
+    navigate(`/book/${targetUid}`);
+  }, [authUser?.uid, userData?.uid, userData?.id, userData?.userId, navigate]);
 
-        return (
-          <div
-            className="
-              w-full h-full min-h-0
-              overflow-y-auto overscroll-contain
-              px-1 sm:px-2 pb-24 sm:pb-4
-            "
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Calendar */}
-              <div className="rounded-2xl border border-neutral-800 bg-black p-3">
-                <DayPicker
-                  locale={ro}
-                  mode="range"
-                  weekStartsOn={1}
-                  showOutsideDays
-                  fixedWeeks
-                  defaultMonth={todayStart}
-                  startMonth={todayStart}
-                  month={localMonth}
-                  onMonthChange={(m) => setLocalMonth(m || todayStart)}
-                  disabled={disabledDay}
-                  selected={dialogRange}
-                  onSelect={setDialogRange}
-                  className="!bg-black !text-white !p-0 !m-0"
-                  styles={{
-                    caption: { color: "#ffffff", textAlign: "left" },
-                    head_cell: { color: "#a3a3a3" },
-                    day: { borderRadius: "10px" },
-                    day_selected: {
-                      background:
-                        "linear-gradient(135deg, #8A2BE2, #ff4b9f)",
-                      color: "#ffffff",
-                    },
-                    day_today: { border: "1px solid #8A2BE2" },
-                  }}
-                />
-                <p className="mt-2 text-xs text-neutral-400">
-                  Sfârșitul este exclusiv (se salvează +1 zi automat).
-                </p>
-              </div>
-
-              {/* Form */}
-              <div className="space-y-3">
-                {/* Aici presupunem că ai deja Label / Input / Textarea în proiect */}
-                {/* Dacă nu, înlocuiește cu componenta ta de input */}
-                <div className="grid grid-cols-1 gap-2">
-                  <label className="text-xs font-semibold text-neutral-300">
-                    Titlu
-                  </label>
-                  <input
-                    autoFocus
-                    value={dialogForm.title}
-                    onChange={(e) =>
-                      setDialogForm((s) => ({
-                        ...s,
-                        title: e.target.value,
-                      }))
-                    }
-                    placeholder="Ex: Eveniment privat"
-                    className="bg-black border border-neutral-700 text-white placeholder:text-neutral-500 focus:ring-2 focus:ring-violet-500 rounded-lg px-3 py-2 text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-2">
-                  <label className="text-xs font-semibold text-neutral-300">
-                    Detalii (opțional)
-                  </label>
-                  <textarea
-                    rows={6}
-                    value={dialogForm.notes}
-                    onChange={(e) =>
-                      setDialogForm((s) => ({
-                        ...s,
-                        notes: e.target.value,
-                      }))
-                    }
-                    placeholder="Detalii despre eveniment..."
-                    className="bg-black border border-neutral-700 text-white placeholder:text-neutral-500 focus:ring-2 focus:ring-violet-500 rounded-lg px-3 py-2 text-sm"
-                  />
-                </div>
-
-                {/* Footer sticky pe mobil */}
-                <div
-                  className="
-                    sticky bottom-0 left-0 right-0
-                    bg-neutral-950/95 backdrop-blur
-                    pt-3 pb-4 flex justify-end gap-2
-                  "
-                >
-                  <Button variant="outline" onClick={() => closeDialog?.()}>
-                    Anulează
-                  </Button>
-                  <Button
-                    onClick={sendRequest}
-                    disabled={
-                      !dialogRange?.from ||
-                      !dialogRange?.to ||
-                      dialogRange.from < todayStart
-                    }
-                  >
-                    Trimite cererea
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      },
-    });
-  }, [authUser, userData, isArtist, isLocation, openDialog, navigate]);
 
   // ---------------------------
   // BUTON "TRIMITE MESAJ"
@@ -431,29 +290,49 @@ export default function LeftPanel({
           />
         </div>
 
-        {/* Book + Trimite mesaj (doar când vezi alt profil) */}
-        {!isOwnProfile && (
-          <div className="mt-3 w-full flex flex-col gap-2 px-4">
-            {(isArtist || isLocation) && (
+        {/* Zona butoanelor sub avatar */}
+        <div className="mt-3 w-full flex flex-col gap-2 px-4">
+          {isOwnProfile ? (
+            <>
               <Button
                 variant="primary"
                 className="w-full !bg-violet-600 hover:!bg-violet-700"
-                onClick={openBookDialog}
+                onClick={handleGoToMyBookings}
               >
-                {isArtist ? "Book artist" : "Book location"}
+                My bookings
               </Button>
-            )}
 
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleSendMessage}
-            >
-              Trimite mesaj
-            </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleGoToMyMessages}
+              >
+                Mesajele mele
+              </Button>
+            </>
+          ) : (
+            <>
+              {(isArtist || isLocation) && (
+                <Button
+                  variant="primary"
+                  className="w-full !bg-violet-600 hover:!bg-violet-700"
+                  onClick={handleBookClick}
+                >
+                  {isArtist ? "Book artist" : "Book location"}
+                </Button>
+              )}
 
-          </div>
-        )}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleSendMessage}
+              >
+                Trimite mesaj
+              </Button>
+            </>
+          )}
+        </div>
+
 
         {/* Username */}
         <p
@@ -654,7 +533,7 @@ export default function LeftPanel({
           </div>
           <Button
             variant="primary"
-            onClick={onOpenKYC}
+            onClick={handleGoToVerificationPage}
             disabled={!canRequestVerification || !isOwnProfile}
           >
             {verificationStatus === "verified"
@@ -662,6 +541,7 @@ export default function LeftPanel({
               : t("kyc.verify_btn")}
           </Button>
         </div>
+
       </div>
 
       {/* AICI trebuie să ai modalul tău de confirmare.

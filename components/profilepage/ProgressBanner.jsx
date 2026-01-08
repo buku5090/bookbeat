@@ -4,13 +4,15 @@ import { useTranslation } from "react-i18next";
 export default function ProgressBanner({ isTypeChosen, percent, missing }) {
   const { t } = useTranslation();
   const ok = percent >= 100;
+
+  // dacă profilul e complet -> nu mai afișăm bannerul deloc
+  if (ok) return null;
+
   return (
     <div
       className={`mb-4 text-sm font-medium rounded px-4 py-2 ${
         !isTypeChosen
           ? "bg-amber-600 text-amber-800"
-          : ok
-          ? "bg-green-600 text-green-800"
           : "bg-yellow-600 text-yellow-800"
       }`}
       role="status"
@@ -18,8 +20,6 @@ export default function ProgressBanner({ isTypeChosen, percent, missing }) {
     >
       {!isTypeChosen
         ? t("progressBanner.choose_type")
-        : ok
-        ? t("progressBanner.complete")
         : t("progressBanner.progress", {
             percent,
             missing: (missing || []).join(", "),

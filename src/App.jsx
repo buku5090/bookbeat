@@ -33,6 +33,8 @@ const AdvancedSettingsPage = lazy(() => import("../pages/AdvancedSettingsPage"))
 const LanguageSettingsPage = lazy(() => import("../pages/LanguageSettingsPage"));
 const Test = lazy(() => import("../pages/Test"));
 const MessagesPage = lazy(() => import("../pages/MessagesPage"));
+const VerificationCenterPage = lazy(() => import("../pages/VerificationCenterPage"));
+const BookArtistPage = lazy(() => import("../pages/BookArtistPage"));
 
 // alias helper: /profile/:id -> /user/:id
 function ProfileIdAlias() {
@@ -105,6 +107,20 @@ function AppShell() {
           <Route path="/user" element={<Navigate to="/profil" replace />} />
           <Route path="/settings" element={<AdvancedSettingsPage />} />
 
+          {/* noua pagină de booking – pentru artiști ȘI locații */}
+          <Route
+            path="/book/:id"
+            element={
+              <RequireAuth>
+                <BookArtistPage />
+              </RequireAuth>
+            }
+          />
+
+
+          {/* verificare */}
+          <Route path="/verification" element={<VerificationCenterPage />} />
+
           {/* Test */}
           <Route path="/test" element={<Test />} />
 
@@ -113,7 +129,7 @@ function AppShell() {
         </Routes>
       </Suspense>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

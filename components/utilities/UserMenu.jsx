@@ -1,3 +1,4 @@
+// components/.../UserMenu.jsx
 import { useState, useEffect, useRef, useMemo } from "react";
 import { auth, db } from "../../src/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -79,7 +80,7 @@ export default function UserMenu() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
-  // ✅ avatar stabil, nu se schimbă la open/close
+  // avatar stabil
   const [stableAvatarSrc, setStableAvatarSrc] = useState(placeholderAvatar);
 
   const menuRef = useRef(null);
@@ -97,6 +98,7 @@ export default function UserMenu() {
     return () => unsub();
   }, [user?.uid]);
 
+  // toate notificările necitite
   useEffect(() => {
     if (!user?.uid) return setUnreadCount(0);
     const q = query(
@@ -107,12 +109,13 @@ export default function UserMenu() {
     return () => unsub();
   }, [user?.uid]);
 
-  // 🔔 Mesaje necitite (ajustează path-ul dacă schema ta e alta)
+  // mesaje necitite = notificări de tip "message.new" necitite
   useEffect(() => {
     if (!user?.uid) return setUnreadMessagesCount(0);
 
     const q = query(
-      collection(db, `users/${user.uid}/messages`),
+      collection(db, `users/${user.uid}/notifications`),
+      where("type", "==", "message.new"),
       where("read", "==", false)
     );
 
@@ -123,12 +126,10 @@ export default function UserMenu() {
     return () => unsub();
   }, [user?.uid]);
 
-  // ✅ actualizează avatarul stabil DOAR când se schimbă user/profile, nu când se deschide meniul
+  // avatar stabil
   useEffect(() => {
     const next =
-      profile?.photoURL ||
-      user?.photoURL ||
-      placeholderAvatar;
+      profile?.photoURL || user?.photoURL || placeholderAvatar;
 
     setStableAvatarSrc((prev) => (prev === next ? prev : next));
   }, [profile?.photoURL, user?.photoURL]);
@@ -197,7 +198,6 @@ export default function UserMenu() {
         >
           {/* HEADER CU GRADIENT + NUME */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#111827] to-[#1f2937] !text-white">
-            {/* Avatar în meniu (același stabil) */}
             <img
               src={stableAvatarSrc}
               alt=""
@@ -252,7 +252,7 @@ export default function UserMenu() {
               {/* Mesaje */}
               <button
                 onClick={() => {
-                  navigate("/messages"); // schimbă dacă ruta ta e alta
+                  navigate("/messages");
                   setOpen(false);
                 }}
                 className="flex items-center gap-3 w-full px-4 py-3 !bg-black hover:!bg-[#111] transition text-sm !text-white"
